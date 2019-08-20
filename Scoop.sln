@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scoop.Tests", "Scoop.Tests\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Scoop.Cli", "Scoop.Cli\Scoop.Cli.csproj", "{1C9FCFC6-17F6-4BA4-8382-85D4DC6B16A5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Scoop.Example", "Scoop.Example\Scoop.Example.csproj", "{C29DBF98-EB31-468B-92DA-FDA15790B715}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{1C9FCFC6-17F6-4BA4-8382-85D4DC6B16A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C9FCFC6-17F6-4BA4-8382-85D4DC6B16A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C9FCFC6-17F6-4BA4-8382-85D4DC6B16A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C29DBF98-EB31-468B-92DA-FDA15790B715}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C29DBF98-EB31-468B-92DA-FDA15790B715}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C29DBF98-EB31-468B-92DA-FDA15790B715}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C29DBF98-EB31-468B-92DA-FDA15790B715}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

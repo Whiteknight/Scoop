@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ProjectSchemaDefinitions xmlns="http://schemas.microsoft.com/build/2009/properties">
+  <ItemType Name="ScoopL1" DisplayName="Scoop L1" />
+  <ContentType Name="ScoopL1" ItemType="ScoopL1" DisplayName="Scoop L1" />
+  <FileExtension Name=".scl1" ContentType="ScoopL1" />
+</ProjectSchemaDefinitions>

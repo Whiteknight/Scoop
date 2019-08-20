@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)/scoop.xml" />
+    
+    <AvailableItemName Include="ScoopL1">
+      <Targets>ScoopL1</Targets>
+    </AvailableItemName>
+  </ItemGroup>
+
+  <Target
+    Name="ScoopL1"
+    Condition="'@(ScoopL1)' != ''"
+    BeforeTargets="ClCompile">
+    <Message Importance="High" Text="Building Scoop!" />
+    <!-- Setup metadata for custom build tool -->
+    <ItemGroup>
+      <ScoopL1>
+        <Message>%(Filename)%(Extension)</Message>
+        <Command>
+          "dotnet ../Scoop.Cli/bin/Debug/netcoreapp2.2/Scoop.Cli.dll  %(Identity)"
+        </Command>
+        <Outputs>%(Filename).cs</Outputs>
+      </ScoopL1>
+    </ItemGroup>
+
+    <!-- Compile by forwarding to the Custom Build Tool infrastructure -->
+    <CustomBuild Sources="@(ScoopL1)" />
+  </Target>
+</Project>
