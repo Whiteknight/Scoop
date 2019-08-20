@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 using Scoop.SyntaxTree;
 
 namespace Scoop.Transpiler
@@ -14,6 +12,13 @@ namespace Scoop.Transpiler
         {
             _sb = sb;
             _indent = 0;
+        }
+
+        public static string ToString(AstNode n)
+        {
+            var sb = new StringBuilder();
+            new CSharpTranspileVisitor(sb).Visit(n);
+            return sb.ToString();
         }
 
         public void AppendLineAndIndent(string s = "")
@@ -75,7 +80,7 @@ namespace Scoop.Transpiler
             {
                 AppendLineAndIndent();
                 Visit(n.Members[0]);
-                for (int i = 1; i <= n.Members.Count; i++)
+                for (int i = 1; i < n.Members.Count; i++)
                 {
                     AppendLineAndIndent();
                     Visit(n.Members[i]);
@@ -103,8 +108,7 @@ namespace Scoop.Transpiler
                     Visit(n.Parameters[i]);
                 }
             }
-
-            AppendLineAndIndent();
+            AppendLineAndIndent(")");
             Append("{");
             IncreaseIndent();
 
@@ -186,7 +190,7 @@ namespace Scoop.Transpiler
                 }
             }
 
-            AppendLineAndIndent();
+            AppendLineAndIndent(")");
             Append("{");
             IncreaseIndent();
 

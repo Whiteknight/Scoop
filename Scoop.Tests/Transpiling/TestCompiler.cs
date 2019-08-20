@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -15,31 +17,38 @@ namespace Scoop.Tests.Transpiling
     // Class to compile AST -> C# -> Assembly for test purposes only
     public static class TestCompiler
     {
-        public static Assembly Compile(CompilationUnitNode ast)
+        public static Assembly Compile(ClassNode ast)
         {
-            var sb = new StringBuilder();
-            new CSharpTranspileVisitor(sb).Visit(ast);
-            var code = sb.ToString();
-            return Compile(code);
+            var testAssemblyName = GetTestAssemblyName();
+            var unit = new CompilationUnitNode
+            {
+                Namespaces = new List<NamespaceNode>
+                {
+                    new NamespaceNode
+                    {
+                        Name = new DottedIdentifierNode(testAssemblyName),
+                        Declarations = new List<AstNode>
+                        {
+                            ast
+                        }
+                    }
+                }
+            };
+            var code = CSharpTranspileVisitor.ToString(ast);
+            return Compile(code, testAssemblyName);
         }
 
-        public static Assembly Compile(string code)
+        public static Assembly Compile(CompilationUnitNode ast)
         {
-            var stackTrace = new StackTrace();
-            string testMethodName = "";
-            string testType = "";
-            for (int i = 1; i < stackTrace.FrameCount; i++)
-            {
-                var frame = stackTrace.GetFrame(i);
-                var method = frame.GetMethod();
-                if (method.GetCustomAttribute<TestAttribute>() == null)
-                    continue;
-                testMethodName = method.Name;
-                testType = method.DeclaringType.Namespace + "." + method.DeclaringType.Name;
-                break;
-            }
+            var code = CSharpTranspileVisitor.ToString(ast);
+            var testAssemblyName = GetTestAssemblyName();
+            return Compile(code, testAssemblyName);
+        }
 
-            var testAssemblyName = $"{testType}.{testMethodName}";
+        public static Assembly Compile(string code, string testAssemblyName)
+        {
+            
+            
             var syntaxTree = CSharpSyntaxTree.ParseText(code);
             var compilation = CSharpCompilation.Create(testAssemblyName,
                 syntaxTrees: new[] { syntaxTree },
@@ -62,6 +71,21 @@ namespace Scoop.Tests.Transpiling
                 ms.Seek(0, SeekOrigin.Begin);
                 return Assembly.Load(ms.ToArray());
             }
+        }
+
+        private static string GetTestAssemblyName()
+        {
+            var stackTrace = new StackTrace();
+            for (int i = 1; i < stackTrace.FrameCount; i++)
+            {
+                var frame = stackTrace.GetFrame(i);
+                var method = frame.GetMethod();
+                if (method.GetCustomAttribute<TestAttribute>() == null)
+                    continue;
+                return $"{method.DeclaringType.Namespace}.{method.DeclaringType.Name}.{method.Name}";
+            }
+
+            throw new Exception("Could not find [Test] method in stack trace");
         }
     }
 }
