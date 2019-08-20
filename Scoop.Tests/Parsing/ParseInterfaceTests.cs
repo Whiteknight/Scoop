@@ -3,21 +3,21 @@ using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
-namespace Scoop.Tests
+namespace Scoop.Tests.Parsing
 {
     [TestFixture]
-    public class ParseClassTests
+    public class ParseInterfaceTests
     {
         [Test]
-        public void ParseClass_Test()
+        public void ParseInterface_Test()
         {
             var target = new Parser();
-            var result = target.ParseClass("public class MyClass { }");
+            var result = target.ParseInterface("public interface MyInterface { }");
             result.Should().MatchAst(
-                new ClassNode
+                new InterfaceNode
                 {
                     AccessModifier = new KeywordNode("public"),
-                    Name = new IdentifierNode("MyClass"),
+                    Name = new IdentifierNode("MyInterface"),
                     Members = new List<AstNode>()
                 }
             );

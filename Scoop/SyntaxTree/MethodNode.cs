@@ -10,6 +10,7 @@ namespace Scoop.SyntaxTree
 
         public KeywordNode AccessModifier { get; set; }
         public AstNode ReturnType { get; set; }
+        public IdentifierNode Name { get; set; }
         public List<AstNode> Parameters { get; set; }
         public List<AstNode> Statements { get; set; }
 

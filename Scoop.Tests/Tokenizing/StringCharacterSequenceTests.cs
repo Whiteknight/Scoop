@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using FluentAssertions;
 using NUnit.Framework;
 using Scoop.Tokenization;
 
-namespace Scoop.Tests
+namespace Scoop.Tests.Tokenizing
 {
     [TestFixture]
     public class StringCharacterSequenceTests

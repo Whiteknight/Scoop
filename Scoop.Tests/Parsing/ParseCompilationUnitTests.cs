@@ -3,7 +3,7 @@ using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
-namespace Scoop.Tests
+namespace Scoop.Tests.Parsing
 {
     [TestFixture]
     public class ParseCompilationUnitTests

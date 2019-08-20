@@ -2,7 +2,7 @@ using NUnit.Framework;
 using Scoop.Tests.Utility;
 using Scoop.Tokenization;
 
-namespace Scoop.Tests
+namespace Scoop.Tests.Tokenizing
 {
     [TestFixture]
     public class TokenScanner_CSharpLiteral_Tests
