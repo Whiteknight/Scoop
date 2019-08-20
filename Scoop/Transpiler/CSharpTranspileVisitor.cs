@@ -1,16 +1,23 @@
-﻿using System.Text;
+﻿using System.IO;
+using System.Text;
 using Scoop.SyntaxTree;
 
 namespace Scoop.Transpiler
 {
     public class CSharpTranspileVisitor : AstNodeVisitor
     {
-        private readonly StringBuilder _sb;
+        private readonly TextWriter _tw;
         private int _indent;
 
         public CSharpTranspileVisitor(StringBuilder sb)
         {
-            _sb = sb;
+            _tw = new StringWriter(sb);
+            _indent = 0;
+        }
+
+        public CSharpTranspileVisitor(TextWriter writer)
+        {
+            _tw = writer;
             _indent = 0;
         }
 
@@ -27,19 +34,21 @@ namespace Scoop.Transpiler
             WriteIndent();
         }
 
-        public void AppendLine(string s = "") => _sb.AppendLine(s);
-        public void Append(string s) => _sb.Append(s);
+        public void AppendLine(string s = "") => _tw.WriteLine(s);
+        public void Append(string s) => _tw.Write(s);
         public void WriteIndent()
         {
             if (_indent <= 0)
                 return;
-            _sb.Append(new string(' ', _indent * 4));
+            _tw.Write(new string(' ', _indent * 4));
         }
         public void IncreaseIndent() => _indent++;
         public void DecreaseIndent() => _indent--;
 
         public override AstNode VisitCompilationUnit(CompilationUnitNode n)
         {
+            if (!string.IsNullOrEmpty(n.FileName))
+                AppendLineAndIndent($"// Source File: {n.FileName}");
             foreach (var ud in n.UsingDirectives.OrEmptyIfNull())
             {
                 Visit(ud);
@@ -58,7 +67,7 @@ namespace Scoop.Transpiler
         public override AstNode VisitClass(ClassNode n)
         {
             Visit(n.AccessModifier);
-            Append(" class ");
+            Append(" sealed class ");
             Visit(n.Name);
             Append(" ");
             if (!n.Interfaces.IsNullOrEmpty())
@@ -109,11 +118,19 @@ namespace Scoop.Transpiler
                 }
             }
             AppendLineAndIndent(")");
+            // TODO: ": this(...)"
             Append("{");
             IncreaseIndent();
+            AppendLineAndIndent();
+            AppendLineAndIndent("// Do not allow concrete inheritance");
+            AppendLineAndIndent("System.Diagnostics.Debug.Assert(GetType().BaseType == typeof(object));");
 
             foreach (var s in n.Statements.OrEmptyIfNull())
+            {
                 Visit(s);
+                AppendLineAndIndent($"#line {s.Location.Line} \"{s.Location.FileName}\""); 
+                AppendLineAndIndent();
+            }
 
             DecreaseIndent();
             AppendLineAndIndent();

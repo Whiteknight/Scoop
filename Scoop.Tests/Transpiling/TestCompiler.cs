@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using FluentAssertions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -34,7 +33,7 @@ namespace Scoop.Tests.Transpiling
                     }
                 }
             };
-            var code = CSharpTranspileVisitor.ToString(ast);
+            var code = CSharpTranspileVisitor.ToString(unit);
             return Compile(code, testAssemblyName);
         }
 
@@ -47,15 +46,14 @@ namespace Scoop.Tests.Transpiling
 
         public static Assembly Compile(string code, string testAssemblyName)
         {
-            
-            
             var syntaxTree = CSharpSyntaxTree.ParseText(code);
             var compilation = CSharpCompilation.Create(testAssemblyName,
                 syntaxTrees: new[] { syntaxTree },
                 references: new MetadataReference[]
                 {
                     MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location)
+                    MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(System.Diagnostics.Debug).Assembly.Location)
                 },
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
             );

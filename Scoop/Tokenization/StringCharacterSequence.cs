@@ -1,20 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace Scoop.Tokenization
 {
     public class StringCharacterSequence : ICharacterSequence
     {
+        private readonly string _fileName;
         private readonly string _s;
         private readonly Stack<char> _putbacks;
         private int _index;
         private int _line;
         private int _column;
 
-        public StringCharacterSequence(string s)
+        public StringCharacterSequence(string s, string fileName = null)
         {
             _s = s;
+            _fileName = fileName ?? "string literal";
             _putbacks = new Stack<char>();
         }
 
@@ -44,24 +45,6 @@ namespace Scoop.Tokenization
             _putbacks.Push(c);
         }
 
-        public char Peek()
-        {
-            var c = GetNext();
-            PutBack(c);
-            return c;
-        }
-
-        public char Expect(char expected)
-        {
-            var c = GetNext();
-            if (c != expected)
-                throw ParsingException.UnexpectedCharacter(expected, c, GetLocation());
-            return c;
-        }
-
-        public Location GetLocation()
-        {
-            return new Location(_line, _column);
-        }
+        public Location GetLocation() => new Location(_fileName, _line, _column);
     }
 }
