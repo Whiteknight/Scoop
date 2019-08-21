@@ -2,7 +2,6 @@
 using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
-using Scoop.Transpiler;
 
 namespace Scoop.Tests.Parsing
 {
@@ -37,7 +36,6 @@ public class MyClass
     // Simple void() method
     public void MyMethod() { }
 }");
-            var cs = CSharpTranspileVisitor.ToString(result);
             result.Should().MatchAst(
                 new ClassNode
                 {
@@ -59,6 +57,122 @@ public class MyClass
                             ReturnType = new IdentifierNode("void"),
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>()
+                        }
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void ParseClass_MethodReturnNumber()
+        {
+            var target = new Parser();
+            var result = target.ParseClass(@"
+public class MyClass 
+{
+    public int MyMethod() 
+    { 
+        return 5;
+    }
+}");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Name = new IdentifierNode("MyClass"),
+                    Members = new List<AstNode>
+                    {
+                        new MethodNode
+                        {
+                            Name = new IdentifierNode("MyMethod"),
+                            AccessModifier = new KeywordNode("public"),
+                            ReturnType = new IdentifierNode("int"),
+                            Parameters = new List<AstNode>(),
+                            Statements = new List<AstNode>
+                            {
+                                new ReturnNode
+                                {
+                                    Expression = new IntegerNode(5)
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void ParseClass_LambdaMethodReturnNumber()
+        {
+            var target = new Parser();
+            var result = target.ParseClass(@"
+public class MyClass 
+{
+    public int MyMethod() => 5;
+}");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Name = new IdentifierNode("MyClass"),
+                    Members = new List<AstNode>
+                    {
+                        new MethodNode
+                        {
+                            Name = new IdentifierNode("MyMethod"),
+                            AccessModifier = new KeywordNode("public"),
+                            ReturnType = new IdentifierNode("int"),
+                            Parameters = new List<AstNode>(),
+                            Statements = new List<AstNode>
+                            {
+                                new ReturnNode
+                                {
+                                    Expression = new IntegerNode(5)
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void ParseClass_MethodReturnInfixExpression()
+        {
+            var target = new Parser();
+            var result = target.ParseClass(@"
+public class MyClass 
+{
+    public int MyMethod() 
+    { 
+        return 5 + 6;
+    }
+}");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Name = new IdentifierNode("MyClass"),
+                    Members = new List<AstNode>
+                    {
+                        new MethodNode
+                        {
+                            Name = new IdentifierNode("MyMethod"),
+                            AccessModifier = new KeywordNode("public"),
+                            ReturnType = new IdentifierNode("int"),
+                            Parameters = new List<AstNode>(),
+                            Statements = new List<AstNode>
+                            {
+                                new ReturnNode
+                                {
+                                    Expression = new InfixOperationNode
+                                    {
+                                        Left = new IntegerNode(5),
+                                        Operator = new OperatorNode("+"),
+                                        Right = new IntegerNode(6)
+                                    }
+                                }
+                            }
                         }
                     }
                 }

@@ -13,6 +13,8 @@
             return n;
         }
 
+        public virtual AstNode VisitChar(CharNode n) => n;
+
         public virtual AstNode VisitClass(ClassNode n)
         {
             Visit(n.AccessModifier);
@@ -34,15 +36,25 @@
             return n;
         }
 
-        public virtual AstNode VisitDottedIdentifier(DottedIdentifierNode n)
+        public virtual AstNode VisitDecimal(DecimalNode n) => n;
+
+        public virtual AstNode VisitDottedIdentifier(DottedIdentifierNode n) => n;
+
+        public virtual AstNode VisitDouble(DoubleNode n) => n;
+
+        public virtual AstNode VisitFloat(FloatNode n) => n;
+
+        public virtual AstNode VisitIdentifier(IdentifierNode n) => n;
+
+        public virtual AstNode VisitInfixOperation(InfixOperationNode n)
         {
+            Visit(n.Left);
+            Visit(n.Operator);
+            Visit(n.Right);
             return n;
         }
 
-        public virtual AstNode VisitIdentifier(IdentifierNode n)
-        {
-            return n;
-        }
+        public virtual AstNode VisitInteger(IntegerNode n) => n;
 
         public virtual AstNode VisitInterface(InterfaceNode n)
         {
@@ -55,10 +67,9 @@
             return n;
         }
 
-        public virtual AstNode VisitKeyword(KeywordNode n)
-        {
-            return n;
-        }
+        public virtual AstNode VisitKeyword(KeywordNode n) => n;
+
+        public virtual AstNode VisitLong(LongNode n) => n;
 
         public virtual AstNode VisitMethod(MethodNode n)
         {
@@ -78,6 +89,34 @@
                 Visit(d);
             return n;
         }
+
+        public virtual AstNode VisitOperator(OperatorNode n) => n;
+
+        public virtual AstNode VisitParenthesis<TNode>(ParenthesisNode<TNode> n)
+            where TNode : AstNode
+        {
+            Visit(n.Expression);
+            return n;
+        }
+
+        public virtual AstNode VisitPrefixOperation(PrefixOperationNode n)
+        {
+            Visit(n.Operator);
+            Visit(n.Right);
+            return n;
+        }
+
+        public virtual AstNode VisitReturn(ReturnNode n)
+        {
+            Visit(n.Expression);
+            return n;
+        }
+
+        public virtual AstNode VisitString(StringNode n) => n;
+
+        public virtual AstNode VisitUInteger(UIntegerNode n) => n;
+
+        public virtual AstNode VisitULong(ULongNode n) => n;
 
         public virtual AstNode VisitUsingDirective(UsingDirectiveNode n)
         {

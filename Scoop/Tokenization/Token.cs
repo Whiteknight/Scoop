@@ -53,6 +53,19 @@ namespace Scoop.Tokenization
             return false;
         }
 
+        public bool IsOperator(params string[] operators)
+        {
+            if (Type != TokenType.Operator)
+                return false;
+            foreach (var op in operators)
+            {
+                if (Value == op)
+                    return true;
+            }
+
+            return false;
+        }
+
         public override string ToString()
         {
             return $"{Type}:{Value}";

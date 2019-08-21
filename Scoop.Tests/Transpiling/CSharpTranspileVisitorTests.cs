@@ -1,5 +1,5 @@
-﻿using System.Linq;
-using System.Reflection;
+﻿using System;
+using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -49,6 +49,26 @@ public class MyClass
             method.Name.Should().Be("MyMethod");
             method.ReturnType.Should().Be(typeof(void));
             method.GetParameters().Length.Should().Be(0);
+        }
+
+        [Test]
+        public void Compile_ClassMethodReturnValue()
+        {
+            var ast = new Parser().ParseClass(@"
+public class MyClass 
+{
+    public int MyMethod()
+    {
+        return 5 + 6;
+    }
+}");
+
+            var assembly = TestCompiler.Compile(ast);
+            var type = assembly.ExportedTypes.First();
+            var myObj = Activator.CreateInstance(type);
+            var method = type.GetMethod("MyMethod");
+            var result = (int) method.Invoke(myObj, new object[0]);
+            result.Should().Be(11);
         }
     }
 }

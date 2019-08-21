@@ -30,6 +30,9 @@ namespace Scoop.Tokenization
             // Unary ~. Unary - and + are covered above
             _operators.Add("~");
 
+            // Lambda operators
+            _operators.Add("=>");
+
             // "=" for assignment
             _operators.Add("=");
 

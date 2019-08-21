@@ -25,7 +25,7 @@ namespace Scoop.Tokenization
             _scanner = scanner ?? throw new ArgumentNullException(nameof(scanner));
         }
 
-        public Token GetNextToken()
+        public Token ScanNextToken()
         {
             if (_putbacks.Count > 0)
                 return _putbacks.Pop();

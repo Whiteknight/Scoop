@@ -97,13 +97,62 @@ namespace Scoop
                 ReturnType = new IdentifierNode(returnType),
                 Name = new IdentifierNode(name)
             };
-            t.Expect(TokenType.Operator, "(");
-            methodNode.Parameters = new List<AstNode>();
-            t.Expect(TokenType.Operator, ")");
-            t.Expect(TokenType.Operator, "{");
-            methodNode.Statements = new List<AstNode>();
-            t.Expect(TokenType.Operator, "}");
+            var parameterList = ParseParameterList(t);
+            methodNode.Parameters = parameterList;
+            methodNode.Statements = ParseMethodBody(t);
+            
             return methodNode;
+        }
+
+        private static List<AstNode> ParseParameterList(Tokenizer t)
+        {
+            t.Expect(TokenType.Operator, "(");
+            var parameterList = new List<AstNode>();
+
+            t.Expect(TokenType.Operator, ")");
+            return parameterList;
+        }
+
+        private List<AstNode> ParseMethodBody(Tokenizer t)
+        {
+            var lookahead = t.Peek();
+            if (lookahead.IsOperator("=>"))
+                return ParseExpressionBodiedMethodBody(t);
+
+            if (lookahead.IsOperator("{"))
+                return ParseNormalMethodBody(t);
+            throw ParsingException.CouldNotParseRule(nameof(ParseMethodBody), lookahead);
+        }
+
+        private List<AstNode> ParseExpressionBodiedMethodBody(Tokenizer t)
+        {
+            var lambdaToken = t.Expect(TokenType.Operator, "=>");
+            var expr = ParseExpression(t);
+            t.Expect(TokenType.Operator, ";");
+            return new List<AstNode>
+            {
+                new ReturnNode
+                {
+                    Location = lambdaToken.Location,
+                    Expression = expr
+                }
+            };
+        }
+
+        private List<AstNode> ParseNormalMethodBody(Tokenizer t)
+        {
+            t.Expect(TokenType.Operator, "{");
+            var statements = new List<AstNode>();
+            while (true)
+            {
+                var stmt = ParseStatement(t);
+                if (stmt == null)
+                    break;
+                statements.Add(stmt);
+            }
+
+            t.Expect(TokenType.Operator, "}");
+            return statements;
         }
     }
 }

@@ -6,7 +6,7 @@
         {
             while (true)
             {
-                var next = tokenizer.GetNextToken();
+                var next = tokenizer.ScanNextToken();
                 if (next == null || next.IsType(TokenType.EndOfInput))
                     return Token.EndOfInput();
                 if (next.Type == TokenType.Comment && skipComments)
