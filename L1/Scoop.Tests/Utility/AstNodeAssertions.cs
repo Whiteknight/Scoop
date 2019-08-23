@@ -59,7 +59,8 @@ namespace Scoop.Tests.Utility
 
             var type = a.GetType();
             type.Should().BeSameAs(b.GetType(), path);
-            foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            var publicProperties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public).ToList();
+            foreach (var property in publicProperties)
             {
                 if (property.Name == nameof(AstNode.Location) && property.PropertyType == typeof(Location))
                     continue;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
@@ -167,11 +168,54 @@ namespace Scoop
 
         private AstNode ParseExpressionPostfix(Tokenizer t)
         {
-            var terminal = ParseExpressionTerminal(t);
-            // TODO: <terminal> ("++" | "--")
-            // TODO: <terminal> "(" <args> ")"
-            // TODO: <terminal> "." <identifer> ( "(" <args> ")" )?
-            return terminal;
+            var current = ParseExpressionTerminal(t);
+            while (true)
+            {
+                var lookahead = t.Peek();
+
+                // <terminal> ("++" | "--")
+                if (lookahead.IsOperator("++", "--"))
+                {
+                    t.Advance();
+                    current = new PostfixOperationNode
+                    {
+                        Location = current.Location,
+                        Left = current,
+                        Operator = new OperatorNode(lookahead)
+                    };
+                    continue;
+                }
+
+                if (lookahead.IsOperator("."))
+                {
+                    t.Advance();
+                    var identifier = t.Expect(TokenType.Identifier);
+                    current = new MemberAccessNode
+                    {
+                        Location = lookahead.Location,
+                        Instance = current,
+                        MemberName = new IdentifierNode(identifier)
+                    };
+                    continue;
+                }
+
+                if (lookahead.IsOperator("("))
+                {
+                    t.Advance();
+                    // TODO: Args
+                    current = new InvokeNode
+                    {
+                        Arguments = new List<AstNode>(),
+                        Instance = current,
+                        Location = lookahead.Location
+                    };
+                    t.Expect(TokenType.Operator, ")");
+                    continue;
+                }
+
+                // TODO: <terminal> "[" <args> "]"
+                return current;
+            }
         }
 
         // Parse terminals
@@ -202,7 +246,6 @@ namespace Scoop
                 return new FloatNode(t.GetNext());
             if (lookahead.IsType(TokenType.Double))
                 return new DoubleNode(t.GetNext());
-
 
             if (lookahead.IsOperator("("))
             {

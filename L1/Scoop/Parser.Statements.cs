@@ -5,6 +5,9 @@ namespace Scoop
 {
     public partial class Parser
     {
+        // Helper for testing
+        public AstNode ParseStatement(string s) => ParseStatement(new Tokenizer(new StringCharacterSequence(s)));
+
         private AstNode ParseStatement(Tokenizer t)
         {
             var stmt = ParseStatement0(t);

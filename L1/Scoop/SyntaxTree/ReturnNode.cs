@@ -12,7 +12,7 @@
             Location = location ?? expression.Location;
         }
 
-        public AstNode Expression;
+        public AstNode Expression { get; set; }
 
         public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitReturn(this);
     }

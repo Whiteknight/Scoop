@@ -218,12 +218,7 @@ public class MyClass
                                 },
                                 new ReturnNode
                                 {
-                                    Expression = new InfixOperationNode
-                                    {
-                                        Left = new IntegerNode(5),
-                                        Operator = new OperatorNode("+"),
-                                        Right = new IntegerNode(6)
-                                    }
+                                    Expression = new IdentifierNode("value")
                                 }
                             }
                         }
@@ -269,11 +264,94 @@ public class MyClass
                                 },
                                 new ReturnNode
                                 {
-                                    Expression = new InfixOperationNode
+                                    Expression = new IdentifierNode("value")
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void ParseClass_MethodStringLiteralProperty()
+        {
+            var target = new Parser();
+            var result = target.ParseClass(@"
+public class MyClass 
+{
+    public int MyMethod() 
+    { 
+        return ""test"".Length;
+    }
+}");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Name = new IdentifierNode("MyClass"),
+                    Members = new List<AstNode>
+                    {
+                        new MethodNode
+                        {
+                            Name = new IdentifierNode("MyMethod"),
+                            AccessModifier = new KeywordNode("public"),
+                            ReturnType = new IdentifierNode("int"),
+                            Parameters = new List<AstNode>(),
+                            Statements = new List<AstNode>
+                            {
+                                new ReturnNode
+                                {
+                                    Expression = new MemberAccessNode
                                     {
-                                        Left = new IntegerNode(5),
-                                        Operator = new OperatorNode("+"),
-                                        Right = new IntegerNode(6)
+                                        Instance = new StringNode("test"),
+                                        MemberName = new IdentifierNode("Length")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void ParseClass_MethodIntegerMethod()
+        {
+            var target = new Parser();
+            var result = target.ParseClass(@"
+public class MyClass 
+{
+    public string MyMethod() 
+    { 
+        return 5.ToString();
+    }
+}");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Name = new IdentifierNode("MyClass"),
+                    Members = new List<AstNode>
+                    {
+                        new MethodNode
+                        {
+                            Name = new IdentifierNode("MyMethod"),
+                            AccessModifier = new KeywordNode("public"),
+                            ReturnType = new IdentifierNode("string"),
+                            Parameters = new List<AstNode>(),
+                            Statements = new List<AstNode>
+                            {
+                                new ReturnNode
+                                {
+                                    Expression = new InvokeNode
+                                    {
+                                        Instance = new MemberAccessNode
+                                        {
+                                            Instance = new IntegerNode(5),
+                                            MemberName = new IdentifierNode("ToString")
+                                        },
+                                        Arguments = new List<AstNode>()
                                     }
                                 }
                             }

@@ -22,25 +22,25 @@ namespace Scoop.Tokenization
             _operators.Add(".", ",", ";");
 
             // Parens
-            _operators.Add("(", ")", "{", "}");
+            _operators.Add("(", ")", "{", "}", "[", "]");
 
             // Arithmetic operators
             _operators.Add("+", "-", "/", "*", "&", "|", "^");
 
             // Unary ~. Unary - and + are covered above
-            _operators.Add("~");
+            _operators.Add("~", "!");
+
+            // prefix/postfix increment/decrement
+            _operators.Add("++", "--");
 
             // Lambda operators
             _operators.Add("=>");
 
-            // "=" for assignment
-            _operators.Add("=");
+            // Assignment operators
+            _operators.Add("=", "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=");
 
             // Comparison operators
             _operators.Add("==", "!=", ">", "<", ">=", "<=");
-
-            // Assignment operators
-            _operators.Add("+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=");
         }
 
         public Token ParseNext()
@@ -284,8 +284,16 @@ namespace Scoop.Tokenization
 
             if (_chars.Peek() == '.')
             {
+                var dot = _chars.GetNext();
+                if (!char.IsDigit(_chars.Peek()))
+                {
+                    // The . is for method invocation, not a decimal, so we put back
+                    _chars.PutBack(dot);
+                    return new Token(new string(chars.ToArray()), TokenType.Integer, l);
+                }
+
                 hasDecimal = true;
-                chars.Add(_chars.GetNext());
+                chars.Add(dot);
                 while (true)
                 {
                     c = _chars.GetNext();

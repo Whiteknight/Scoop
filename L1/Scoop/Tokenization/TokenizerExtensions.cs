@@ -17,6 +17,8 @@
             }
         }
 
+        public static void Advance(this Tokenizer tokenizer) => GetNext(tokenizer);
+
         public static bool NextIs(this Tokenizer tokenizer, TokenType type, string value, bool consume = false)
         {
             var t = tokenizer.GetNext();

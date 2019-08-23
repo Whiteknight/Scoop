@@ -85,6 +85,9 @@ namespace Scoop
             return ctorNode;
         }
 
+        // Helper method to start parsing at the method level, mostly to simplify unit tests
+        public MethodNode ParseMethod(string s) => ParseMethod(new Tokenizer(new StringCharacterSequence(s)));
+
         private MethodNode ParseMethod(Tokenizer t)
         {
             var accessModifier = t.Expect(TokenType.Keyword, "public", "private");

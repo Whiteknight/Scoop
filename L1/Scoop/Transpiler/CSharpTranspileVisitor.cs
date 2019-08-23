@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using Scoop.SyntaxTree;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Scoop.Transpiler
@@ -233,6 +234,24 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public override AstNode VisitInvoke(InvokeNode n)
+        {
+            Visit(n.Instance);
+            Append("(");
+            if (n.Arguments != null && n.Arguments.Any())
+            {
+                Visit(n.Arguments[0]);
+                for (int i = 1; i < n.Arguments.Count; i++)
+                {
+                    Append(", ");
+                    Visit(n.Arguments[i]);
+                }
+            }
+
+            Append(")");
+            return n;
+        }
+
         public override AstNode VisitKeyword(KeywordNode n)
         {
             Append(n.Keyword);
@@ -242,6 +261,14 @@ namespace Scoop.Transpiler
         public override AstNode VisitLong(LongNode n)
         {
             Append(n.Value.ToString(CultureInfo.InvariantCulture));
+            return n;
+        }
+
+        public override AstNode VisitMemberAccess(MemberAccessNode n)
+        {
+            Visit(n.Instance);
+            Append(".");
+            Visit(n.MemberName);
             return n;
         }
 
@@ -315,6 +342,13 @@ namespace Scoop.Transpiler
             Append("(");
             Visit(n.Expression);
             Append(")");
+            return n;
+        }
+
+        public override AstNode VisitPostfixOperation(PostfixOperationNode n)
+        {
+            Visit(n.Left);
+            Visit(n.Operator);
             return n;
         }
 

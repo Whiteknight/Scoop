@@ -70,5 +70,25 @@ public class MyClass
             var result = (int) method.Invoke(myObj, new object[0]);
             result.Should().Be(11);
         }
+
+        [Test]
+        public void Compile_ClassMethodReturnExpression()
+        {
+            var ast = new Parser().ParseClass(@"
+public class MyClass 
+{
+    public string MyMethod()
+    {
+        return 5.ToString() + ""test"".Length;
+    }
+}");
+
+            var assembly = TestCompiler.Compile(ast);
+            var type = assembly.ExportedTypes.First();
+            var myObj = Activator.CreateInstance(type);
+            var method = type.GetMethod("MyMethod");
+            var result = (string)method.Invoke(myObj, new object[0]);
+            result.Should().Be("54");
+        }
     }
 }

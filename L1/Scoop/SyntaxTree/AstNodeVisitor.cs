@@ -67,9 +67,24 @@
             return n;
         }
 
+        public virtual AstNode VisitInvoke(InvokeNode n)
+        {
+            Visit(n.Instance);
+            foreach (var a in n.Arguments.OrEmptyIfNull())
+                Visit(a);
+            return n;
+        }
+
         public virtual AstNode VisitKeyword(KeywordNode n) => n;
 
         public virtual AstNode VisitLong(LongNode n) => n;
+
+        public virtual AstNode VisitMemberAccess(MemberAccessNode n)
+        {
+            Visit(n.Instance);
+            Visit(n.MemberName);
+            return n;
+        }
 
         public virtual AstNode VisitMethod(MethodNode n)
         {
@@ -99,12 +114,21 @@
             return n;
         }
 
+        public virtual AstNode VisitPostfixOperation(PostfixOperationNode n)
+        {
+            Visit(n.Left);
+            Visit(n.Operator);
+            return n;
+        }
+
         public virtual AstNode VisitPrefixOperation(PrefixOperationNode n)
         {
             Visit(n.Operator);
             Visit(n.Right);
             return n;
         }
+
+        
 
         public virtual AstNode VisitReturn(ReturnNode n)
         {
