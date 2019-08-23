@@ -17,6 +17,6 @@ namespace Scoop.SyntaxTree
 
         public decimal Value { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitDecimal(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitDecimal(this);
     }
 }

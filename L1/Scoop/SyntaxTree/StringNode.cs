@@ -21,6 +21,6 @@ namespace Scoop.SyntaxTree
 
         public string Value { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitString(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitString(this);
     }
 }

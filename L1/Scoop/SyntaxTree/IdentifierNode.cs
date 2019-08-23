@@ -21,6 +21,6 @@ namespace Scoop.SyntaxTree
             Location = location;
         }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitIdentifier(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitIdentifier(this);
     }
 }

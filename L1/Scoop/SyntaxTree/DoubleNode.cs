@@ -17,6 +17,6 @@ namespace Scoop.SyntaxTree
 
         public double Value { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitDouble(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitDouble(this);
     }
 }

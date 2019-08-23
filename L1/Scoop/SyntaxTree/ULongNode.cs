@@ -17,6 +17,6 @@ namespace Scoop.SyntaxTree
 
         public ulong Value { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitULong(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitULong(this);
     }
 }

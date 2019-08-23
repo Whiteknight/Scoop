@@ -15,6 +15,6 @@ namespace Scoop.SyntaxTree
             Declarations.Add(declaration);
         }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitNamespace(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitNamespace(this);
     }
 }

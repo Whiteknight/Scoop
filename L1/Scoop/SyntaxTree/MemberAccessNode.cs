@@ -5,7 +5,7 @@
         public AstNode Instance { get; set; }
         public IdentifierNode MemberName { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitMemberAccess(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitMemberAccess(this);
 
     }
 }

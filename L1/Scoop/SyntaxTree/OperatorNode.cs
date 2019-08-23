@@ -18,6 +18,6 @@ namespace Scoop.SyntaxTree
 
         public string Operator { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitOperator(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitOperator(this);
     }
 }

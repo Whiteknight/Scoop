@@ -12,6 +12,6 @@ namespace Scoop.SyntaxTree
         public List<AstNode> Parameters { get; set; }
         public List<AstNode> Statements { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitConstructor(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitConstructor(this);
     }
 }

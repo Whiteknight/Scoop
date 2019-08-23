@@ -17,6 +17,6 @@ namespace Scoop.SyntaxTree
 
         public float Value { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitFloat(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitFloat(this);
     }
 }

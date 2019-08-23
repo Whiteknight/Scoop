@@ -15,6 +15,6 @@ namespace Scoop.SyntaxTree
         // Constructors, methods, fields, properties, child classes, etc
         public List<AstNode> Members { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitInterface(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitInterface(this);
     }
 }

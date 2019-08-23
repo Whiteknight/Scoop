@@ -10,6 +10,6 @@ namespace Scoop.SyntaxTree
         public IdentifierNode Alias { get; set; }
         public DottedIdentifierNode Namespace { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitUsingDirective(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitUsingDirective(this);
     }
 }

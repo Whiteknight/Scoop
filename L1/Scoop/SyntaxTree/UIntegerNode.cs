@@ -17,6 +17,6 @@ namespace Scoop.SyntaxTree
 
         public uint Value { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitUInteger(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitUInteger(this);
     }
 }

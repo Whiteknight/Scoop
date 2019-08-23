@@ -15,6 +15,6 @@
         }
 
         public TNode Expression { get; set; }
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitParenthesis(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitParenthesis(this);
     }
 }

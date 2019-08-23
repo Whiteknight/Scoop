@@ -30,7 +30,7 @@ namespace Scoop.SyntaxTree
         public List<UsingDirectiveNode> UsingDirectives { get; set; }
         public List<NamespaceNode> Namespaces { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitCompilationUnit(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitCompilationUnit(this);
 
         public void AddNamespace(NamespaceNode ns)
         {

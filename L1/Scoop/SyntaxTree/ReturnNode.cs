@@ -14,6 +14,6 @@
 
         public AstNode Expression { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitReturn(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitReturn(this);
     }
 }

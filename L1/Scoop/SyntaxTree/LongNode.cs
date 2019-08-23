@@ -17,6 +17,6 @@ namespace Scoop.SyntaxTree
 
         public long Value { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitLong(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitLong(this);
     }
 }

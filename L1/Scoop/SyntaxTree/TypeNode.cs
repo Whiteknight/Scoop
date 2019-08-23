@@ -9,7 +9,7 @@ namespace Scoop.SyntaxTree
         public IdentifierNode Name { get; set; }
         public List<AstNode> GenericArguments { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitType(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitType(this);
     }
 
     public class ChildTypeNode : AstNode
@@ -17,12 +17,12 @@ namespace Scoop.SyntaxTree
         public AstNode Parent { get; set; }
         public TypeNode Child { get; set; }
 
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitChildType(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitChildType(this);
     }
 
     public class ArrayTypeNode : AstNode
     {
         public AstNode ElementType { get; set; }
-        public override AstNode Accept(AstNodeVisitor visitor) => visitor.VisitArrayType(this);
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitArrayType(this);
     }
 }

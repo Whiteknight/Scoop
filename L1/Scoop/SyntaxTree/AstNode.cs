@@ -2,9 +2,9 @@
 {
     public abstract class AstNode
     {
-        public abstract AstNode Accept(AstNodeVisitor visitor);
+        public abstract AstNode Accept(IAstNodeVisitorImplementation visitor);
 
-        //public override string ToString()
+        //public string ToString()
         //{
         //    var sb = new StringBuilder();
         //    var visitor = new SqlServerStringifyVisitor(sb);

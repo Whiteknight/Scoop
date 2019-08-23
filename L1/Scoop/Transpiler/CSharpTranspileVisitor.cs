@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Scoop.Transpiler
 {
-    public class CSharpTranspileVisitor : AstNodeVisitor
+    public class CSharpTranspileVisitor : IAstNodeVisitor, IAstNodeVisitorImplementation
     {
         private readonly TextWriter _tw;
         private int _indent;
@@ -22,6 +22,8 @@ namespace Scoop.Transpiler
             _tw = writer;
             _indent = 0;
         }
+
+        public AstNode Visit(AstNode node) => node?.Accept(this);
 
         public static string ToString(AstNode n)
         {
@@ -49,14 +51,14 @@ namespace Scoop.Transpiler
             _tw.Write(new string(' ', _indent * 4));
         }
 
-        public override AstNode VisitArrayType(ArrayTypeNode n)
+        public AstNode VisitArrayType(ArrayTypeNode n)
         {
             Visit(n.ElementType);
             Append("[]");
             return n;
         }
 
-        public override AstNode VisitCast(CastNode n)
+        public AstNode VisitCast(CastNode n)
         {
             Append("(");
             Visit(n.Type);
@@ -65,7 +67,7 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitChar(CharNode n)
+        public AstNode VisitChar(CharNode n)
         {
             Append("'");
             var asInt = (int) n.Value;
@@ -77,7 +79,7 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitChildType(ChildTypeNode n)
+        public AstNode VisitChildType(ChildTypeNode n)
         {
             Visit(n.Parent);
             Append(".");
@@ -85,7 +87,7 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitClass(ClassNode n)
+        public AstNode VisitClass(ClassNode n)
         {
             Visit(n.AccessModifier);
             Append(" sealed class ");
@@ -123,7 +125,7 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitCompilationUnit(CompilationUnitNode n)
+        public AstNode VisitCompilationUnit(CompilationUnitNode n)
         {
             if (!string.IsNullOrEmpty(n.FileName))
                 AppendLineAndIndent($"// Source File: {n.FileName}");
@@ -142,7 +144,7 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitConstructor(ConstructorNode n)
+        public AstNode VisitConstructor(ConstructorNode n)
         {
             Visit(n.AccessModifier);
             Append(" ");
@@ -179,37 +181,37 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitDecimal(DecimalNode n)
+        public AstNode VisitDecimal(DecimalNode n)
         {
             Append(n.Value.ToString(CultureInfo.InvariantCulture));
             return n;
         }
 
-        public override AstNode VisitDottedIdentifier(DottedIdentifierNode n)
+        public AstNode VisitDottedIdentifier(DottedIdentifierNode n)
         {
             Append(n.Id);
             return n;
         }
 
-        public override AstNode VisitDouble(DoubleNode n)
+        public AstNode VisitDouble(DoubleNode n)
         {
             Append(n.Value.ToString(CultureInfo.InvariantCulture));
             return n;
         }
 
-        public override AstNode VisitFloat(FloatNode n)
+        public AstNode VisitFloat(FloatNode n)
         {
             Append(n.Value.ToString(CultureInfo.InvariantCulture));
             return n;
         }
 
-        public override AstNode VisitIdentifier(IdentifierNode n)
+        public AstNode VisitIdentifier(IdentifierNode n)
         {
             Append(n.Id);
             return n;
         }
 
-        public override AstNode VisitInfixOperation(InfixOperationNode n)
+        public AstNode VisitInfixOperation(InfixOperationNode n)
         {
             Visit(n.Left);
             Append(" ");
@@ -219,13 +221,13 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitInteger(IntegerNode n)
+        public AstNode VisitInteger(IntegerNode n)
         {
             Append(n.Value.ToString(CultureInfo.InvariantCulture));
             return n;
         }
 
-        public override AstNode VisitInterface(InterfaceNode n)
+        public AstNode VisitInterface(InterfaceNode n)
         {
             Visit(n.AccessModifier);
             Append(" interface ");
@@ -258,7 +260,7 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitInvoke(InvokeNode n)
+        public AstNode VisitInvoke(InvokeNode n)
         {
             Visit(n.Instance);
             Append("(");
@@ -276,19 +278,19 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitKeyword(KeywordNode n)
+        public AstNode VisitKeyword(KeywordNode n)
         {
             Append(n.Keyword);
             return n;
         }
 
-        public override AstNode VisitLong(LongNode n)
+        public AstNode VisitLong(LongNode n)
         {
             Append(n.Value.ToString(CultureInfo.InvariantCulture));
             return n;
         }
 
-        public override AstNode VisitMemberAccess(MemberAccessNode n)
+        public AstNode VisitMemberAccess(MemberAccessNode n)
         {
             Visit(n.Instance);
             Append(".");
@@ -296,7 +298,7 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitMethod(MethodNode n)
+        public AstNode VisitMethod(MethodNode n)
         {
             Visit(n.AccessModifier);
             Append(" ");
@@ -331,7 +333,7 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitNamespace(NamespaceNode n)
+        public AstNode VisitNamespace(NamespaceNode n)
         {
             Append("namespace ");
             Visit(n.Name);
@@ -355,7 +357,7 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitNew(NewNode n)
+        public AstNode VisitNew(NewNode n)
         {
             Append("new ");
             Visit(n.Type);
@@ -374,13 +376,14 @@ namespace Scoop.Transpiler
         }
 
 
-        public override AstNode VisitOperator(OperatorNode n)
+        public AstNode VisitOperator(OperatorNode n)
         {
             Append(n.Operator);
             return n;
         }
 
-        public override AstNode VisitParenthesis<TNode>(ParenthesisNode<TNode> n)
+        public AstNode VisitParenthesis<TNode>(ParenthesisNode<TNode> n)
+            where TNode : AstNode
         {
             Append("(");
             Visit(n.Expression);
@@ -388,28 +391,28 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitPostfixOperation(PostfixOperationNode n)
+        public AstNode VisitPostfixOperation(PostfixOperationNode n)
         {
             Visit(n.Left);
             Visit(n.Operator);
             return n;
         }
 
-        public override AstNode VisitPrefixOperation(PrefixOperationNode n)
+        public AstNode VisitPrefixOperation(PrefixOperationNode n)
         {
             Visit(n.Operator);
             Visit(n.Right);
             return n;
         }
 
-        public override AstNode VisitReturn(ReturnNode n)
+        public AstNode VisitReturn(ReturnNode n)
         {
             Append("return ");
             Visit(n.Expression);
             return n;
         }
 
-        public override AstNode VisitString(StringNode n)
+        public AstNode VisitString(StringNode n)
         {
             if (n.Interpolated)
                 Append("$");
@@ -421,7 +424,7 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitType(TypeNode n)
+        public AstNode VisitType(TypeNode n)
         {
             Visit(n.Name);
             if (n.GenericArguments != null && n.GenericArguments.Any())
@@ -439,21 +442,21 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitUInteger(UIntegerNode n)
+        public AstNode VisitUInteger(UIntegerNode n)
         {
             Append(n.Value.ToString(CultureInfo.InvariantCulture));
             Append("U");
             return n;
         }
 
-        public override AstNode VisitULong(ULongNode n)
+        public AstNode VisitULong(ULongNode n)
         {
             Append(n.Value.ToString(CultureInfo.InvariantCulture));
             Append("UL");
             return n;
         }
 
-        public override AstNode VisitUsingDirective(UsingDirectiveNode n)
+        public AstNode VisitUsingDirective(UsingDirectiveNode n)
         {
             Append("using ");
             if (n.Alias != null)
@@ -467,7 +470,7 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public override AstNode VisitVariableDeclare(VariableDeclareNode n)
+        public AstNode VisitVariableDeclare(VariableDeclareNode n)
         {
             Append("var ");
             Visit(n.Name);
