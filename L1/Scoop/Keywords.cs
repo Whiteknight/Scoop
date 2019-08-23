@@ -24,7 +24,8 @@ namespace Scoop
             "public",
             "return",
             "true",
-            "using"
+            "using",
+            "var"
         };
     }
 }

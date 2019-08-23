@@ -36,11 +36,17 @@ namespace Scoop.Transpiler
         public void AppendLineAndIndent(string s = "")
         {
             AppendLine(s);
-            WriteIndent();
+            AppendIndent();
         }
 
         public void DecreaseIndent() => _indent--;
         public void IncreaseIndent() => _indent++;
+        public void AppendIndent()
+        {
+            if (_indent <= 0)
+                return;
+            _tw.Write(new string(' ', _indent * 4));
+        }
 
         public override AstNode VisitChar(CharNode n)
         {
@@ -366,11 +372,11 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public void WriteIndent()
+        public override AstNode VisitVariableDeclare(VariableDeclareNode n)
         {
-            if (_indent <= 0)
-                return;
-            _tw.Write(new string(' ', _indent * 4));
-        }
+            Append("var ");
+            Visit(n.Name);
+            return n;
+        }   
     }
 }

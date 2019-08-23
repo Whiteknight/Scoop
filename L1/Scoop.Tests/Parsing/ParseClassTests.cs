@@ -178,5 +178,109 @@ public class MyClass
                 }
             );
         }
+
+        [Test]
+        public void ParseClass_MethodDeclareThenAssignReturn()
+        {
+            var target = new Parser();
+            var result = target.ParseClass(@"
+public class MyClass 
+{
+    public int MyMethod() 
+    { 
+        var value;
+        value = 4;
+        return value;
+    }
+}");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Name = new IdentifierNode("MyClass"),
+                    Members = new List<AstNode>
+                    {
+                        new MethodNode
+                        {
+                            Name = new IdentifierNode("MyMethod"),
+                            AccessModifier = new KeywordNode("public"),
+                            ReturnType = new IdentifierNode("int"),
+                            Parameters = new List<AstNode>(),
+                            Statements = new List<AstNode>
+                            {
+                                new VariableDeclareNode {
+                                    Name = new IdentifierNode("value")
+                                },
+                                new InfixOperationNode {
+                                    Left = new IdentifierNode("value"),
+                                    Operator = new OperatorNode("="),
+                                    Right = new IntegerNode(4)
+                                },
+                                new ReturnNode
+                                {
+                                    Expression = new InfixOperationNode
+                                    {
+                                        Left = new IntegerNode(5),
+                                        Operator = new OperatorNode("+"),
+                                        Right = new IntegerNode(6)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void ParseClass_MethodDeclareAssignReturn()
+        {
+            var target = new Parser();
+            var result = target.ParseClass(@"
+public class MyClass 
+{
+    public int MyMethod() 
+    { 
+        var value = 4;
+        return value;
+    }
+}");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Name = new IdentifierNode("MyClass"),
+                    Members = new List<AstNode>
+                    {
+                        new MethodNode
+                        {
+                            Name = new IdentifierNode("MyMethod"),
+                            AccessModifier = new KeywordNode("public"),
+                            ReturnType = new IdentifierNode("int"),
+                            Parameters = new List<AstNode>(),
+                            Statements = new List<AstNode>
+                            {
+                                new InfixOperationNode {
+                                    Left = new VariableDeclareNode {
+                                        Name = new IdentifierNode("value")
+                                    },
+                                    Operator = new OperatorNode("="),
+                                    Right = new IntegerNode(4)
+                                },
+                                new ReturnNode
+                                {
+                                    Expression = new InfixOperationNode
+                                    {
+                                        Left = new IntegerNode(5),
+                                        Operator = new OperatorNode("+"),
+                                        Right = new IntegerNode(6)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
     }
 }

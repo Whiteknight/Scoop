@@ -17,10 +17,14 @@ namespace Scoop
         private AstNode ParseStatement0(Tokenizer t)
         {
             var lookahead = t.Peek();
+            if (lookahead.Is(TokenType.Operator, "}"))
+                return null;
             if (lookahead.IsKeyword("return"))
                 return ParseReturn(t);
+            if (lookahead.IsKeyword("var"))
+                return ParseDeclaration(t);
 
-            return null;
+            return ParseExpression(t);
         }
 
         private ReturnNode ParseReturn(Tokenizer t)
@@ -30,6 +34,31 @@ namespace Scoop
             {
                 Location = returnToken.Location,
                 Expression = ParseExpression(t)
+            };
+        }
+
+        private AstNode ParseDeclaration(Tokenizer t)
+        {
+            var varToken = t.Expect(TokenType.Keyword, "var");
+            var nameToken = t.Expect(TokenType.Identifier);
+            var declareNode = new VariableDeclareNode
+            {
+                Location = varToken.Location,
+                Name = new IdentifierNode(nameToken)
+            };
+
+            var lookahead = t.Peek();
+            if (!lookahead.Is(TokenType.Operator, "="))
+                return declareNode;
+
+            var assignmentToken = t.GetNext();
+            var expr = ParseExpression(t);
+            return new InfixOperationNode
+            {
+                Location = declareNode.Location,
+                Left = declareNode,
+                Operator = new OperatorNode(assignmentToken),
+                Right = expr
             };
         }
     }

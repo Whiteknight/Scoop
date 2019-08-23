@@ -124,5 +124,11 @@
             Visit(n.Namespace);
             return n;
         }
+
+        public virtual AstNode VisitVariableDeclare(VariableDeclareNode n)
+        {
+            Visit(n.Name);
+            return n;
+        }
     }
 }
