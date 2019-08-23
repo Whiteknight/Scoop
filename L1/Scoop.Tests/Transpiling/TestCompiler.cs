@@ -53,7 +53,8 @@ namespace Scoop.Tests.Transpiling
                 {
                     MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
                     MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(System.Diagnostics.Debug).Assembly.Location)
+                    MetadataReference.CreateFromFile(typeof(System.Diagnostics.Debug).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(List<>).Assembly.Location)
                 },
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
             );

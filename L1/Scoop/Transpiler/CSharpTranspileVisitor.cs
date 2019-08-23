@@ -49,6 +49,22 @@ namespace Scoop.Transpiler
             _tw.Write(new string(' ', _indent * 4));
         }
 
+        public override AstNode VisitArrayType(ArrayTypeNode n)
+        {
+            Visit(n.ElementType);
+            Append("[]");
+            return n;
+        }
+
+        public override AstNode VisitCast(CastNode n)
+        {
+            Append("(");
+            Visit(n.Type);
+            Append(")");
+            Visit(n.Right);
+            return n;
+        }
+
         public override AstNode VisitChar(CharNode n)
         {
             Append("'");
@@ -58,6 +74,14 @@ namespace Scoop.Transpiler
             else
                 Append(n.Value.ToString());
             Append("'");
+            return n;
+        }
+
+        public override AstNode VisitChildType(ChildTypeNode n)
+        {
+            Visit(n.Parent);
+            Append(".");
+            Visit(n.Child);
             return n;
         }
 
@@ -331,6 +355,25 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public override AstNode VisitNew(NewNode n)
+        {
+            Append("new ");
+            Visit(n.Type);
+            Append("(");
+            if (n.Arguments != null && n.Arguments.Any())
+            {
+                Visit(n.Arguments[0]);
+                for (int i = 1; i < n.Arguments.Count; i++)
+                {
+                    Append(", ");
+                    Visit(n.Arguments[i]);
+                }
+            }
+            Append(")");
+            return n;
+        }
+
+
         public override AstNode VisitOperator(OperatorNode n)
         {
             Append(n.Operator);
@@ -375,6 +418,24 @@ namespace Scoop.Transpiler
             Append("\"");
             Append(n.Value);
             Append("\"");
+            return n;
+        }
+
+        public override AstNode VisitType(TypeNode n)
+        {
+            Visit(n.Name);
+            if (n.GenericArguments != null && n.GenericArguments.Any())
+            {
+                Append("<");
+                Visit(n.GenericArguments[0]);
+                for (int i = 1; i < n.GenericArguments.Count; i++)
+                {
+                    Append(", ");
+                    Visit(n.GenericArguments[i]);
+                }
+                Append(">");
+            }
+
             return n;
         }
 

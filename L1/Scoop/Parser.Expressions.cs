@@ -104,6 +104,8 @@ namespace Scoop
             return left;
         }
 
+        // TODO: "is" and "as" go here, probably
+
         private AstNode ParseExpressionAdditive(Tokenizer t)
         {
             // Operators with + - precidence
@@ -150,6 +152,7 @@ namespace Scoop
         {
             // ("-" | "+" | "~") <Expression0> | <Expression0>
             var next = t.Peek();
+            // TODO: Loop to get all possible prefixes
             // TODO: <cast> <expr>
             if (next.IsOperator("-", "+", "++", "--", "!", "~"))
             {
@@ -246,6 +249,21 @@ namespace Scoop
                 return new FloatNode(t.GetNext());
             if (lookahead.IsType(TokenType.Double))
                 return new DoubleNode(t.GetNext());
+
+            if (lookahead.IsKeyword("new"))
+            {
+                var newToken = t.GetNext();
+                var typeNode = ParseType(t);
+                t.Expect(TokenType.Operator, "(");
+                // TODO: Argument list
+                t.Expect(TokenType.Operator, ")");
+                return new NewNode
+                {
+                    Location = newToken.Location,
+                    Type = typeNode,
+                    Arguments = new List<AstNode>()
+                };
+            }
 
             if (lookahead.IsOperator("("))
             {

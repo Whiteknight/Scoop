@@ -40,23 +40,16 @@ namespace Scoop
 
                 if (lookahead.IsKeyword("public", "private"))
                 {
-                    // l2 is either a return type or a class name for a constructor
-                    var l2 = t.Expect(TokenType.Identifier);
-                    var l3 = t.Peek();
-                    if (l3.Is(TokenType.Operator, "("))
+                    var lookahead2 = t.Peek();
+                    if (lookahead2.IsKeyword("class"))
                     {
-                        // It's a constructor
-                        t.PutBack(l2);
-                        t.PutBack(lookahead);
-                        var ctor = ParseConstructor(t);
-                        members.Add(ctor);
-                        continue;
+                        // TODO: Parse nested child class
+                        throw ParsingException.CouldNotParseRule(nameof(ParseClassBody), lookahead2);
                     }
-                    // It's a method
-                    t.PutBack(l2);
+
                     t.PutBack(lookahead);
-                    var method = ParseMethod(t);
-                    members.Add(method);
+                    var member = ParseConstructorOrMethod(t);
+                    members.Add(member);
                     continue;
                 }
 
@@ -66,45 +59,44 @@ namespace Scoop
             return members;
         }
 
-        private ConstructorNode ParseConstructor(Tokenizer t)
+        public AstNode ParseConstructorOrMethod(string s) => ParseConstructorOrMethod(new Tokenizer(new StringCharacterSequence(s)));
+
+        private AstNode ParseConstructorOrMethod(Tokenizer t)
         {
             var accessModifier = t.Expect(TokenType.Keyword, "public", "private");
-            var className = t.Expect(TokenType.Identifier);
-            var ctorNode = new ConstructorNode
+            var returnType = ParseType(t);
+            AstNode node = null;
+            if (t.NextIs(TokenType.Operator, "("))
             {
-                Location = accessModifier.Location,
-                AccessModifier = new KeywordNode(accessModifier),
-                ClassName = new IdentifierNode(className)
-            };
-            t.Expect(TokenType.Operator, "(");
-            ctorNode.Parameters = new List<AstNode>();
-            t.Expect(TokenType.Operator, ")");
-            t.Expect(TokenType.Operator, "{");
-            ctorNode.Statements = new List<AstNode>();
-            t.Expect(TokenType.Operator, "}");
-            return ctorNode;
-        }
-
-        // Helper method to start parsing at the method level, mostly to simplify unit tests
-        public MethodNode ParseMethod(string s) => ParseMethod(new Tokenizer(new StringCharacterSequence(s)));
-
-        private MethodNode ParseMethod(Tokenizer t)
-        {
-            var accessModifier = t.Expect(TokenType.Keyword, "public", "private");
-            var returnType = t.Expect(TokenType.Identifier);
-            var name = t.Expect(TokenType.Identifier);
-            var methodNode = new MethodNode
+                // It's a constructor
+                var ctor = new ConstructorNode
+                {
+                    Location = accessModifier.Location,
+                    AccessModifier = new KeywordNode(accessModifier),
+                    Parameters = ParseParameterList(t),
+                    Statements = ParseMethodBody(t)
+                    // TODO: Class Name?
+                };
+                if (!(returnType is TypeNode returnTypeNode) || !returnTypeNode.GenericArguments.IsNullOrEmpty())
+                    throw new ParsingException($"Invalid name for constructor at {returnType.Location}");
+                ctor.ClassName = returnTypeNode.Name;
+                node = ctor;
+            }
+            else
             {
-                Location = accessModifier.Location,
-                AccessModifier = new KeywordNode(accessModifier),
-                ReturnType = new IdentifierNode(returnType),
-                Name = new IdentifierNode(name)
-            };
-            var parameterList = ParseParameterList(t);
-            methodNode.Parameters = parameterList;
-            methodNode.Statements = ParseMethodBody(t);
-            
-            return methodNode;
+                var name = t.Expect(TokenType.Identifier);
+                node = new MethodNode
+                {
+                    Location = accessModifier.Location,
+                    AccessModifier = new KeywordNode(accessModifier),
+                    ReturnType = returnType,
+                    Name = new IdentifierNode(name),
+                    Parameters = ParseParameterList(t),
+                    Statements = ParseMethodBody(t)
+                };
+            }
+
+            return node;
         }
 
         private static List<AstNode> ParseParameterList(Tokenizer t)

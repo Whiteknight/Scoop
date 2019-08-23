@@ -54,7 +54,11 @@ public class MyClass
                         {
                             Name = new IdentifierNode("MyMethod"),
                             AccessModifier = new KeywordNode("public"),
-                            ReturnType = new IdentifierNode("void"),
+                            ReturnType = new TypeNode
+                            {
+                                Name = new IdentifierNode("void"),
+                                GenericArguments = new List<AstNode>()
+                            },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>()
                         }
@@ -86,7 +90,11 @@ public class MyClass
                         {
                             Name = new IdentifierNode("MyMethod"),
                             AccessModifier = new KeywordNode("public"),
-                            ReturnType = new IdentifierNode("int"),
+                            ReturnType = new TypeNode
+                            {
+                                Name = new IdentifierNode("int"),
+                                GenericArguments = new List<AstNode>()
+                            },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
                             {
@@ -121,7 +129,11 @@ public class MyClass
                         {
                             Name = new IdentifierNode("MyMethod"),
                             AccessModifier = new KeywordNode("public"),
-                            ReturnType = new IdentifierNode("int"),
+                            ReturnType = new TypeNode
+                            {
+                                Name = new IdentifierNode("int"),
+                                GenericArguments = new List<AstNode>()
+                            },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
                             {
@@ -159,7 +171,11 @@ public class MyClass
                         {
                             Name = new IdentifierNode("MyMethod"),
                             AccessModifier = new KeywordNode("public"),
-                            ReturnType = new IdentifierNode("int"),
+                            ReturnType = new TypeNode
+                            {
+                                Name = new IdentifierNode("int"),
+                                GenericArguments = new List<AstNode>()
+                            },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
                             {
@@ -204,7 +220,11 @@ public class MyClass
                         {
                             Name = new IdentifierNode("MyMethod"),
                             AccessModifier = new KeywordNode("public"),
-                            ReturnType = new IdentifierNode("int"),
+                            ReturnType = new TypeNode
+                            {
+                                Name = new IdentifierNode("int"),
+                                GenericArguments = new List<AstNode>()
+                            },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
                             {
@@ -251,7 +271,11 @@ public class MyClass
                         {
                             Name = new IdentifierNode("MyMethod"),
                             AccessModifier = new KeywordNode("public"),
-                            ReturnType = new IdentifierNode("int"),
+                            ReturnType = new TypeNode
+                            {
+                                Name = new IdentifierNode("int"),
+                                GenericArguments = new List<AstNode>()
+                            },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
                             {
@@ -296,7 +320,11 @@ public class MyClass
                         {
                             Name = new IdentifierNode("MyMethod"),
                             AccessModifier = new KeywordNode("public"),
-                            ReturnType = new IdentifierNode("int"),
+                            ReturnType = new TypeNode
+                            {
+                                Name = new IdentifierNode("int"),
+                                GenericArguments = new List<AstNode>()
+                            },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
                             {
@@ -338,7 +366,11 @@ public class MyClass
                         {
                             Name = new IdentifierNode("MyMethod"),
                             AccessModifier = new KeywordNode("public"),
-                            ReturnType = new IdentifierNode("string"),
+                            ReturnType = new TypeNode
+                            {
+                                Name = new IdentifierNode("string"),
+                                GenericArguments = new List<AstNode>()
+                            },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
                             {

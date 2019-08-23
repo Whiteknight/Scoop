@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
@@ -89,6 +90,31 @@ public class MyClass
             var method = type.GetMethod("MyMethod");
             var result = (string)method.Invoke(myObj, new object[0]);
             result.Should().Be("54");
+        }
+
+        [Test]
+        public void Compile_MethodReturnListOfInt()
+        {
+            var ast = new Parser().ParseUnit(@"
+using System.Collections.Generic;
+
+namespace XYZ 
+{
+    public class MyClass 
+    {
+        public List<int> MyMethod()
+        {
+            return new List<int>();
+        }
+    }
+}");
+            var assembly = TestCompiler.Compile(ast);
+            var type = assembly.ExportedTypes.First();
+            var myObj = Activator.CreateInstance(type);
+            var method = type.GetMethod("MyMethod");
+            var result = (List<int>)method.Invoke(myObj, new object[0]);
+            result.Should().NotBeNull();
+            result.Count.Should().Be(0);
         }
     }
 }

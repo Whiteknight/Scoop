@@ -4,6 +4,19 @@
     {
         public AstNode Visit(AstNode node) => node?.Accept(this);
 
+        public virtual AstNode VisitArrayType(ArrayTypeNode n)
+        {
+            Visit(n.ElementType);
+            return n;
+        }
+
+        public virtual AstNode VisitCast(CastNode n)
+        {
+            Visit(n.Type);
+            Visit(n.Right);
+            return n;
+        }
+
         public virtual AstNode VisitCompilationUnit(CompilationUnitNode n)
         {
             foreach (var ud in n.UsingDirectives.OrEmptyIfNull())
@@ -14,6 +27,13 @@
         }
 
         public virtual AstNode VisitChar(CharNode n) => n;
+
+        public virtual AstNode VisitChildType(ChildTypeNode n)
+        {
+            Visit(n.Parent);
+            Visit(n.Child);
+            return n;
+        }
 
         public virtual AstNode VisitClass(ClassNode n)
         {
@@ -105,6 +125,14 @@
             return n;
         }
 
+        public virtual AstNode VisitNew(NewNode n)
+        {
+            Visit(n.Type);
+            foreach (var a in n.Arguments.OrEmptyIfNull())
+                Visit(a);
+            return n;
+        }
+
         public virtual AstNode VisitOperator(OperatorNode n) => n;
 
         public virtual AstNode VisitParenthesis<TNode>(ParenthesisNode<TNode> n)
@@ -137,6 +165,14 @@
         }
 
         public virtual AstNode VisitString(StringNode n) => n;
+
+        public virtual AstNode VisitType(TypeNode n)
+        {
+            Visit(n.Name);
+            foreach (var a in n.GenericArguments.OrEmptyIfNull())
+                Visit(a);
+            return n;
+        }
 
         public virtual AstNode VisitUInteger(UIntegerNode n) => n;
 
