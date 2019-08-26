@@ -17,7 +17,7 @@ namespace Scoop
         private AstNode ParseExpressionAssignment(Tokenizer t)
         {
             // Operators with Assignment precidence
-            // <Expression2> (<op> <Expression2>)+
+            // <Conditional> (<op> <Conditional>)+
             var left = ParseExpressionConditional(t);
             while (t.Peek().IsOperator("=", "+=", "-=", "/=", "%="))
             {
@@ -44,7 +44,7 @@ namespace Scoop
         private AstNode ParseExpressionLogical(Tokenizer t)
         {
             // Operators with + - precidence
-            // <Expression2> (<op> <Expression2>)+
+            // <Bitwise> (<op> <Bitwise>)+
             var left = ParseExpressionBitwise(t);
             while (t.Peek().IsOperator("&&", "||"))
             {
@@ -65,7 +65,7 @@ namespace Scoop
         private AstNode ParseExpressionBitwise(Tokenizer t)
         {
             // Operators with + - precidence
-            // <Expression2> (<op> <Expression2>)+
+            // <Equality> (<op> <Equality>)+
             var left = ParseExpressionEquality(t);
             while (t.Peek().IsOperator("&", "^", "|"))
             {
@@ -86,7 +86,7 @@ namespace Scoop
         private AstNode ParseExpressionEquality(Tokenizer t)
         {
             // Operators with + - precidence
-            // <Expression2> (<op> <Expression2>)+
+            // <Additive> (<op> <Additive>)+
             var left = ParseExpressionAdditive(t);
             while (t.Peek().IsOperator("==", "!=", ">=", "<=", "<", ">"))
             {
@@ -109,7 +109,7 @@ namespace Scoop
         private AstNode ParseExpressionAdditive(Tokenizer t)
         {
             // Operators with + - precidence
-            // <Expression2> (<op> <Expression2>)+
+            // <Multiplicative> (<op> <Multiplicative>)+
             var left = ParseExpressionMultiplicative(t);
             while (t.Peek().IsOperator("+", "-"))
             {
@@ -130,7 +130,7 @@ namespace Scoop
         private AstNode ParseExpressionMultiplicative(Tokenizer t)
         {
             // Operators with * / % precidence
-            // <Expression1> (<op> <Expression1>)+
+            // <Unary> (<op> <Unary>)+
             var left = ParseExpressionUnary(t);
             while (t.Peek().IsOperator("*", "/", "%"))
             {
@@ -150,7 +150,7 @@ namespace Scoop
 
         private AstNode ParseExpressionUnary(Tokenizer t)
         {
-            // ("-" | "+" | "~") <Expression0> | <Expression0>
+            // ("-" | "+" | "~") <Postfix> | <Postfix>
             var next = t.Peek();
             // TODO: Loop to get all possible prefixes
             // TODO: <cast> <expr>
@@ -221,12 +221,14 @@ namespace Scoop
             }
         }
 
-        // Parse terminals
         private AstNode ParseExpressionTerminal(Tokenizer t)
         {
             // Terminal expression
-            // <Identifier> | <Variable> | <String> | <Number> | "(" <Expression> ")"
+            // "true" | "false" | "null" | <Identifier> | <String> | <Number> | "new" <type> "(" <args> ")" | "(" <Expression> ")"
             var lookahead = t.Peek();
+
+            if (lookahead.IsKeyword("true", "false", "null"))
+                return new KeywordNode(t.GetNext());
 
             if (lookahead.IsType(TokenType.Identifier))
                 return new IdentifierNode(t.GetNext());
@@ -267,8 +269,6 @@ namespace Scoop
 
             if (lookahead.IsOperator("("))
             {
-                // "(" (<QueryExpression> | <ScalarExpression>) ")"
-                // e.g. SET @x = (select 5) or INSERT INTO x(num) VALUES (1, 2, (select 3))
                 var value = ParseParenthesis(t, x => ParseExpression(t));
                 return value.Expression;
             }

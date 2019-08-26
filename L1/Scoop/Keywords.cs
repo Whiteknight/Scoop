@@ -20,6 +20,7 @@ namespace Scoop
             "interface",
             "namespace",
             "new",
+            "null",
             "private",
             "public",
             "return",

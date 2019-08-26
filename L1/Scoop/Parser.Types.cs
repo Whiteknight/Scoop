@@ -21,6 +21,7 @@ namespace Scoop
                 if (lookahead.IsOperator("["))
                 {
                     t.Advance();
+                    // TODO: Size
                     t.Expect(TokenType.Operator, "]");
                     type = new ArrayTypeNode
                     {
