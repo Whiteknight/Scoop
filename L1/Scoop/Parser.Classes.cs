@@ -38,6 +38,12 @@ namespace Scoop
                     break;
                 }
 
+                if (lookahead.IsType(TokenType.CSharpLiteral))
+                {
+                    members.Add(new CSharpNode(lookahead));
+                    continue;
+                }
+
                 if (lookahead.IsKeyword("public", "private"))
                 {
                     var lookahead2 = t.Peek();

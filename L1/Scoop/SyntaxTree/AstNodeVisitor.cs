@@ -14,6 +14,7 @@
         AstNode VisitChildType(ChildTypeNode n);
         AstNode VisitClass(ClassNode n);
         AstNode VisitConstructor(ConstructorNode n);
+        AstNode VisitCSharp(CSharpNode n);
         AstNode VisitDecimal(DecimalNode n);
         AstNode VisitDottedIdentifier(DottedIdentifierNode n);
         AstNode VisitDouble(DoubleNode n);

@@ -116,5 +116,41 @@ namespace XYZ
             result.Should().NotBeNull();
             result.Count.Should().Be(0);
         }
+
+        [Test]
+        public void Compile_CSharpCodeLiterals()
+        {
+            var ast = new Parser().ParseUnit(@"
+using System.Collections.Generic;
+
+namespace XYZ 
+{
+    public class MyClass 
+    {
+        // use code literal to define a protected method, which Scoop doesn't support
+        c# 
+        {
+            protected int CSharpMethod() => 4;
+        }
+
+        public int MyMethod()
+        {
+            var v = CSharpMethod();
+            // Use code literal to use an if statement
+            c# {
+                if (v == 4)
+                    v = 6;
+            };
+            return v;
+        }
+    }
+}");
+            var assembly = TestCompiler.Compile(ast);
+            var type = assembly.ExportedTypes.First();
+            var myObj = Activator.CreateInstance(type);
+            var method = type.GetMethod("MyMethod");
+            var result = (int)method.Invoke(myObj, new object[0]);
+            result.Should().Be(6);
+        }
     }
 }

@@ -136,6 +136,12 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public AstNode VisitCSharp(CSharpNode n)
+        {
+            AppendLineAndIndent(n.Code);
+            return n;
+        }
+
         public AstNode VisitDecimal(DecimalNode n)
         {
             Append(n.Value.ToString(CultureInfo.InvariantCulture));

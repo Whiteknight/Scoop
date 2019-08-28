@@ -10,17 +10,26 @@ namespace Scoop
 
         private AstNode ParseStatement(Tokenizer t)
         {
-            var stmt = ParseStatement0(t);
+            // Skip over any bare semicolons, which indicate an empty statement.
+            while (t.Peek().IsOperator(";"))
+                t.Advance();
+
+            var lookahead = t.Peek();
+            if (lookahead.IsType(TokenType.CSharpLiteral))
+                return new CSharpNode(t.GetNext());
+
+            var stmt = ParseStatementUnterminated(t);
             if (stmt == null)
                 return null;
             t.Expect(TokenType.Operator, ";");
             return stmt;
         }
 
-        private AstNode ParseStatement0(Tokenizer t)
+        private AstNode ParseStatementUnterminated(Tokenizer t)
         {
             var lookahead = t.Peek();
             if (lookahead.Is(TokenType.Operator, "}"))
+                // TODO: Would be nice to return an End-Block statement instead of null
                 return null;
             if (lookahead.IsKeyword("return"))
                 return ParseReturn(t);
