@@ -27,6 +27,28 @@ namespace Scoop.Tests.Parsing
         }
 
         [Test]
+        public void ParseStatement_NewMyClassArgs()
+        {
+            var target = new Parser();
+            var result = target.ParseStatement(@"new MyClass(1, ""test"");");
+            result.Should().MatchAst(
+                new NewNode
+                {
+                    Type = new TypeNode
+                    {
+                        Name = new IdentifierNode("MyClass"),
+                        GenericArguments = new List<AstNode>()
+                    },
+                    Arguments = new List<AstNode>
+                    {
+                        new IntegerNode(1),
+                        new StringNode("test")
+                    }
+                }
+            );
+        }
+
+        [Test]
         public void ParseStatement_NewMyClassChild()
         {
             var target = new Parser();
@@ -160,6 +182,28 @@ namespace Scoop.Tests.Parsing
                                 }
                             }
                         }
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void ParseStatement_InvokeMethodArgs()
+        {
+            var target = new Parser();
+            var result = target.ParseStatement(@"myObj.Method(1, 'b');");
+            result.Should().MatchAst(
+                new InvokeNode
+                {
+                    Instance = new MemberAccessNode
+                    {
+                        Instance = new IdentifierNode("myObj"),
+                        MemberName = new IdentifierNode("Method")
+                    },
+                    Arguments = new List<AstNode>
+                    {
+                        new IntegerNode(1),
+                        new CharNode('b')
                     }
                 }
             );

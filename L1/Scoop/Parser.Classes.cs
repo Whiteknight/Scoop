@@ -70,6 +70,7 @@ namespace Scoop
         private AstNode ParseConstructorOrMethod(Tokenizer t)
         {
             var accessModifier = t.Expect(TokenType.Keyword, "public", "private");
+            // TODO: "async"
             var returnType = ParseType(t);
             AstNode node = null;
             if (t.NextIs(TokenType.Operator, "("))
@@ -109,7 +110,7 @@ namespace Scoop
         {
             t.Expect(TokenType.Operator, "(");
             var parameterList = new List<AstNode>();
-
+            // TODO: This
             t.Expect(TokenType.Operator, ")");
             return parameterList;
         }

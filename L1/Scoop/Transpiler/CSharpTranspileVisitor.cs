@@ -333,6 +333,7 @@ namespace Scoop.Transpiler
                 }
             }
             Append(")");
+            // TODO: Initializers
             return n;
         }
 

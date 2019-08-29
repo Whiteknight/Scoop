@@ -5,6 +5,8 @@ using Scoop.Tokenization;
 
 namespace Scoop
 {
+    // TODO: Lambda expressions
+    // TODO: "await"
     public partial class Parser
     {
         private AstNode ParseExpression(Tokenizer t)
@@ -40,6 +42,8 @@ namespace Scoop
             // TODO: Conditional (ternary)
             return ParseExpressionLogical(t);
         }
+
+        // TODO: "??" Goes here
 
         private AstNode ParseExpressionLogical(Tokenizer t)
         {
@@ -189,10 +193,14 @@ namespace Scoop
                     continue;
                 }
 
+                // member access (property and method)
+                // <terminal> "." <identifier>
+                // TODO: <terminal> "?." <identifier>
                 if (lookahead.IsOperator("."))
                 {
                     t.Advance();
                     var identifier = t.Expect(TokenType.Identifier);
+                    // TODO: "<" <genericTypeArgs> ">"
                     current = new MemberAccessNode
                     {
                         Location = lookahead.Location,
@@ -202,17 +210,20 @@ namespace Scoop
                     continue;
                 }
 
+                // Invoke operator
+                // <terminal> "(" <args> ")"
                 if (lookahead.IsOperator("("))
                 {
-                    t.Advance();
+                    var args = ParseArgumentList(t);
+
                     // TODO: Args
                     current = new InvokeNode
                     {
-                        Arguments = new List<AstNode>(),
+                        Arguments = args,
                         Instance = current,
-                        Location = lookahead.Location
+                        Location = lookahead.Location,
                     };
-                    t.Expect(TokenType.Operator, ")");
+                    
                     continue;
                 }
 
@@ -221,10 +232,36 @@ namespace Scoop
             }
         }
 
+        private List<AstNode> ParseArgumentList(Tokenizer t)
+        {
+            t.Expect(TokenType.Operator, "(");
+            var args = new List<AstNode>();
+            while (true)
+            {
+                var lookahead = t.Peek();
+                if (lookahead.IsOperator(")"))
+                    break;
+                var arg = ParseExpression(t);
+                args.Add(arg);
+                if (t.Peek().IsOperator(","))
+                {
+                    t.Advance();
+                    continue;
+                }
+
+                break;
+            }
+
+            t.Expect(TokenType.Operator, ")");
+            return args;
+        }
+
         private AstNode ParseExpressionTerminal(Tokenizer t)
         {
             // Terminal expression
-            // "true" | "false" | "null" | <Identifier> | <String> | <Number> | "new" <type> "(" <args> ")" | "(" <Expression> ")"
+            // Some of these "terminal" values may themselves be productions, but
+            // are treated as a single value for the purposes of the expression parser
+            // "true" | "false" | "null" | <Identifier> | <String> | <Number> | <new> | "(" <Expression> ")"
             var lookahead = t.Peek();
 
             if (lookahead.IsKeyword("true", "false", "null"))
@@ -253,27 +290,25 @@ namespace Scoop
                 return new DoubleNode(t.GetNext());
 
             if (lookahead.IsKeyword("new"))
-            {
-                var newToken = t.GetNext();
-                var typeNode = ParseType(t);
-                t.Expect(TokenType.Operator, "(");
-                // TODO: Argument list
-                t.Expect(TokenType.Operator, ")");
-                return new NewNode
-                {
-                    Location = newToken.Location,
-                    Type = typeNode,
-                    Arguments = new List<AstNode>()
-                };
-            }
+                return ParseNew(t);
 
             if (lookahead.IsOperator("("))
-            {
-                var value = ParseParenthesis(t, x => ParseExpression(t));
-                return value.Expression;
-            }
+                return ParseParenthesis(t, x => ParseExpression(t)).Expression;
 
             throw ParsingException.CouldNotParseRule(nameof(ParseExpressionTerminal), lookahead);
+        }
+
+        private AstNode ParseNew(Tokenizer t)
+        {
+            var newToken = t.GetNext();
+            var typeNode = ParseType(t);
+            var args = ParseArgumentList(t);
+            return new NewNode
+            {
+                Location = newToken.Location,
+                Type = typeNode,
+                Arguments = args
+            };
         }
 
         private ParenthesisNode<TNode> ParseParenthesis<TNode>(Tokenizer t, Func<Tokenizer, TNode> parse)

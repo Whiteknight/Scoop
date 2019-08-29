@@ -118,6 +118,38 @@ namespace XYZ
         }
 
         [Test]
+        public void Compile_MethodReturnListOfInt_Add()
+        {
+            var ast = new Parser().ParseUnit(@"
+using System.Collections.Generic;
+
+namespace XYZ 
+{
+    public class MyClass 
+    {
+        public List<int> MyMethod()
+        {
+            var list = new List<int>();
+            list.Add(1);
+            list.Add(3);
+            list.Add(7);
+            return list;
+        }
+    }
+}");
+            var assembly = TestCompiler.Compile(ast);
+            var type = assembly.ExportedTypes.First();
+            var myObj = Activator.CreateInstance(type);
+            var method = type.GetMethod("MyMethod");
+            var result = (List<int>)method.Invoke(myObj, new object[0]);
+            result.Should().NotBeNull();
+            result.Count.Should().Be(3);
+            result[0].Should().Be(1);
+            result[1].Should().Be(3);
+            result[2].Should().Be(7);
+        }
+
+        [Test]
         public void Compile_CSharpCodeLiterals()
         {
             var ast = new Parser().ParseUnit(@"
