@@ -27,7 +27,7 @@ namespace Scoop.Tokenization
             // Arithmetic operators
             _operators.Add("+", "-", "/", "*", "&", "|", "^");
 
-            // Unary ~. Unary - and + are covered above
+            // Unary ~ and !. (Unary - and + are covered above)
             _operators.Add("~", "!");
 
             // prefix/postfix increment/decrement
@@ -38,6 +38,9 @@ namespace Scoop.Tokenization
 
             // Coalesce operator
             _operators.Add("??");
+
+            // Ternary/Conditional operators
+            _operators.Add("?", ":");
 
             // Assignment operators
             _operators.Add("=", "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=");

@@ -99,6 +99,16 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public AstNode VisitConditional(ConditionalNode n)
+        {
+            Visit(n.Condition);
+            Append(" ? ");
+            Visit(n.IfTrue);
+            Append(" : ");
+            Visit(n.IfFalse);
+            return n;
+        }
+
         public AstNode VisitConstructor(ConstructorNode n)
         {
             Visit(n.AccessModifier);

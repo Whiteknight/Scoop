@@ -40,8 +40,23 @@ namespace Scoop
 
         private AstNode ParseExpressionConditional(Tokenizer t)
         {
-            // TODO: Conditional (ternary)
-            return ParseExpressionCoalesce(t);
+            var left = ParseExpressionCoalesce(t);
+            while (t.Peek().IsOperator("?"))
+            {
+                var op = t.GetNext();
+                var ifTrue = ParseExpressionCoalesce(t);
+                t.Expect(TokenType.Operator, ":");
+                var ifFalse = ParseExpressionCoalesce(t);
+                left = new ConditionalNode
+                {
+                    Location = op.Location,
+                    Condition = left,
+                    IfTrue = ifTrue,
+                    IfFalse = ifFalse
+                };
+            }
+
+            return left;
         }
 
         private AstNode ParseExpressionCoalesce(Tokenizer t)

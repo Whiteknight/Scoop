@@ -21,5 +21,20 @@ namespace Scoop.Tests.Parsing
                 }
             );
         }
+
+        [Test]
+        public void ConditionalOperator_Test()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression(@"true ? 0 : 1");
+            result.Should().MatchAst(
+                new ConditionalNode
+                {
+                    Condition = new KeywordNode("true"),
+                    IfTrue = new IntegerNode(0),
+                    IfFalse = new IntegerNode(1)
+                }
+            );
+        }
     }
 }
