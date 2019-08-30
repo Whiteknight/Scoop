@@ -27,6 +27,8 @@
         AstNode VisitInterface(InterfaceNode n);
         AstNode VisitInvoke(InvokeNode n);
         AstNode VisitKeyword(KeywordNode n);
+        AstNode VisitLambda(LambdaNode n);
+        AstNode VisitList(ListNode n);
         AstNode VisitLong(LongNode n);
         AstNode VisitMemberAccess(MemberAccessNode n);
         AstNode VisitMethod(MethodNode n);

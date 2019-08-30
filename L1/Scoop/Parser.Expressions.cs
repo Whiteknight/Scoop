@@ -14,7 +14,81 @@ namespace Scoop
         {
             // Top-level general-purpose expression parsing method, redirects to the appropriate
             // precidence level
-            return ParseExpressionAssignment(t);
+            return ParseExpressionComma(t);
+        }
+
+        private AstNode ParseExpressionComma(Tokenizer t)
+        {
+            var left = ParseExpressionLambda(t);
+            if (t.Peek().IsOperator(","))
+            {
+                var items = new ListNode();
+                items.Add(left);
+                while(t.Peek().IsOperator(","))
+                {
+                    t.Advance();
+                    var next = ParseExpressionLambda(t);
+                    items.Add(next);
+                }
+
+                return items;
+            }
+
+            return left;
+        }
+
+        private AstNode ParseExpressionLambda(Tokenizer t)
+        {
+            // "() =>" case, which the expression parser won't deal with
+            var l1 = t.GetNext();
+            var l2 = t.GetNext();
+            var l3 = t.GetNext();
+            if (l1.IsOperator("(") && l2.IsOperator(")") && l3.IsOperator("=>"))
+            {
+                var lambdaToken = t.GetNext();
+                var lambdaNode = new LambdaNode
+                {
+                    Location = lambdaToken.Location,
+                    Parameter = new ListNode { Items = new List<AstNode>() }
+                };
+
+                if (t.Peek().IsOperator("{"))
+                    lambdaNode.Statements = ParseNormalMethodBody(t);
+                else
+                {
+                    var bodyExpr = ParseExpressionAssignment(t);
+                    lambdaNode.Statements = new List<AstNode> { bodyExpr };
+                }
+
+                return lambdaNode;
+            }
+            t.PutBack(l3);
+            t.PutBack(l2);
+            t.PutBack(l1);
+
+            // Otherwise parse the expression and see if it looks like the start of a lambda
+            var expr = ParseExpressionAssignment(t);
+            if ((expr is IdentifierNode || expr is ListNode) && t.Peek().IsOperator("=>"))
+            {
+                var lambdaToken = t.GetNext();
+                var lambdaNode = new LambdaNode
+                {
+                    Location = lambdaToken.Location,
+                    Parameter = expr
+                };
+
+                if (t.Peek().IsOperator("{"))
+                    lambdaNode.Statements = ParseNormalMethodBody(t);
+                else
+                {
+                    var bodyExpr = ParseExpressionAssignment(t);
+                    lambdaNode.Statements = new List<AstNode> { bodyExpr };
+                }
+
+                return lambdaNode;
+            }
+
+            return expr;
         }
 
         private AstNode ParseExpressionAssignment(Tokenizer t)
@@ -283,7 +357,7 @@ namespace Scoop
                 var lookahead = t.Peek();
                 if (lookahead.IsOperator(")"))
                     break;
-                var arg = ParseExpression(t);
+                var arg = ParseExpressionLambda(t);
                 args.Add(arg);
                 if (t.Peek().IsOperator(","))
                 {
@@ -307,7 +381,7 @@ namespace Scoop
                 var lookahead = t.Peek();
                 if (lookahead.IsOperator("]"))
                     break;
-                var arg = ParseExpression(t);
+                var arg = ParseExpressionLambda(t);
                 args.Add(arg);
                 if (t.Peek().IsOperator(","))
                 {

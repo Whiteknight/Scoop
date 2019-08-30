@@ -269,6 +269,51 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public AstNode VisitLambda(LambdaNode n)
+        {
+            Append("((");
+            Visit(n.Parameter);
+            Append(") => ");
+            if (n.Statements == null || !n.Statements.Any())
+                Append("{}");
+            else if (n.Statements.Count == 1)
+                Visit(n.Statements[0]);
+            else
+            {
+                Append("{");
+                IncreaseIndent();
+                
+                foreach (var statement in n.Statements)
+                {
+                    AppendLineAndIndent();
+                    Visit(statement);
+                    Append(";");
+                }
+
+                DecreaseIndent();
+                AppendLineAndIndent();
+                Append("}");
+            }
+            Append(")");
+
+            return n;
+        }
+
+        public AstNode VisitList(ListNode n)
+        {
+            if (n.Any())
+            {
+                Visit(n[0]);
+                for (int i = 1; i < n.Count; i++)
+                {
+                    Append(", ");
+                    Visit(n[i]);
+                }
+            }
+
+            return n;
+        }
+
         public AstNode VisitLong(LongNode n)
         {
             Append(n.Value.ToString(CultureInfo.InvariantCulture));
