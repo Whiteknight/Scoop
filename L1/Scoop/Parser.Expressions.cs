@@ -9,6 +9,7 @@ namespace Scoop
     // TODO: "await"
     public partial class Parser
     {
+        public AstNode ParseExpression(string s) => ParseExpression(new Tokenizer(s));
         private AstNode ParseExpression(Tokenizer t)
         {
             // Top-level general-purpose expression parsing method, redirects to the appropriate
@@ -40,10 +41,27 @@ namespace Scoop
         private AstNode ParseExpressionConditional(Tokenizer t)
         {
             // TODO: Conditional (ternary)
-            return ParseExpressionLogical(t);
+            return ParseExpressionCoalesce(t);
         }
 
-        // TODO: "??" Goes here
+        private AstNode ParseExpressionCoalesce(Tokenizer t)
+        {
+            var left = ParseExpressionLogical(t);
+            while (t.Peek().IsOperator("??"))
+            {
+                var op = new OperatorNode(t.GetNext());
+                var right = ParseExpressionLogical(t);
+                left = new InfixOperationNode
+                {
+                    Location = op.Location,
+                    Left = left,
+                    Operator = op,
+                    Right = right
+                };
+            }
+
+            return left;
+        }
 
         private AstNode ParseExpressionLogical(Tokenizer t)
         {
@@ -195,8 +213,8 @@ namespace Scoop
 
                 // member access (property and method)
                 // <terminal> "." <identifier>
-                // TODO: <terminal> "?." <identifier>
-                if (lookahead.IsOperator("."))
+                // <terminal> "?." <identifier>
+                if (lookahead.IsOperator(".", "?."))
                 {
                     t.Advance();
                     var identifier = t.Expect(TokenType.Identifier);
@@ -205,6 +223,7 @@ namespace Scoop
                     {
                         Location = lookahead.Location,
                         Instance = current,
+                        IgnoreNulls = lookahead.Value == "?.",
                         MemberName = new IdentifierNode(identifier)
                     };
                     continue;

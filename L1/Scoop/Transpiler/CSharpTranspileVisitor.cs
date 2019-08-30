@@ -254,7 +254,7 @@ namespace Scoop.Transpiler
         public AstNode VisitMemberAccess(MemberAccessNode n)
         {
             Visit(n.Instance);
-            Append(".");
+            Append(n.IgnoreNulls ? "?." : ".");
             Visit(n.MemberName);
             return n;
         }

@@ -19,7 +19,7 @@ namespace Scoop.Tokenization
             _operators = new SymbolSequence();
 
             // punctuation
-            _operators.Add(".", ",", ";");
+            _operators.Add(".", "?.", ",", ";");
 
             // Parens
             _operators.Add("(", ")", "{", "}", "[", "]");
@@ -35,6 +35,9 @@ namespace Scoop.Tokenization
 
             // Lambda operators
             _operators.Add("=>");
+
+            // Coalesce operator
+            _operators.Add("??");
 
             // Assignment operators
             _operators.Add("=", "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=");
@@ -74,6 +77,7 @@ namespace Scoop.Tokenization
                 _chars.PutBack(c);
                 // Fall through, we might use that 'c' for an identifier somewhere
             }
+            // TODO: "as" and "is" are operators
 
             // TODO: global:: which should be treated as a single keyword for our purposes and not
             // a keyword followed by an operator

@@ -6,10 +6,10 @@ using Scoop.Tests.Utility;
 namespace Scoop.Tests.Parsing
 {
     [TestFixture]
-    public class ParseStatementTests
+    public class ParseNewExpressionTests
     {
         [Test]
-        public void ParseStatement_NewMyClass()
+        public void New_MyClass()
         {
             var target = new Parser();
             var result = target.ParseStatement(@"new MyClass();");
@@ -27,7 +27,7 @@ namespace Scoop.Tests.Parsing
         }
 
         [Test]
-        public void ParseStatement_NewMyClassArgs()
+        public void New_MyClassArgs()
         {
             var target = new Parser();
             var result = target.ParseStatement(@"new MyClass(1, ""test"");");
@@ -49,7 +49,7 @@ namespace Scoop.Tests.Parsing
         }
 
         [Test]
-        public void ParseStatement_NewMyClassChild()
+        public void New_MyClassChild()
         {
             var target = new Parser();
             var result = target.ParseStatement(@"new MyClass.Child();");
@@ -75,7 +75,7 @@ namespace Scoop.Tests.Parsing
         }
 
         [Test]
-        public void ParseStatement_NewListOfMyClass()
+        public void New_ListOfMyClass()
         {
             var target = new Parser();
             var result = target.ParseStatement(@"new List<MyClass>();");
@@ -100,7 +100,7 @@ namespace Scoop.Tests.Parsing
         }
 
         [Test]
-        public void ParseStatement_NewListOfMyClassChild()
+        public void New_ListOfMyClassChild()
         {
             var target = new Parser();
             var result = target.ParseStatement(@"new List<MyClass.Child>();");
@@ -133,7 +133,7 @@ namespace Scoop.Tests.Parsing
         }
 
         [Test]
-        public void ParseStatement_NewComplexType()
+        public void New_ComplexType()
         {
             var target = new Parser();
             var result = target.ParseStatement(@"new A<B>.C<D.E<F>>();");
@@ -182,28 +182,6 @@ namespace Scoop.Tests.Parsing
                                 }
                             }
                         }
-                    }
-                }
-            );
-        }
-
-        [Test]
-        public void ParseStatement_InvokeMethodArgs()
-        {
-            var target = new Parser();
-            var result = target.ParseStatement(@"myObj.Method(1, 'b');");
-            result.Should().MatchAst(
-                new InvokeNode
-                {
-                    Instance = new MemberAccessNode
-                    {
-                        Instance = new IdentifierNode("myObj"),
-                        MemberName = new IdentifierNode("Method")
-                    },
-                    Arguments = new List<AstNode>
-                    {
-                        new IntegerNode(1),
-                        new CharNode('b')
                     }
                 }
             );
