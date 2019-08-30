@@ -21,6 +21,7 @@
         AstNode VisitDouble(DoubleNode n);
         AstNode VisitFloat(FloatNode n);
         AstNode VisitIdentifier(IdentifierNode n);
+        AstNode VisitIndex(IndexNode n);
         AstNode VisitInfixOperation(InfixOperationNode n);
         AstNode VisitInteger(IntegerNode n);
         AstNode VisitInterface(InterfaceNode n);

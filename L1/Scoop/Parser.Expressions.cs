@@ -249,8 +249,6 @@ namespace Scoop
                 if (lookahead.IsOperator("("))
                 {
                     var args = ParseArgumentList(t);
-
-                    // TODO: Args
                     current = new InvokeNode
                     {
                         Arguments = args,
@@ -261,7 +259,17 @@ namespace Scoop
                     continue;
                 }
 
-                // TODO: <terminal> "[" <args> "]"
+                if (lookahead.IsOperator("["))
+                {
+                    var args = ParseIndexArgumentList(t);
+                    current = new IndexNode
+                    {
+                        Location = lookahead.Location,
+                        Arguments = args,
+                        Instance = current
+                    };
+                }
+
                 return current;
             }
         }
@@ -287,6 +295,30 @@ namespace Scoop
             }
 
             t.Expect(TokenType.Operator, ")");
+            return args;
+        }
+
+        private List<AstNode> ParseIndexArgumentList(Tokenizer t)
+        {
+            t.Expect(TokenType.Operator, "[");
+            var args = new List<AstNode>();
+            while (true)
+            {
+                var lookahead = t.Peek();
+                if (lookahead.IsOperator("]"))
+                    break;
+                var arg = ParseExpression(t);
+                args.Add(arg);
+                if (t.Peek().IsOperator(","))
+                {
+                    t.Advance();
+                    continue;
+                }
+
+                break;
+            }
+
+            t.Expect(TokenType.Operator, "]");
             return args;
         }
 

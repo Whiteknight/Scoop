@@ -182,6 +182,20 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public AstNode VisitIndex(IndexNode n)
+        {
+            Visit(n.Instance);
+            Append("[");
+            Visit(n.Arguments[0]);
+            for (int i = 1; i < n.Arguments.Count; i++)
+            {
+                Append(", ");
+                Visit(n.Arguments[i]);
+            }
+            Append("]");
+            return n;
+        }
+
         public AstNode VisitInfixOperation(InfixOperationNode n)
         {
             Visit(n.Left);

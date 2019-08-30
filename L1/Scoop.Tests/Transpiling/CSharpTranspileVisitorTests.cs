@@ -150,6 +150,34 @@ namespace XYZ
         }
 
         [Test]
+        public void Compile_MethodAddToListIndex()
+        {
+            var ast = new Parser().ParseUnit(@"
+using System.Collections.Generic;
+
+namespace XYZ 
+{
+    public class MyClass 
+    {
+        public int MyMethod()
+        {
+            var list = new List<int>();
+            list.Add(1);
+            list.Add(3);
+            list.Add(7);
+            return list[1];
+        }
+    }
+}");
+            var assembly = TestCompiler.Compile(ast);
+            var type = assembly.ExportedTypes.First();
+            var myObj = Activator.CreateInstance(type);
+            var method = type.GetMethod("MyMethod");
+            var result = (int)method.Invoke(myObj, new object[0]);
+            result.Should().Be(3);
+        }
+
+        [Test]
         public void Compile_MethodReturnNullInvokeCoalesce()
         {
             var ast = new Parser().ParseUnit(@"
