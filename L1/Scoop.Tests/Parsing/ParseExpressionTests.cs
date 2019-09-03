@@ -126,5 +126,35 @@ namespace Scoop.Tests.Parsing
                 }
             );
         }
+
+        [Test]
+        public void AsOperator_Test()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression(@"a as b");
+            result.Should().MatchAst(
+                new InfixOperationNode
+                {
+                    Left = new IdentifierNode("a"),
+                    Operator = new OperatorNode("as"),
+                    Right = new TypeNode("b")
+                }
+            );
+        }
+
+        [Test]
+        public void IsOperator_Test()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression(@"a is b");
+            result.Should().MatchAst(
+                new InfixOperationNode
+                {
+                    Left = new IdentifierNode("a"),
+                    Operator = new OperatorNode("is"),
+                    Right = new TypeNode("b")
+                }
+            );
+        }
     }
 }

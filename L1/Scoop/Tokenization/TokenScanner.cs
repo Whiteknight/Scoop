@@ -80,7 +80,6 @@ namespace Scoop.Tokenization
                 _chars.PutBack(c);
                 // Fall through, we might use that 'c' for an identifier somewhere
             }
-            // TODO: "as" and "is" are operators
 
             // TODO: global:: which should be treated as a single keyword for our purposes and not
             // a keyword followed by an operator
@@ -368,6 +367,8 @@ namespace Scoop.Tokenization
             }
 
             var x = new string(chars.ToArray());
+            if (x == "is" || x == "as")
+                return Token.Operator(x, l);
             return Token.Word(x, l);
         }
 

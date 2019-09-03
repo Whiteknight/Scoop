@@ -197,11 +197,11 @@ namespace Scoop
         {
             // Operators with + - precidence
             // <Additive> (<op> <Additive>)+
-            var left = ParseExpressionAdditive(t);
+            var left = ParseExpressionTypeCoerce(t);
             while (t.Peek().IsOperator("==", "!=", ">=", "<=", "<", ">"))
             {
                 var op = new OperatorNode(t.GetNext());
-                var right = ParseExpressionAdditive(t);
+                var right = ParseExpressionTypeCoerce(t);
                 left = new InfixOperationNode
                 {
                     Location = op.Location,
@@ -214,7 +214,25 @@ namespace Scoop
             return left;
         }
 
-        // TODO: "is" and "as" go here, probably
+        private AstNode ParseExpressionTypeCoerce(Tokenizer t)
+        {
+            var left = ParseExpressionAdditive(t);
+            var lookahead = t.Peek();
+            if (lookahead.IsOperator("is", "as"))
+            {
+                var op = t.GetNext();
+                var type = ParseType(t);
+                return new InfixOperationNode
+                {
+                    Location = op.Location,
+                    Left = left,
+                    Operator = new OperatorNode(op),
+                    Right = type
+                };
+            }
+
+            return left;
+        }
 
         private AstNode ParseExpressionAdditive(Tokenizer t)
         {
