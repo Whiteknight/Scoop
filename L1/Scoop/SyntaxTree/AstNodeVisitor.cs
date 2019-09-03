@@ -36,6 +36,7 @@
         AstNode VisitNamespace(NamespaceNode n);
         AstNode VisitNew(NewNode n);
         AstNode VisitOperator(OperatorNode n);
+        AstNode VisitParameter(ParameterNode n);
 
         AstNode VisitParenthesis<TNode>(ParenthesisNode<TNode> n)
             where TNode : AstNode;

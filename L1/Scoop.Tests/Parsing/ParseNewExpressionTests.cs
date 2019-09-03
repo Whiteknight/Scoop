@@ -18,8 +18,7 @@ namespace Scoop.Tests.Parsing
                 {
                     Type = new TypeNode
                     {
-                        Name = new IdentifierNode("MyClass"),
-                        GenericArguments = new List<AstNode>()
+                        Name = new IdentifierNode("MyClass")
                     },
                     Arguments = new List<AstNode>()
                 }
@@ -36,8 +35,7 @@ namespace Scoop.Tests.Parsing
                 {
                     Type = new TypeNode
                     {
-                        Name = new IdentifierNode("MyClass"),
-                        GenericArguments = new List<AstNode>()
+                        Name = new IdentifierNode("MyClass")
                     },
                     Arguments = new List<AstNode>
                     {
@@ -60,13 +58,11 @@ namespace Scoop.Tests.Parsing
                     {
                         Parent = new TypeNode
                         {
-                            Name = new IdentifierNode("MyClass"),
-                            GenericArguments = new List<AstNode>()
+                            Name = new IdentifierNode("MyClass")
                         },
                         Child = new TypeNode
                         {
-                            Name = new IdentifierNode("Child"),
-                            GenericArguments = new List<AstNode>()
+                            Name = new IdentifierNode("Child")
                         }
                     },
                     Arguments = new List<AstNode>()
@@ -89,8 +85,7 @@ namespace Scoop.Tests.Parsing
                         {
                             new TypeNode
                             {
-                                Name = new IdentifierNode("MyClass"),
-                                GenericArguments = new List<AstNode>()
+                                Name = new IdentifierNode("MyClass")
                             }
                         }
                     },
@@ -116,13 +111,11 @@ namespace Scoop.Tests.Parsing
                             {
                                 Parent = new TypeNode
                                 {
-                                    Name = new IdentifierNode("MyClass"),
-                                    GenericArguments = new List<AstNode>()
+                                    Name = new IdentifierNode("MyClass")
                                 },
                                 Child = new TypeNode
                                 {
-                                    Name = new IdentifierNode("Child"),
-                                    GenericArguments = new List<AstNode>()
+                                    Name = new IdentifierNode("Child")
                                 }
                             }
                         }
@@ -150,8 +143,7 @@ namespace Scoop.Tests.Parsing
                             {
                                 new TypeNode
                                 {
-                                    Name = new IdentifierNode("B"),
-                                    GenericArguments = new List<AstNode>()
+                                    Name = new IdentifierNode("B")
                                 }
                             }
                         },
@@ -164,8 +156,7 @@ namespace Scoop.Tests.Parsing
                                 {
                                     Parent = new TypeNode
                                     {
-                                        Name = new IdentifierNode("D"),
-                                        GenericArguments = new List<AstNode>(),
+                                        Name = new IdentifierNode("D")
                                     },
                                     Child = new TypeNode
                                     {
@@ -174,8 +165,7 @@ namespace Scoop.Tests.Parsing
                                         {
                                             new TypeNode
                                             {
-                                                Name = new IdentifierNode("F"),
-                                                GenericArguments = new List<AstNode>()
+                                                Name = new IdentifierNode("F")
                                             }
                                         }
                                     }

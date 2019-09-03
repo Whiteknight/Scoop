@@ -56,8 +56,7 @@ public class MyClass
                             AccessModifier = new KeywordNode("public"),
                             ReturnType = new TypeNode
                             {
-                                Name = new IdentifierNode("void"),
-                                GenericArguments = new List<AstNode>()
+                                Name = new IdentifierNode("void")
                             },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>()
@@ -92,8 +91,7 @@ public class MyClass
                             AccessModifier = new KeywordNode("public"),
                             ReturnType = new TypeNode
                             {
-                                Name = new IdentifierNode("int"),
-                                GenericArguments = new List<AstNode>()
+                                Name = new IdentifierNode("int")
                             },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
@@ -131,8 +129,7 @@ public class MyClass
                             AccessModifier = new KeywordNode("public"),
                             ReturnType = new TypeNode
                             {
-                                Name = new IdentifierNode("int"),
-                                GenericArguments = new List<AstNode>()
+                                Name = new IdentifierNode("int")
                             },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
@@ -173,8 +170,7 @@ public class MyClass
                             AccessModifier = new KeywordNode("public"),
                             ReturnType = new TypeNode
                             {
-                                Name = new IdentifierNode("int"),
-                                GenericArguments = new List<AstNode>()
+                                Name = new IdentifierNode("int")
                             },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
@@ -222,8 +218,7 @@ public class MyClass
                             AccessModifier = new KeywordNode("public"),
                             ReturnType = new TypeNode
                             {
-                                Name = new IdentifierNode("int"),
-                                GenericArguments = new List<AstNode>()
+                                Name = new IdentifierNode("int")
                             },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
@@ -273,8 +268,7 @@ public class MyClass
                             AccessModifier = new KeywordNode("public"),
                             ReturnType = new TypeNode
                             {
-                                Name = new IdentifierNode("int"),
-                                GenericArguments = new List<AstNode>()
+                                Name = new IdentifierNode("int")
                             },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
@@ -322,8 +316,7 @@ public class MyClass
                             AccessModifier = new KeywordNode("public"),
                             ReturnType = new TypeNode
                             {
-                                Name = new IdentifierNode("int"),
-                                GenericArguments = new List<AstNode>()
+                                Name = new IdentifierNode("int")
                             },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
@@ -368,8 +361,7 @@ public class MyClass
                             AccessModifier = new KeywordNode("public"),
                             ReturnType = new TypeNode
                             {
-                                Name = new IdentifierNode("string"),
-                                GenericArguments = new List<AstNode>()
+                                Name = new IdentifierNode("string")
                             },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
@@ -384,6 +376,68 @@ public class MyClass
                                             MemberName = new IdentifierNode("ToString")
                                         },
                                         Arguments = new List<AstNode>()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void ParseClass_GenericClassAndMethod()
+        {
+            var target = new Parser();
+            var result = target.ParseClass(@"
+public class MyClass<TA> 
+{
+    public TB MyMethod<TB>() 
+    { 
+        return default(TB);
+    }
+}");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Name = new IdentifierNode("MyClass"),
+                    GenericTypeParameters = new List<AstNode>
+                    {
+                        new TypeNode
+                        {
+                            Name = new IdentifierNode("TA")
+                        }
+                    },
+                    Members = new List<AstNode>
+                    {
+                        new MethodNode
+                        {
+                            AccessModifier = new KeywordNode("public"),
+                            ReturnType = new TypeNode
+                            {
+                                Name = new IdentifierNode("TB")
+                            },
+                            Name = new IdentifierNode("MyMethod"),
+                            GenericTypeParameters = new List<AstNode>
+                            {
+                                new TypeNode
+                                {
+                                    Name = new IdentifierNode("TB")
+                                }
+                            },
+                            Parameters = new List<AstNode>(),
+                            Statements = new List<AstNode>
+                            {
+                                new ReturnNode
+                                {
+                                    Expression = new InvokeNode
+                                    {
+                                        Instance = new IdentifierNode("default"),
+                                        Arguments = new List<AstNode>
+                                        {
+                                            new IdentifierNode("TB")
+                                        }
                                     }
                                 }
                             }

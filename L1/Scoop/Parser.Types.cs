@@ -68,6 +68,7 @@ namespace Scoop
             if (lookahead.IsOperator("<"))
             {
                 t.Advance();
+                typeNode.GenericArguments = new List<AstNode>();
                 while (true)
                 {
                     var elementType = ParseTypeArray(t);
@@ -94,8 +95,7 @@ namespace Scoop
             return new TypeNode
             {
                 Location = id.Location,
-                Name = new IdentifierNode(id),
-                GenericArguments = new List<AstNode>()
+                Name = new IdentifierNode(id)
             };
         }
     }

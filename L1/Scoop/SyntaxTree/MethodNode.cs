@@ -12,6 +12,7 @@ namespace Scoop.SyntaxTree
         public IdentifierNode Name { get; set; }
         public List<AstNode> Parameters { get; set; }
         public List<AstNode> Statements { get; set; }
+        public List<AstNode> GenericTypeParameters { get; set; }
 
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitMethod(this);
     }
@@ -23,6 +24,7 @@ namespace Scoop.SyntaxTree
         public AstNode ReturnType { get; set; }
         public IdentifierNode Name { get; set; }
         public List<AstNode> Parameters { get; set; }
+        public List<AstNode> GenericTypeParameters { get; set; }
 
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitMethodDeclare(this);
     }

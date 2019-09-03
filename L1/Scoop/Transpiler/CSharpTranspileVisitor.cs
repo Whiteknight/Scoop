@@ -47,6 +47,18 @@ namespace Scoop.Transpiler
             Visit(n.AccessModifier);
             Append(" sealed class ");
             Visit(n.Name);
+            if (!n.GenericTypeParameters.IsNullOrEmpty())
+            {
+                Append("<");
+                Visit(n.GenericTypeParameters[0]);
+                for (int i = 1; i < n.GenericTypeParameters.Count; i++)
+                {
+                    Append(", ");
+                    Visit(n.GenericTypeParameters[i]);
+                }
+
+                Append(">");
+            }
             Append(" ");
             if (!n.Interfaces.IsNullOrEmpty())
             {
@@ -217,6 +229,18 @@ namespace Scoop.Transpiler
             Visit(n.AccessModifier);
             Append(" interface ");
             Visit(n.Name);
+            if (!n.GenericTypeParameters.IsNullOrEmpty())
+            {
+                Append("<");
+                Visit(n.GenericTypeParameters[0]);
+                for (int i = 1; i < n.GenericTypeParameters.Count; i++)
+                {
+                    Append(", ");
+                    Visit(n.GenericTypeParameters[i]);
+                }
+
+                Append(">");
+            }
             Append(" ");
             if (!n.Interfaces.IsNullOrEmpty())
             {
@@ -335,6 +359,19 @@ namespace Scoop.Transpiler
             Visit(n.ReturnType);
             Append(" ");
             Visit(n.Name);
+            if (!n.GenericTypeParameters.IsNullOrEmpty())
+            {
+                Append("<");
+                Visit(n.GenericTypeParameters[0]);
+                for (int i = 1; i < n.GenericTypeParameters.Count; i++)
+                {
+                    Append(", ");
+                    Visit(n.GenericTypeParameters[i]);
+                }
+
+                Append(">");
+            }
+
             Append("(");
             if (!n.Parameters.IsNullOrEmpty())
             {
@@ -368,6 +405,18 @@ namespace Scoop.Transpiler
             Visit(n.ReturnType);
             Append(" ");
             Visit(n.Name);
+            if (!n.GenericTypeParameters.IsNullOrEmpty())
+            {
+                Append("<");
+                Visit(n.GenericTypeParameters[0]);
+                for (int i = 1; i < n.GenericTypeParameters.Count; i++)
+                {
+                    Append(", ");
+                    Visit(n.GenericTypeParameters[i]);
+                }
+
+                Append(">");
+            }
             Append("(");
             if (!n.Parameters.IsNullOrEmpty())
             {
@@ -430,6 +479,20 @@ namespace Scoop.Transpiler
         public AstNode VisitOperator(OperatorNode n)
         {
             Append(n.Operator);
+            return n;
+        }
+
+        public AstNode VisitParameter(ParameterNode n)
+        {
+            Visit(n.Type);
+            Append(" ");
+            Visit(n.Name);
+            if (n.DefaultValue != null)
+            {
+                Append(" = ");
+                Visit(n.DefaultValue);
+            }
+
             return n;
         }
 

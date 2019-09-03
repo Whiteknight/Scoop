@@ -9,6 +9,9 @@ namespace Scoop.SyntaxTree
 
         public KeywordNode AccessModifier { get; set; }
         public IdentifierNode Name { get; set; }
+
+        public List<AstNode> GenericTypeParameters { get; set; }
+
         // TODO: This needs to be a better node type to handle things like generics
         public List<DottedIdentifierNode> Interfaces { get; set; }
 

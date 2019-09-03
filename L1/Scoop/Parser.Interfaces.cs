@@ -14,6 +14,7 @@ namespace Scoop
             var accessModifierToken = t.Expect(TokenType.Keyword, "public", "private");
             t.Expect(TokenType.Keyword, "interface");
             var classNameToken = t.Expect(TokenType.Identifier);
+            var genericTypeParams = ParseGenericTypeParametersList(t);
             // TODO: ':' <ContractList>
             t.Expect(TokenType.Operator, "{");
             var memberNodes = ParseInterfaceBody(t);
@@ -22,6 +23,7 @@ namespace Scoop
             {
                 AccessModifier = new KeywordNode(accessModifierToken),
                 Name = new IdentifierNode(classNameToken),
+                GenericTypeParameters = genericTypeParams,
                 Members = memberNodes
             };
         }
@@ -37,12 +39,13 @@ namespace Scoop
                     break;
                 var returnType = ParseType(t);
                 var nameToken = t.GetNext();
-                // TODO: "<" <typeArgs> ">"
+                var genericTypeParams = ParseGenericTypeParametersList(t);
                 var parameters = ParseParameterList(t);
                 members.Add(new MethodDeclareNode
                 {
                     Location = returnType.Location,
                     Name = new IdentifierNode(nameToken),
+                    GenericTypeParameters = genericTypeParams,
                     Parameters = parameters,
                     ReturnType = returnType
                 });

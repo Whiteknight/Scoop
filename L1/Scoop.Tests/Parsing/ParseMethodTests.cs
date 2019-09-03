@@ -31,8 +31,7 @@ public List<int[]> GetListOfIntArrays()
                             {
                                 ElementType = new TypeNode
                                 {
-                                    Name = new IdentifierNode("int"),
-                                    GenericArguments = new List<AstNode>()
+                                    Name = new IdentifierNode("int")
                                 }
                             }
                         }
@@ -53,8 +52,7 @@ public List<int[]> GetListOfIntArrays()
                                         {
                                             ElementType = new TypeNode
                                             {
-                                                Name = new IdentifierNode("int"),
-                                                GenericArguments = new List<AstNode>()
+                                                Name = new IdentifierNode("int")
                                             }
                                         }
                                     }
@@ -63,6 +61,55 @@ public List<int[]> GetListOfIntArrays()
                             }
                         }
                     }
+                }
+            );
+        }
+
+        [Test]
+        public void ParseMethod_Parameters()
+        {
+            var target = new Parser();
+            var result = target.ParseConstructorOrMethod(@"
+public void TestMethod(int a, double b, string c)
+{
+}");
+            result.Should().MatchAst(
+                new MethodNode
+                {
+                    Name = new IdentifierNode("TestMethod"),
+                    AccessModifier = new KeywordNode("public"),
+                    ReturnType = new TypeNode
+                    {
+                        Name = new IdentifierNode("void")
+                    },
+                    Parameters = new List<AstNode>
+                    {
+                        new ParameterNode
+                        {
+                            Type = new TypeNode
+                            {
+                                Name = new IdentifierNode("int")
+                            },
+                            Name = new IdentifierNode("a")
+                        },
+                        new ParameterNode
+                        {
+                            Type = new TypeNode
+                            {
+                                Name = new IdentifierNode("double")
+                            },
+                            Name = new IdentifierNode("b")
+                        },
+                        new ParameterNode
+                        {
+                            Type = new TypeNode
+                            {
+                                Name = new IdentifierNode("string")
+                            },
+                            Name = new IdentifierNode("c")
+                        }
+                    },
+                    Statements = new List<AstNode>()
                 }
             );
         }

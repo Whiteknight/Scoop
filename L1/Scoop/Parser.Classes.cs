@@ -14,6 +14,7 @@ namespace Scoop
             var accessModifierToken = t.Expect(TokenType.Keyword, "public", "private");
             t.Expect(TokenType.Keyword, "class");
             var classNameToken = t.Expect(TokenType.Identifier);
+            var genericTypeParams = ParseGenericTypeParametersList(t);
             // TODO: ':' <ContractList>
             t.Expect(TokenType.Operator, "{");
             var memberNodes = ParseClassBody(t);
@@ -22,6 +23,7 @@ namespace Scoop
             {
                 AccessModifier = new KeywordNode(accessModifierToken),
                 Name = new IdentifierNode(classNameToken),
+                GenericTypeParameters = genericTypeParams,
                 Members = memberNodes
             };
         }
@@ -92,13 +94,13 @@ namespace Scoop
             else
             {
                 var name = t.Expect(TokenType.Identifier);
-                // TODO: "<" <typeArgs> ">"
                 node = new MethodNode
                 {
                     Location = accessModifier.Location,
                     AccessModifier = new KeywordNode(accessModifier),
                     ReturnType = returnType,
                     Name = new IdentifierNode(name),
+                    GenericTypeParameters = ParseGenericTypeParametersList(t),
                     Parameters = ParseParameterList(t),
                     Statements = ParseMethodBody(t)
                 };
@@ -107,11 +109,61 @@ namespace Scoop
             return node;
         }
 
-        private static List<AstNode> ParseParameterList(Tokenizer t)
+        private List<AstNode> ParseGenericTypeParametersList(Tokenizer t)
+        {
+            if (!t.NextIs(TokenType.Operator, "<"))
+                return null;
+            var types = new List<AstNode>();
+            t.Expect(TokenType.Operator, "<");
+            var type = ParseType(t);
+            types.Add(type);
+            while (t.NextIs(TokenType.Operator, ",", true))
+            {
+                type = ParseType(t);
+                types.Add(type);
+            }
+            t.Expect(TokenType.Operator, ">");
+            return types;
+        }
+
+        private List<AstNode> ParseParameterList(Tokenizer t)
         {
             t.Expect(TokenType.Operator, "(");
             var parameterList = new List<AstNode>();
-            // TODO: This
+            var lookahead = t.Peek();
+            if (!lookahead.IsOperator(")"))
+            {
+                while (true)
+                {
+                    var type = ParseType(t);
+                    var nameToken = t.Expect(TokenType.Identifier);
+                    var parameter = new ParameterNode
+                    {
+                        Location = type.Location,
+                        Type = type,
+                        Name = new IdentifierNode(nameToken)
+                    };
+                    if (t.Peek().IsOperator("="))
+                    {
+                        t.Advance();
+                        parameter.DefaultValue = ParseExpression(t);
+                    }
+
+                    parameterList.Add(parameter);
+                    lookahead = t.Peek();
+                    if (lookahead.IsOperator(","))
+                    {
+                        t.Advance();
+                        continue;
+                    }
+
+                    if (lookahead.IsOperator(")"))
+                        break;
+
+                    throw ParsingException.CouldNotParseRule(nameof(ParseParameterList), lookahead);
+                }
+            }
+
             t.Expect(TokenType.Operator, ")");
             return parameterList;
         }
