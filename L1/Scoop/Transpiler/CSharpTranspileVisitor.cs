@@ -363,6 +363,26 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public AstNode VisitMethodDeclare(MethodDeclareNode n)
+        {
+            Visit(n.ReturnType);
+            Append(" ");
+            Visit(n.Name);
+            Append("(");
+            if (!n.Parameters.IsNullOrEmpty())
+            {
+                Visit(n.Parameters[0]);
+                for (int i = 1; i < n.Parameters.Count; i++)
+                {
+                    Append(", ");
+                    Visit(n.Parameters[i]);
+                }
+            }
+
+            Append(");");
+            return n;
+        }
+
         public AstNode VisitNamespace(NamespaceNode n)
         {
             Append("namespace ");

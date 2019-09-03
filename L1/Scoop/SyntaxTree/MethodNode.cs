@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Scoop.SyntaxTree
 {
@@ -15,5 +14,16 @@ namespace Scoop.SyntaxTree
         public List<AstNode> Statements { get; set; }
 
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitMethod(this);
+    }
+
+    public class MethodDeclareNode : AstNode
+    {
+        // Represents a declaration of a method in an interface
+
+        public AstNode ReturnType { get; set; }
+        public IdentifierNode Name { get; set; }
+        public List<AstNode> Parameters { get; set; }
+
+        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitMethodDeclare(this);
     }
 }

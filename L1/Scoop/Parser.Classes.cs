@@ -92,6 +92,7 @@ namespace Scoop
             else
             {
                 var name = t.Expect(TokenType.Identifier);
+                // TODO: "<" <typeArgs> ">"
                 node = new MethodNode
                 {
                     Location = accessModifier.Location,

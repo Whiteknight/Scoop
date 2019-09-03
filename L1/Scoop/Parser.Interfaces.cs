@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
@@ -30,7 +29,27 @@ namespace Scoop
         private List<AstNode> ParseInterfaceBody(Tokenizer t)
         {
             // <methodSignature>*
-            return new List<AstNode>();
+            var members = new List<AstNode>();
+            while (true)
+            {
+                var lookahead = t.Peek();
+                if (lookahead.IsOperator("}"))
+                    break;
+                var returnType = ParseType(t);
+                var nameToken = t.GetNext();
+                // TODO: "<" <typeArgs> ">"
+                var parameters = ParseParameterList(t);
+                members.Add(new MethodDeclareNode
+                {
+                    Location = returnType.Location,
+                    Name = new IdentifierNode(nameToken),
+                    Parameters = parameters,
+                    ReturnType = returnType
+                });
+                t.Expect(TokenType.Operator, ";");
+            }
+
+            return members;
         }
     }
 }
