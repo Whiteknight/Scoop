@@ -473,5 +473,31 @@ public class MyClass
                 }
             );
         }
+
+        [Test]
+        public void ParseClass_InheritInterfaces()
+        {
+            var target = new Parser();
+            var result = target.ParseClass("public class MyClass : IFaceA, IFaceB { }");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Name = new IdentifierNode("MyClass"),
+                    Interfaces = new List<AstNode>
+                    {
+                        new TypeNode
+                        {
+                            Name = new IdentifierNode("IFaceA")
+                        },
+                        new TypeNode
+                        {
+                            Name = new IdentifierNode("IFaceB")
+                        }
+                    },
+                    Members = new List<AstNode>()
+                }
+            );
+        }
     }
 }

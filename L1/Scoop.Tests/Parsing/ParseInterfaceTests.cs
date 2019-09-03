@@ -162,5 +162,31 @@ public interface MyInterface<TA>
                 }
             );
         }
+
+        [Test]
+        public void ParseInterface_InheritInterfaces()
+        {
+            var target = new Parser();
+            var result = target.ParseInterface("public interface MyInterface : IFaceA, IFaceB { }");
+            result.Should().MatchAst(
+                new InterfaceNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Name = new IdentifierNode("MyInterface"),
+                    Interfaces = new List<AstNode>
+                    {
+                        new TypeNode
+                        {
+                            Name = new IdentifierNode("IFaceA")
+                        },
+                        new TypeNode
+                        {
+                            Name = new IdentifierNode("IFaceB")
+                        }
+                    },
+                    Members = new List<AstNode>()
+                }
+            );
+        }
     }
 }

@@ -15,17 +15,28 @@ namespace Scoop
             t.Expect(TokenType.Keyword, "interface");
             var classNameToken = t.Expect(TokenType.Identifier);
             var genericTypeParams = ParseGenericTypeParametersList(t);
-            // TODO: ':' <ContractList>
-            t.Expect(TokenType.Operator, "{");
-            var memberNodes = ParseInterfaceBody(t);
-            t.Expect(TokenType.Operator, "}");
-            return new InterfaceNode
+            var interfaceNode = new InterfaceNode
             {
                 AccessModifier = new KeywordNode(accessModifierToken),
                 Name = new IdentifierNode(classNameToken),
                 GenericTypeParameters = genericTypeParams,
-                Members = memberNodes
+                
             };
+            if (t.NextIs(TokenType.Operator, ":", true))
+            {
+                interfaceNode.Interfaces = new List<AstNode>();
+                var contractType = ParseType(t);
+                interfaceNode.Interfaces.Add(contractType);
+                while (t.NextIs(TokenType.Operator, ",", true))
+                {
+                    contractType = ParseType(t);
+                    interfaceNode.Interfaces.Add(contractType);
+                }
+            }
+            t.Expect(TokenType.Operator, "{");
+            interfaceNode.Members = ParseInterfaceBody(t);
+            t.Expect(TokenType.Operator, "}");
+            return interfaceNode;
         }
 
         private List<AstNode> ParseInterfaceBody(Tokenizer t)

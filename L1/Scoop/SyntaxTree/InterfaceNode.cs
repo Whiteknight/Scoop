@@ -12,8 +12,7 @@ namespace Scoop.SyntaxTree
 
         public List<AstNode> GenericTypeParameters { get; set; }
 
-        // TODO: This needs to be a better node type to handle things like generics
-        public List<DottedIdentifierNode> Interfaces { get; set; }
+        public List<AstNode> Interfaces { get; set; }
 
         // Constructors, methods, fields, properties, child classes, etc
         public List<AstNode> Members { get; set; }
