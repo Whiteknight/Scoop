@@ -130,7 +130,7 @@ namespace Scoop.Tokenization
                         c = _chars.GetNext();
                         if (c == 'x')
                         {
-                            // TODO: hex escape codes
+                            // TODO: hex escape codes may be 4 chars long
                         }
                     }
                     buffer.Add(c);

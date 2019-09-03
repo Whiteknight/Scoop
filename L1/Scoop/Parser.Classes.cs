@@ -33,6 +33,8 @@ namespace Scoop
                 }
             }
 
+            // TODO: "where" <genericTypeParameter> ":" <typeConstraints>
+
             t.Expect(TokenType.Operator, "{");
             classNode.Members = ParseClassBody(t);
             t.Expect(TokenType.Operator, "}");
@@ -96,6 +98,7 @@ namespace Scoop
             if (t.NextIs(TokenType.Operator, "("))
             {
                 // It's a constructor
+                // TODO: ":" "this" "(" <args> ")"
                 var ctor = new ConstructorNode
                 {
                     Location = accessModifier.Location,
@@ -119,6 +122,7 @@ namespace Scoop
                     Name = new IdentifierNode(name),
                     GenericTypeParameters = ParseGenericTypeParametersList(t),
                     Parameters = ParseParameterList(t),
+                    // TODO: "where" <genericTypeParameter> ":" <typeConstraints>
                     Statements = ParseMethodBody(t)
                 };
             }

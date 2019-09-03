@@ -33,6 +33,7 @@ namespace Scoop
                     interfaceNode.Interfaces.Add(contractType);
                 }
             }
+            // TODO: "where" <genericTypeParameter> ":" <typeConstraints>
             t.Expect(TokenType.Operator, "{");
             interfaceNode.Members = ParseInterfaceBody(t);
             t.Expect(TokenType.Operator, "}");
