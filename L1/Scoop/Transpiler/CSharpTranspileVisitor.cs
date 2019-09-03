@@ -349,6 +349,18 @@ namespace Scoop.Transpiler
             Visit(n.Instance);
             Append(n.IgnoreNulls ? "?." : ".");
             Visit(n.MemberName);
+            if (!n.GenericArguments.IsNullOrEmpty())
+            {
+                Append("<");
+                Visit(n.GenericArguments[0]);
+                for (int i = 1; i < n.GenericArguments.Count; i++)
+                {
+                    Append(", ");
+                    Visit(n.GenericArguments[i]);
+                }
+
+                Append(">");
+            }
             return n;
         }
 

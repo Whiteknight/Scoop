@@ -263,5 +263,30 @@ namespace XYZ
             var result = (int)method.Invoke(myObj, new object[0]);
             result.Should().Be(6);
         }
+
+        [Test]
+        public void Compile_MethodGenericExtensionMethod()
+        {
+            var ast = new Parser().ParseUnit(@"
+using System.Collections.Generic;
+using System.Linq;
+
+namespace XYZ 
+{
+    public class MyClass 
+    {
+        public int MyMethod(List<List<int>> e)
+        {
+            return e.First<List<int>>().First<int>();
+        }
+    }
+}");
+            var assembly = TestCompiler.Compile(ast);
+            var type = assembly.ExportedTypes.First();
+            var myObj = Activator.CreateInstance(type);
+            var method = type.GetMethod("MyMethod");
+            var result = (int)method.Invoke(myObj, new object[] { new List<List<int>> { new List<int> { 5 } } });
+            result.Should().Be(5);
+        }
     }
 }

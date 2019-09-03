@@ -5,7 +5,6 @@ using Scoop.Tokenization;
 
 namespace Scoop
 {
-    // TODO: Lambda expressions
     // TODO: "await"
     public partial class Parser
     {
@@ -280,6 +279,45 @@ namespace Scoop
             return ParseExpressionPostfix(t);
         }
 
+        private bool IsGenericTypeArgument(Tokenizer t)
+        {
+            var putbacks = new Stack<Token>();
+            int angleBracketDepth = 0;
+            bool success = true;
+            while (true)
+            {
+                var next = t.GetNext();
+                putbacks.Push(next);
+                if (next.IsOperator("<"))
+                {
+                    angleBracketDepth++;
+                    continue;
+                }
+
+                if (next.IsOperator(">"))
+                {
+                    angleBracketDepth--;
+                    if (angleBracketDepth < 0)
+                    {
+                        success = false;
+                        break;
+                    }
+                    if (angleBracketDepth == 0)
+                        break;
+                    continue;
+                }
+
+                if (next.IsType(TokenType.Identifier) || next.IsOperator(".", "[", "]"))
+                    continue;
+                success = false;
+                break;
+            }
+
+            while (putbacks.Count > 0)
+                t.PutBack(putbacks.Pop());
+            return success && angleBracketDepth == 0;
+        }
+
         private AstNode ParseExpressionPostfix(Tokenizer t)
         {
             var current = ParseExpressionTerminal(t);
@@ -307,14 +345,17 @@ namespace Scoop
                 {
                     t.Advance();
                     var identifier = t.Expect(TokenType.Identifier);
-                    // TODO: "<" <genericTypeArgs> ">"
-                    current = new MemberAccessNode
+                    var memberAccessNode = new MemberAccessNode
                     {
                         Location = lookahead.Location,
                         Instance = current,
                         IgnoreNulls = lookahead.Value == "?.",
                         MemberName = new IdentifierNode(identifier)
                     };
+                    if (t.NextIs(TokenType.Operator, "<") && IsGenericTypeArgument(t))
+                        memberAccessNode.GenericArguments = ParseGenericTypeParametersList(t);
+
+                    current = memberAccessNode;
                     continue;
                 }
 

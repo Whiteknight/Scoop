@@ -47,15 +47,20 @@ namespace Scoop.Tests.Transpiling
         public static Assembly Compile(string code, string testAssemblyName)
         {
             var syntaxTree = CSharpSyntaxTree.ParseText(code);
+            var references = new List<MetadataReference>
+            {
+                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(System.Diagnostics.Debug).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(List<>).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IEnumerable<>).Assembly.Location)
+            };
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies().Where(a => a.FullName.StartsWith("System")))
+                references.Add(MetadataReference.CreateFromFile(assembly.Location));
+
             var compilation = CSharpCompilation.Create(testAssemblyName,
                 syntaxTrees: new[] { syntaxTree },
-                references: new MetadataReference[]
-                {
-                    MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(System.Diagnostics.Debug).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(List<>).Assembly.Location)
-                },
+                references: references,
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
             );
             using (var ms = new MemoryStream())

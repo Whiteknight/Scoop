@@ -10,9 +10,6 @@ namespace Scoop
         public CompilationUnitNode ParseUnit(Tokenizer t)
         {
             var unit = new CompilationUnitNode();
-            // TODO: Parse the using statements at the beginning
-            // TODO: Parse a namespace statement, if any
-
             while (true)
             {
                 var lookahead = t.Peek();
