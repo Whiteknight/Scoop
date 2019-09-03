@@ -49,13 +49,20 @@ namespace Scoop
                 if (lookahead.IsKeyword("public", "private"))
                 {
                     var lookahead2 = t.Peek();
+                    t.PutBack(lookahead);
                     if (lookahead2.IsKeyword("class"))
                     {
-                        // TODO: Parse nested child class
-                        throw ParsingException.CouldNotParseRule(nameof(ParseClassBody), lookahead2);
+                        var nestedClass = ParseClass(t);
+                        members.Add(nestedClass);
+                        continue;
+                    }
+                    if (lookahead2.IsKeyword("interface"))
+                    {
+                        var nestedClass = ParseInterface(t);
+                        members.Add(nestedClass);
+                        continue;
                     }
 
-                    t.PutBack(lookahead);
                     var member = ParseConstructorOrMethod(t);
                     members.Add(member);
                     continue;
@@ -84,7 +91,6 @@ namespace Scoop
                     AccessModifier = new KeywordNode(accessModifier),
                     Parameters = ParseParameterList(t),
                     Statements = ParseMethodBody(t)
-                    // TODO: Class Name?
                 };
                 if (!(returnType is TypeNode returnTypeNode) || !returnTypeNode.GenericArguments.IsNullOrEmpty())
                     throw new ParsingException($"Invalid name for constructor at {returnType.Location}");

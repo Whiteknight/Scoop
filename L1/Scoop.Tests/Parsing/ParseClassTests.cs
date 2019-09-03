@@ -446,5 +446,32 @@ public class MyClass<TA>
                 }
             );
         }
+
+        [Test]
+        public void ParseClass_NestedClass()
+        {
+            var target = new Parser();
+            var result = target.ParseClass(@"
+public class MyClass 
+{ 
+    public class ChildClass { }
+}");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Name = new IdentifierNode("MyClass"),
+                    Members = new List<AstNode>
+                    {
+                        new ClassNode
+                        {
+                            AccessModifier = new KeywordNode("public"),
+                            Name = new IdentifierNode("ChildClass"),
+                            Members = new List<AstNode>()
+                        }
+                    }
+                }
+            );
+        }
     }
 }
