@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
+using Scoop.Transpiler;
 
 namespace Scoop.Tests.Parsing
 {
@@ -56,6 +58,55 @@ public List<int[]> GetListOfIntArrays()
                                             }
                                         }
                                     }
+                                },
+                                Arguments = new List<AstNode>()
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void ParseMethod_UsingStatement()
+        {
+            var target = new Parser();
+            var result = target.ParseConstructorOrMethod(@"
+public void MyMethod()
+{
+    using (var x = new Disposable())
+        x.DoWork();
+}");
+            result.Should().MatchAst(
+                new MethodNode
+                {
+                    Name = new IdentifierNode("MyMethod"),
+                    AccessModifier = new KeywordNode("public"),
+                    ReturnType = new TypeNode("void"),
+                    Parameters = new List<AstNode>(),
+                    Statements = new List<AstNode>
+                    {
+                        new UsingStatementNode
+                        {
+                            Disposable = new InfixOperationNode
+                            {
+                                Left = new VariableDeclareNode
+                                {
+                                    Name = new IdentifierNode("x"),
+                                },
+                                Operator = new OperatorNode("="),
+                                Right = new NewNode
+                                {
+                                    Type = new TypeNode("Disposable"),
+                                    Arguments = new List<AstNode>()
+                                }
+                            },
+                            Statement = new InvokeNode
+                            {
+                                Instance = new MemberAccessNode
+                                {
+                                    Instance = new IdentifierNode("x"),
+                                    MemberName = new IdentifierNode("DoWork")
                                 },
                                 Arguments = new List<AstNode>()
                             }

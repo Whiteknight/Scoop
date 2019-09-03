@@ -264,6 +264,7 @@ namespace Scoop
             var next = t.Peek();
             // TODO: Loop to get all possible prefixes
             // TODO: <cast> <expr>
+            // Probably won't do cast operator because of ambiguous parsing rules
             if (next.IsOperator("-", "+", "++", "--", "!", "~"))
             {
                 var op = t.GetNext();

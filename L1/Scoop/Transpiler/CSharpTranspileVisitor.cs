@@ -596,6 +596,18 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public AstNode VisitUsingStatement(UsingStatementNode n)
+        {
+            Append("using (");
+            Visit(n.Disposable);
+            Append(")");
+            IncreaseIndent();
+            AppendLineAndIndent();
+            Visit(n.Statement);
+            DecreaseIndent();
+            return n;
+        }
+
         public AstNode VisitVariableDeclare(VariableDeclareNode n)
         {
             Append("var ");

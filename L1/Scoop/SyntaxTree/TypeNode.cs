@@ -1,11 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Scoop.SyntaxTree
 {
     public class TypeNode : AstNode
     {
+        public TypeNode()
+        {
+        }
+
+        public TypeNode(string typeName)
+        {
+            Name = new IdentifierNode(typeName);
+        }
+
         public IdentifierNode Name { get; set; }
         public List<AstNode> GenericArguments { get; set; }
 

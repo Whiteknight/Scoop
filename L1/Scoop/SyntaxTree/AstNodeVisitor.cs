@@ -49,6 +49,7 @@
         AstNode VisitUInteger(UIntegerNode n);
         AstNode VisitULong(ULongNode n);
         AstNode VisitUsingDirective(UsingDirectiveNode n);
+        AstNode VisitUsingStatement(UsingStatementNode n);
         AstNode VisitVariableDeclare(VariableDeclareNode n);
     }
 }

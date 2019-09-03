@@ -18,6 +18,10 @@ namespace Scoop
             if (lookahead.IsType(TokenType.CSharpLiteral))
                 return new CSharpNode(t.GetNext());
 
+            // Parse using-statement. This already includes it's own ";"
+            if (lookahead.IsKeyword("using"))
+                return ParseUsingStatement(t);
+
             var stmt = ParseStatementUnterminated(t);
             if (stmt == null)
                 return null;
@@ -29,15 +33,43 @@ namespace Scoop
         {
             var lookahead = t.Peek();
             if (lookahead.Is(TokenType.Operator, "}"))
-                // TODO: Would be nice to return an End-Block statement instead of null
                 return null;
             if (lookahead.IsKeyword("return"))
                 return ParseReturn(t);
             if (lookahead.IsKeyword("var"))
                 return ParseDeclaration(t);
-            // TODO: Using statement
 
             return ParseExpression(t);
+        }
+
+        private UsingStatementNode ParseUsingStatement(Tokenizer t)
+        {
+            // TODO: "using" "(" <nonAssignmentExpression> ")"
+            var usingToken = t.Expect(TokenType.Keyword, "using");
+            t.Expect(TokenType.Operator, "(");
+            var declareToken = t.Expect(TokenType.Keyword, "var");
+            var variable = t.Expect(TokenType.Identifier);
+            var assign = t.Expect(TokenType.Operator, "=");
+            var source = ParseExpressionConditional(t);
+            t.Expect(TokenType.Operator, ")");
+            // TODO: Multiple statements in a "{" "}" block?
+            var statement = ParseStatement(t);
+            return new UsingStatementNode
+            {
+                Location = usingToken.Location,
+                Disposable = new InfixOperationNode
+                {
+                    Location = declareToken.Location,
+                    Left = new VariableDeclareNode
+                    {
+                        Location = declareToken.Location,
+                        Name = new IdentifierNode(variable)
+                    },
+                    Operator = new OperatorNode(assign),
+                    Right = source
+                },
+                Statement = statement
+            };
         }
 
         private ReturnNode ParseReturn(Tokenizer t)
