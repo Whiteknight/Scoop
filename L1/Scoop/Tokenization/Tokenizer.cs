@@ -30,7 +30,7 @@ namespace Scoop.Tokenization
             if (_putbacks.Count > 0)
                 return _putbacks.Pop();
 
-            var next = _scanner.ParseNext();
+            var next = _scanner.ScanNext();
             if (next == null)
                 return Token.EndOfInput();
             return next;
@@ -46,7 +46,7 @@ namespace Scoop.Tokenization
         {
             while (true)
             {
-                var next = _scanner.ParseNext();
+                var next = _scanner.ScanNext();
                 if (next == null || next.IsType(TokenType.EndOfInput))
                     break;
                 yield return next;

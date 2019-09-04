@@ -587,13 +587,7 @@ namespace Scoop.Transpiler
 
         public AstNode VisitString(StringNode n)
         {
-            if (n.Interpolated)
-                Append("$");
-            if (n.Literal)
-                Append("@");
-            Append("\"");
             Append(n.Value);
-            Append("\"");
             return n;
         }
 

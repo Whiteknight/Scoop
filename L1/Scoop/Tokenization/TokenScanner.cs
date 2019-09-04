@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Scoop.Tokenization
 {
-    public class TokenScanner
+    public partial class TokenScanner
     {
         private readonly ICharacterSequence _chars;
         private readonly SymbolSequence _operators;
@@ -49,7 +49,7 @@ namespace Scoop.Tokenization
             _operators.Add("==", "!=", ">", "<", ">=", "<=");
         }
 
-        public Token ParseNext()
+        public Token ScanNext()
         {
             var c = _chars.Peek();
             if (c == '\0')
@@ -370,36 +370,6 @@ namespace Scoop.Tokenization
             if (x == "is" || x == "as")
                 return Token.Operator(x, l);
             return Token.Word(x, l);
-        }
-
-        private Token ReadString()
-        {
-            // TODO: Handle $ prefix, including nested {} parsing which may contain quotes or slashes or other things to trip up on
-            // TODO: Handle @-style strings
-            var l = _chars.GetLocation();
-            var chars = new List<char>();
-            _chars.Expect('"');
-
-            while (true)
-            {
-                var c = _chars.GetNext();
-                if (c != '"')
-                {
-                    chars.Add(c);
-                    continue;
-                }
-
-                var n = _chars.GetNext();
-                if (n == '"')
-                {
-                    chars.Add(c);
-                    continue;
-                }
-
-                _chars.PutBack(n);
-                var x = (new string(chars.ToArray()));
-                return Token.String(x, l);
-            }
         }
 
         private Token ReadOperator()

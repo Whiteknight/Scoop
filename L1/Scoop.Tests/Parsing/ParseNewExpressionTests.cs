@@ -40,7 +40,7 @@ namespace Scoop.Tests.Parsing
                     Arguments = new List<AstNode>
                     {
                         new IntegerNode(1),
-                        new StringNode("test")
+                        new StringNode("\"test\"")
                     }
                 }
             );

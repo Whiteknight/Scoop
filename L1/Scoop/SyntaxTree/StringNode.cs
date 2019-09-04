@@ -16,9 +16,6 @@ namespace Scoop.SyntaxTree
             Location = t.Location;
         }
 
-        public bool Literal { get; set; }
-        public bool Interpolated { get; set; }
-
         public string Value { get; set; }
 
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitString(this);

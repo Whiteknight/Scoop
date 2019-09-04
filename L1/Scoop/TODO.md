@@ -2,14 +2,13 @@
 
 ## L1 Items for L2 Cutover:
 
-1. "$" and "@" string literals
 1. Generic type constraints "where" type ":" constaint
    1. Classes
    1. Interfaces
    1. Methods
 1. ":" "this" "(" args ")" syntax for constructors
 1. "using" "(" Non-Assignment Expression ")"
-
+1. Improved test coverage
 
 ## L2 Items
 

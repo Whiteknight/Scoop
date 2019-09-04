@@ -11,23 +11,23 @@ namespace Scoop.Tests.Tokenizing
         public void ParseNext_EOF()
         {
             var target = new TokenScanner("");
-            target.ParseNext().Type.Should().Be(TokenType.EndOfInput);
+            target.ScanNext().Type.Should().Be(TokenType.EndOfInput);
         }
 
         [Test]
         public void ParseNext_Whitespace()
         {
             var target = new TokenScanner("   ");
-            target.ParseNext().Should().Match(TokenType.Whitespace, "   ");
+            target.ScanNext().Should().Match(TokenType.Whitespace, "   ");
         }
 
         [Test]
         public void ParseNext_WhitespaceOperator()
         {
             var target = new TokenScanner("  + ");
-            target.ParseNext().Should().Match(TokenType.Whitespace, "  ");
-            target.ParseNext().Should().Match(TokenType.Operator, "+");
-            target.ParseNext().Should().Match(TokenType.Whitespace, " ");
+            target.ScanNext().Should().Match(TokenType.Whitespace, "  ");
+            target.ScanNext().Should().Match(TokenType.Operator, "+");
+            target.ScanNext().Should().Match(TokenType.Whitespace, " ");
         }
 
         [Test]
@@ -36,9 +36,9 @@ namespace Scoop.Tests.Tokenizing
             var target = new TokenScanner(@"
                 // This is a comment
 ");
-            target.ParseNext().Type.Should().Be(TokenType.Whitespace);
-            target.ParseNext().Should().Match(TokenType.Comment, " This is a comment");
-            target.ParseNext().Type.Should().Be(TokenType.Whitespace);
+            target.ScanNext().Type.Should().Be(TokenType.Whitespace);
+            target.ScanNext().Should().Match(TokenType.Comment, " This is a comment");
+            target.ScanNext().Type.Should().Be(TokenType.Whitespace);
         }
 
         [Test]
@@ -47,9 +47,9 @@ namespace Scoop.Tests.Tokenizing
             var target = new TokenScanner(@"
                 /* This is a comment */
 ");
-            target.ParseNext().Type.Should().Be(TokenType.Whitespace);
-            target.ParseNext().Should().Match(TokenType.Comment, " This is a comment ");
-            target.ParseNext().Type.Should().Be(TokenType.Whitespace);
+            target.ScanNext().Type.Should().Be(TokenType.Whitespace);
+            target.ScanNext().Should().Match(TokenType.Comment, " This is a comment ");
+            target.ScanNext().Type.Should().Be(TokenType.Whitespace);
         }
 
         [Test]
@@ -61,53 +61,53 @@ is
 a
 comment */
 ");
-            target.ParseNext().Type.Should().Be(TokenType.Whitespace);
-            target.ParseNext().Should().Match(TokenType.Comment, @" This
+            target.ScanNext().Type.Should().Be(TokenType.Whitespace);
+            target.ScanNext().Should().Match(TokenType.Comment, @" This
 is
 a
 comment ");
-            target.ParseNext().Type.Should().Be(TokenType.Whitespace);
+            target.ScanNext().Type.Should().Be(TokenType.Whitespace);
         }
 
         [Test]
         public void ParseNext_IntegerDivideInteger()
         {
             var target = new TokenScanner(@"1/2");
-            target.ParseNext().Should().Match(TokenType.Integer, "1");
-            target.ParseNext().Should().Match(TokenType.Operator, "/");
-            target.ParseNext().Should().Match(TokenType.Integer, "2");
+            target.ScanNext().Should().Match(TokenType.Integer, "1");
+            target.ScanNext().Should().Match(TokenType.Operator, "/");
+            target.ScanNext().Should().Match(TokenType.Integer, "2");
         }
 
         [Test]
         public void ParseNext_ClassDefinition()
         {
             var target = new TokenScanner(@"public class MyClass { }");
-            target.ParseNext().Should().Match(TokenType.Keyword, "public");
-            target.ParseNext().Should().Match(TokenType.Whitespace, " ");
-            target.ParseNext().Should().Match(TokenType.Keyword, "class");
-            target.ParseNext().Should().Match(TokenType.Whitespace, " ");
-            target.ParseNext().Should().Match(TokenType.Identifier, "MyClass");
-            target.ParseNext().Should().Match(TokenType.Whitespace, " ");
-            target.ParseNext().Should().Match(TokenType.Operator, "{");
-            target.ParseNext().Should().Match(TokenType.Whitespace, " ");
-            target.ParseNext().Should().Match(TokenType.Operator, "}");
+            target.ScanNext().Should().Match(TokenType.Keyword, "public");
+            target.ScanNext().Should().Match(TokenType.Whitespace, " ");
+            target.ScanNext().Should().Match(TokenType.Keyword, "class");
+            target.ScanNext().Should().Match(TokenType.Whitespace, " ");
+            target.ScanNext().Should().Match(TokenType.Identifier, "MyClass");
+            target.ScanNext().Should().Match(TokenType.Whitespace, " ");
+            target.ScanNext().Should().Match(TokenType.Operator, "{");
+            target.ScanNext().Should().Match(TokenType.Whitespace, " ");
+            target.ScanNext().Should().Match(TokenType.Operator, "}");
         }
 
         [Test]
         public void ParseNext_MethodDefinition()
         {
             var target = new TokenScanner(@"public void MyMethod() { }");
-            target.ParseNext().Should().Match(TokenType.Keyword, "public");
-            target.ParseNext().Should().Match(TokenType.Whitespace, " ");
-            target.ParseNext().Should().Match(TokenType.Identifier, "void");
-            target.ParseNext().Should().Match(TokenType.Whitespace, " ");
-            target.ParseNext().Should().Match(TokenType.Identifier, "MyMethod");
-            target.ParseNext().Should().Match(TokenType.Operator, "(");
-            target.ParseNext().Should().Match(TokenType.Operator, ")");
-            target.ParseNext().Should().Match(TokenType.Whitespace, " ");
-            target.ParseNext().Should().Match(TokenType.Operator, "{");
-            target.ParseNext().Should().Match(TokenType.Whitespace, " ");
-            target.ParseNext().Should().Match(TokenType.Operator, "}");
+            target.ScanNext().Should().Match(TokenType.Keyword, "public");
+            target.ScanNext().Should().Match(TokenType.Whitespace, " ");
+            target.ScanNext().Should().Match(TokenType.Identifier, "void");
+            target.ScanNext().Should().Match(TokenType.Whitespace, " ");
+            target.ScanNext().Should().Match(TokenType.Identifier, "MyMethod");
+            target.ScanNext().Should().Match(TokenType.Operator, "(");
+            target.ScanNext().Should().Match(TokenType.Operator, ")");
+            target.ScanNext().Should().Match(TokenType.Whitespace, " ");
+            target.ScanNext().Should().Match(TokenType.Operator, "{");
+            target.ScanNext().Should().Match(TokenType.Whitespace, " ");
+            target.ScanNext().Should().Match(TokenType.Operator, "}");
         }
     }
 }

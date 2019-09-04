@@ -12,14 +12,14 @@ namespace Scoop.Tests.Tokenizing
         public void ParseNext_CSharpLiteral_Simple()
         {
             var target = new TokenScanner(@"c# {obj.Method();}");
-            target.ParseNext().Should().Match(TokenType.CSharpLiteral, "obj.Method();");
+            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "obj.Method();");
         }
 
         [Test]
         public void ParseNext_CSharpLiteral_Braces()
         {
             var target = new TokenScanner(@"c# {if(x==2){y();}}");
-            target.ParseNext().Should().Match(TokenType.CSharpLiteral, "if(x==2){y();}");
+            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "if(x==2){y();}");
         }
 
         [Test]
@@ -27,7 +27,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var target = new TokenScanner(@"c# {'a'}");
 
-            target.ParseNext().Should().Match(TokenType.CSharpLiteral, "'a'");
+            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "'a'");
         }
 
         [Test]
@@ -35,7 +35,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var target = new TokenScanner(@"c# {'\n'}");
 
-            target.ParseNext().Should().Match(TokenType.CSharpLiteral, "'\\n'");
+            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "'\\n'");
         }
 
         [Test]
@@ -43,7 +43,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var target = new TokenScanner(@"c# {""quoted""}");
 
-            target.ParseNext().Should().Match(TokenType.CSharpLiteral, "\"quoted\"");
+            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "\"quoted\"");
         }
 
         [Test]
@@ -51,7 +51,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var target = new TokenScanner(@"c# {""quo\""ted""}");
 
-            target.ParseNext().Should().Match(TokenType.CSharpLiteral, "\"quo\\\"ted\"");
+            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "\"quo\\\"ted\"");
         }
 
         [Test]
@@ -59,7 +59,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var target = new TokenScanner(@"c# {""quo}ted""}");
 
-            target.ParseNext().Should().Match(TokenType.CSharpLiteral, "\"quo}ted\"");
+            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "\"quo}ted\"");
         }
 
         [Test]
@@ -67,7 +67,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var target = new TokenScanner(@"c# {@""quoted""}");
 
-            target.ParseNext().Should().Match(TokenType.CSharpLiteral, "@\"quoted\"");
+            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "@\"quoted\"");
         }
 
         [Test]
@@ -75,7 +75,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var target = new TokenScanner(@"c# {@""quo""""ted""}");
 
-            target.ParseNext().Should().Match(TokenType.CSharpLiteral, "@\"quo\"\"ted\"");
+            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "@\"quo\"\"ted\"");
         }
 
         [Test]
@@ -83,7 +83,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var target = new TokenScanner(@"c# {@""quo\""""ted""}");
 
-            target.ParseNext().Should().Match(TokenType.CSharpLiteral, "@\"quo\\\"\"ted\"");
+            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "@\"quo\\\"\"ted\"");
         }
     }
 }

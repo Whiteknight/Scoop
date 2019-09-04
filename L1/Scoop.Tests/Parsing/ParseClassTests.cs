@@ -325,7 +325,7 @@ public class MyClass
                                 {
                                     Expression = new MemberAccessNode
                                     {
-                                        Instance = new StringNode("test"),
+                                        Instance = new StringNode("\"test\""),
                                         MemberName = new IdentifierNode("Length")
                                     }
                                 }

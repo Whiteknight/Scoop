@@ -156,5 +156,85 @@ namespace Scoop.Tests.Parsing
                 }
             );
         }
+
+        [Test]
+        public void String_Test()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression("\"test\"");
+            result.Should().MatchAst(
+                new StringNode("\"test\"")
+            );
+        }
+
+        [Test]
+        public void String_Block()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression("@\"test\"");
+            result.Should().MatchAst(
+                new StringNode("@\"test\"")
+            );
+        }
+
+        [Test]
+        public void String_Interpolated()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression("$\"test\"");
+            result.Should().MatchAst(
+                new StringNode("$\"test\"")
+            );
+        }
+
+        [Test]
+        public void String_Interpolated_Int()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression("$\"{5}\"");
+            result.Should().MatchAst(
+                new StringNode("$\"{5}\"")
+            );
+        }
+
+        [Test]
+        public void String_Interpolated_NestedString()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression("$\"{\"test\"}\"");
+            result.Should().MatchAst(
+                new StringNode("$\"{\"test\"}\"")
+            );
+        }
+
+        [Test]
+        public void String_Interpolated_NestedBlockString()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression("$\"{@\"test\"}\"");
+            result.Should().MatchAst(
+                new StringNode("$\"{@\"test\"}\"")
+            );
+        }
+
+        [Test]
+        public void String_Interpolated_NestedInterpolated()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression("$\"{$\"test\"}\"");
+            result.Should().MatchAst(
+                new StringNode("$\"{$\"test\"}\"")
+            );
+        }
+
+        [Test]
+        public void String_InterpolatedBlock()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression("$@\"test\"");
+            result.Should().MatchAst(
+                new StringNode("$@\"test\"")
+            );
+        }
     }
 }
