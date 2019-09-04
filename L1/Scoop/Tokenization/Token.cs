@@ -66,7 +66,7 @@ namespace Scoop.Tokenization
             return false;
         }
 
-        public string ToString()
+        public override string ToString()
         {
             return $"{Type}:{Value}";
         }

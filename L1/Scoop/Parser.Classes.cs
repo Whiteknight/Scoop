@@ -219,6 +219,8 @@ namespace Scoop
         {
             t.Expect(TokenType.Operator, "{");
             var statements = new List<AstNode>();
+            if (t.NextIs(TokenType.Operator, "}", true))
+                return statements;
             while (true)
             {
                 var stmt = ParseStatement(t);

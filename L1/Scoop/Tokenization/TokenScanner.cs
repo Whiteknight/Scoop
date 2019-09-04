@@ -27,6 +27,9 @@ namespace Scoop.Tokenization
             // Arithmetic operators
             _operators.Add("+", "-", "/", "*", "&", "|", "^");
 
+            // Logical operators
+            _operators.Add("&&", "||");
+
             // Unary ~ and !. (Unary - and + are covered above)
             _operators.Add("~", "!");
 
@@ -315,27 +318,16 @@ namespace Scoop.Tokenization
 
             c = _chars.GetNext();
             if (c == 'F')
-            {
-                chars.Add(c);
                 return new Token(new string(chars.ToArray()), TokenType.Float, l);
-            }
             if (c == 'M')
-            {
-                chars.Add(c);
                 return new Token(new string(chars.ToArray()), TokenType.Decimal, l);
-            }
             if (c == 'L' && !hasDecimal)
-            {
-                chars.Add(c);
                 return new Token(new string(chars.ToArray()), TokenType.Long, l);
-            }
-            if (c == 'U')
+            if (c == 'U' && !hasDecimal)
             {
-                chars.Add(c);
                 c = _chars.Peek();
                 if (c == 'L')
                 {
-                    chars.Add(c);
                     _chars.GetNext();
                     return new Token(new string(chars.ToArray()), TokenType.ULong, l);
                 }
@@ -397,10 +389,8 @@ namespace Scoop.Tokenization
             var recurse = ReadOperator(nextOp);
             if (recurse != null)
                 return recurse;
-            _chars.PutBack(x);
-            if (!string.IsNullOrEmpty(op.Operator))
-                return op.Operator;
-            return null;
+
+            throw ParsingException.UnexpectedCharacter(x, _chars.GetLocation());
         }
     }
 }

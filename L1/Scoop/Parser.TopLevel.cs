@@ -16,12 +16,6 @@ namespace Scoop
                 if (lookahead.Type == TokenType.EndOfInput)
                     break;
 
-                if (lookahead.Is(TokenType.Operator, ";"))
-                {
-                    t.GetNext();
-                    continue;
-                }
-
                 if (lookahead.IsKeyword("using"))
                 {
                     var directive = ParseUsingDirective(t);

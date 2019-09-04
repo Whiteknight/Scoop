@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
-using Scoop.Transpiler;
 
 namespace Scoop.Tests.Parsing
 {
@@ -158,6 +156,40 @@ public void TestMethod(int a, double b, string c)
                                 Name = new IdentifierNode("string")
                             },
                             Name = new IdentifierNode("c")
+                        }
+                    },
+                    Statements = new List<AstNode>()
+                }
+            );
+        }
+
+        [Test]
+        public void ParseMethod_DefaultParameter()
+        {
+            var target = new Parser();
+            var result = target.ParseConstructorOrMethod(@"
+public void TestMethod(int a = 5)
+{
+}");
+            result.Should().MatchAst(
+                new MethodNode
+                {
+                    Name = new IdentifierNode("TestMethod"),
+                    AccessModifier = new KeywordNode("public"),
+                    ReturnType = new TypeNode
+                    {
+                        Name = new IdentifierNode("void")
+                    },
+                    Parameters = new List<AstNode>
+                    {
+                        new ParameterNode
+                        {
+                            Type = new TypeNode
+                            {
+                                Name = new IdentifierNode("int")
+                            },
+                            Name = new IdentifierNode("a"),
+                            DefaultValue = new IntegerNode(5)
                         }
                     },
                     Statements = new List<AstNode>()

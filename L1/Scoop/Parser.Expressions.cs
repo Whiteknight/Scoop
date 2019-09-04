@@ -28,7 +28,7 @@ namespace Scoop
             var left = ParseExpressionLambda(t);
             if (t.Peek().IsOperator(","))
             {
-                var items = new ListNode();
+                var items = new List<AstNode>();
                 items.Add(left);
                 while(t.Peek().IsOperator(","))
                 {
@@ -37,7 +37,11 @@ namespace Scoop
                     items.Add(next);
                 }
 
-                return items;
+                return new ListNode
+                {
+                    Location = left.Location,
+                    Items = items
+                };
             }
 
             return left;
@@ -51,11 +55,11 @@ namespace Scoop
             var l3 = t.GetNext();
             if (l1.IsOperator("(") && l2.IsOperator(")") && l3.IsOperator("=>"))
             {
-                var lambdaToken = t.GetNext();
+                var lambdaToken = l3;
                 var lambdaNode = new LambdaNode
                 {
                     Location = lambdaToken.Location,
-                    Parameter = new ListNode { Items = new List<AstNode>() }
+                    Parameters = new List<AstNode>()
                 };
 
                 if (t.Peek().IsOperator("{"))
@@ -80,8 +84,11 @@ namespace Scoop
                 var lambdaNode = new LambdaNode
                 {
                     Location = lambdaToken.Location,
-                    Parameter = expr
                 };
+                if (expr is IdentifierNode)
+                    lambdaNode.Parameters = new List<AstNode> { expr };
+                if (expr is ListNode parameterList)
+                    lambdaNode.Parameters = parameterList.Items;
 
                 if (t.Peek().IsOperator("{"))
                     lambdaNode.Statements = ParseNormalMethodBody(t);
@@ -502,7 +509,15 @@ namespace Scoop
                 return ParseNew(t);
 
             if (lookahead.IsOperator("("))
-                return ParseParenthesis(t, x => ParseExpression(t)).Expression;
+            {
+                t.Expect(TokenType.Operator, "(");
+                if (t.Peek().IsOperator(")"))
+                    throw ParsingException.CouldNotParseRule(nameof(ParseExpressionTerminal), t.Peek());
+
+                var value = ParseExpression(t);
+                t.Expect(TokenType.Operator, ")");
+                return value;
+            }
 
             throw ParsingException.CouldNotParseRule(nameof(ParseExpressionTerminal), lookahead);
         }
@@ -608,28 +623,6 @@ namespace Scoop
                 Location = propertyToken.Location,
                 Property = new IdentifierNode(propertyToken),
                 Value = value
-            };
-        }
-
-        private ParenthesisNode<TNode> ParseParenthesis<TNode>(Tokenizer t, Func<Tokenizer, TNode> parse)
-            where TNode : AstNode
-        {
-            var openingParen = t.Expect(TokenType.Operator, "(");
-            if (t.Peek().IsOperator(")"))
-            {
-                t.GetNext();
-                return new ParenthesisNode<TNode>
-                {
-                    Location = openingParen.Location
-                };
-            }
-
-            var value = parse(t);
-            t.Expect(TokenType.Operator, ")");
-            return new ParenthesisNode<TNode>
-            {
-                Location = openingParen.Location,
-                Expression = value
             };
         }
     }

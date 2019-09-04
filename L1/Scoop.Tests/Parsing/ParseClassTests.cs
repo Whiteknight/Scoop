@@ -392,7 +392,7 @@ public class MyClass
             var result = target.ParseClass(@"
 public class MyClass<TA> 
 {
-    public TB MyMethod<TB>() 
+    public TB MyMethod<TB, TC>() 
     { 
         return default(TB);
     }
@@ -404,27 +404,19 @@ public class MyClass<TA>
                     Name = new IdentifierNode("MyClass"),
                     GenericTypeParameters = new List<AstNode>
                     {
-                        new TypeNode
-                        {
-                            Name = new IdentifierNode("TA")
-                        }
+                        new TypeNode("TA")
                     },
                     Members = new List<AstNode>
                     {
                         new MethodNode
                         {
                             AccessModifier = new KeywordNode("public"),
-                            ReturnType = new TypeNode
-                            {
-                                Name = new IdentifierNode("TB")
-                            },
+                            ReturnType = new TypeNode("TB"),
                             Name = new IdentifierNode("MyMethod"),
                             GenericTypeParameters = new List<AstNode>
                             {
-                                new TypeNode
-                                {
-                                    Name = new IdentifierNode("TB")
-                                }
+                                new TypeNode("TB"),
+                                new TypeNode("TC")
                             },
                             Parameters = new List<AstNode>(),
                             Statements = new List<AstNode>
@@ -467,6 +459,33 @@ public class MyClass
                         {
                             AccessModifier = new KeywordNode("public"),
                             Name = new IdentifierNode("ChildClass"),
+                            Members = new List<AstNode>()
+                        }
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void ParseClass_NestedInterface()
+        {
+            var target = new Parser();
+            var result = target.ParseClass(@"
+public class MyClass 
+{ 
+    public interface ChildIFace { }
+}");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Name = new IdentifierNode("MyClass"),
+                    Members = new List<AstNode>
+                    {
+                        new InterfaceNode
+                        {
+                            AccessModifier = new KeywordNode("public"),
+                            Name = new IdentifierNode("ChildIFace"),
                             Members = new List<AstNode>()
                         }
                     }

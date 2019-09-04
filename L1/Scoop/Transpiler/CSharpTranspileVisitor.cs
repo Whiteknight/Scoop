@@ -315,7 +315,16 @@ namespace Scoop.Transpiler
         public AstNode VisitLambda(LambdaNode n)
         {
             Append("((");
-            Visit(n.Parameter);
+            if (n.Parameters.Any())
+            {
+                Visit(n.Parameters.First());
+                foreach (var p in n.Parameters.Skip(1))
+                {
+                    Append(", ");
+                    Visit(p);
+                }
+            }
+
             Append(") => ");
             if (n.Statements == null || !n.Statements.Any())
                 Append("{}");

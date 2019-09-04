@@ -96,8 +96,6 @@ namespace Scoop.Tokenization
                         // basic state-machine to try and scan through this block
                         if (c == '}')
                         {
-                            if (nesting.Count == 0)
-                                return;
                             PopState();
                             continue;
                         }
@@ -175,7 +173,6 @@ namespace Scoop.Tokenization
                             var d = _chars.GetNext();
                             if (d == '"')
                             {
-                                chars.Add(c);
                                 chars.Add(d);
                                 continue;
                             }
@@ -192,7 +189,6 @@ namespace Scoop.Tokenization
                             var d = _chars.GetNext();
                             if (d == '"')
                             {
-                                chars.Add(c);
                                 chars.Add(d);
                                 continue;
                             }
