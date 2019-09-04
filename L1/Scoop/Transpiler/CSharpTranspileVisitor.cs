@@ -6,6 +6,15 @@ namespace Scoop.Transpiler
 {
     public partial class CSharpTranspileVisitor : IAstNodeVisitorImplementation
     {
+        public AstNode VisitArrayInitializer(ArrayInitializerNode n)
+        {
+            Append("[");
+            Visit(n.Key);
+            Append("] = ");
+            Visit(n.Value);
+            return n;
+        }
+
         public AstNode VisitArrayType(ArrayTypeNode n)
         {
             Visit(n.ElementType);
@@ -287,6 +296,16 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public AstNode VisitKeyValueInitializer(KeyValueInitializerNode n)
+        {
+            Append("{");
+            Visit(n.Key);
+            Append(", ");
+            Visit(n.Value);
+            Append("}");
+            return n;
+        }
+
         public AstNode VisitKeyword(KeywordNode n)
         {
             Append(n.Keyword);
@@ -472,18 +491,38 @@ namespace Scoop.Transpiler
         {
             Append("new ");
             Visit(n.Type);
-            Append("(");
-            if (n.Arguments != null && n.Arguments.Any())
+            if (!n.Arguments.IsNullOrEmpty() || n.Initializers.IsNullOrEmpty())
             {
-                Visit(n.Arguments[0]);
-                for (int i = 1; i < n.Arguments.Count; i++)
+                Append("(");
+                if (n.Arguments != null && n.Arguments.Any())
                 {
-                    Append(", ");
-                    Visit(n.Arguments[i]);
+                    Visit(n.Arguments[0]);
+                    for (int i = 1; i < n.Arguments.Count; i++)
+                    {
+                        Append(", ");
+                        Visit(n.Arguments[i]);
+                    }
                 }
+
+                Append(")");
             }
-            Append(")");
-            // TODO: Initializers
+
+            if (!n.Initializers.IsNullOrEmpty())
+            {
+                Append(" {");
+                IncreaseIndent();
+                AppendLineAndIndent();
+                Visit(n.Initializers[0]);
+                for (int i = 1; i < n.Initializers.Count; i++)
+                {
+                    AppendLineAndIndent(",");
+                    Visit(n.Initializers[i]);
+                }
+                DecreaseIndent();
+                AppendLineAndIndent();
+                Append("}");
+            }
+
             return n;
         }
 
@@ -528,6 +567,14 @@ namespace Scoop.Transpiler
         {
             Visit(n.Operator);
             Visit(n.Right);
+            return n;
+        }
+
+        public AstNode VisitPropertyInitializer(PropertyInitializerNode n)
+        {
+            Visit(n.Property);
+            Append(" = ");
+            Visit(n.Value);
             return n;
         }
 

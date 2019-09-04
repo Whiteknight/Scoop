@@ -7,6 +7,7 @@
 
     public interface IAstNodeVisitorImplementation
     {
+        AstNode VisitArrayInitializer(ArrayInitializerNode n);
         AstNode VisitArrayType(ArrayTypeNode n);
         AstNode VisitCast(CastNode n);
         AstNode VisitCompilationUnit(CompilationUnitNode n);
@@ -26,6 +27,7 @@
         AstNode VisitInteger(IntegerNode n);
         AstNode VisitInterface(InterfaceNode n);
         AstNode VisitInvoke(InvokeNode n);
+        AstNode VisitKeyValueInitializer(KeyValueInitializerNode n);
         AstNode VisitKeyword(KeywordNode n);
         AstNode VisitLambda(LambdaNode n);
         AstNode VisitList(ListNode n);
@@ -43,6 +45,7 @@
 
         AstNode VisitPostfixOperation(PostfixOperationNode n);
         AstNode VisitPrefixOperation(PrefixOperationNode n);
+        AstNode VisitPropertyInitializer(PropertyInitializerNode n);
         AstNode VisitReturn(ReturnNode n);
         AstNode VisitString(StringNode n);
         AstNode VisitType(TypeNode n);

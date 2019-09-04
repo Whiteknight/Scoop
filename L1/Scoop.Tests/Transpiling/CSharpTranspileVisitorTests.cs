@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
@@ -287,6 +288,50 @@ namespace XYZ
             var method = type.GetMethod("MyMethod");
             var result = (int)method.Invoke(myObj, new object[] { new List<List<int>> { new List<int> { 5 } } });
             result.Should().Be(5);
+        }
+
+        [Test]
+        public void Compile_Initializers()
+        {
+            var ast = new Parser().ParseUnit(@"
+using System.Collections.Generic;
+using System.Linq;
+
+namespace XYZ 
+{
+    public class MyClass 
+    {
+        c# {
+            public class TestClass {
+                public int Value { get; set; }
+            }
+        }
+
+        public List<object> MyMethod()
+        {
+            return new List<object> {
+                new Dictionary<int, string> { { 1, ""test"" } },
+                new TestClass { Value = 5 }
+            };
+        }
+    }
+}");
+
+            var assembly = TestCompiler.Compile(ast);
+            var type = assembly.ExportedTypes.First();
+            var myObj = Activator.CreateInstance(type);
+            var method = type.GetMethod("MyMethod");
+            var result = (List<object>)method.Invoke(myObj, new object[0]);
+            result.Count.Should().Be(2);
+            (result[0] as Dictionary<int, string>).Should().BeEquivalentTo(new Dictionary<int, string> { { 1, "test" } });
+            var innerObj = result[1];
+            var innerObjType = innerObj.GetType();
+            var prop = innerObjType.GetProperty("Value");
+            var intValue = (int) prop.GetValue(innerObj);
+            intValue.Should().Be(5);
+
+            // TODO: Indexer initializer syntax "[0] = ..." parses and serializes correctly but I can't
+            // find a test scenario which actually works in Roslyn.
         }
     }
 }

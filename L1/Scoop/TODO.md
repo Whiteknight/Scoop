@@ -2,7 +2,6 @@
 
 ## L1 Items for L2 Cutover:
 
-1. Object initializers
 1. "$" and "@" string literals
 1. Generic type constraints "where" type ":" constaint
    1. Classes

@@ -16,6 +16,13 @@ namespace Scoop
             return ParseExpressionComma(t);
         }
 
+        private AstNode ParseExpressionNonComma(Tokenizer t)
+        {
+            // Top-level expression parsing method for situations where the comma operator is not
+            // allowed.
+            return ParseExpressionLambda(t);
+        }
+
         private AstNode ParseExpressionComma(Tokenizer t)
         {
             var left = ParseExpressionLambda(t);
@@ -410,6 +417,8 @@ namespace Scoop
 
         private List<AstNode> ParseArgumentList(Tokenizer t)
         {
+            if (!t.NextIs(TokenType.Operator, "("))
+                return new List<AstNode>();
             t.Expect(TokenType.Operator, "(");
             var args = new List<AstNode>();
             while (true)
@@ -501,13 +510,104 @@ namespace Scoop
         private AstNode ParseNew(Tokenizer t)
         {
             var newToken = t.GetNext();
+            // TODO: new { } anonymous object syntax
             var typeNode = ParseType(t);
             var args = ParseArgumentList(t);
+            var inits = ParseInitializers(t);
             return new NewNode
             {
                 Location = newToken.Location,
                 Type = typeNode,
-                Arguments = args
+                Arguments = args,
+                Initializers = inits
+            };
+        }
+
+        private List<AstNode> ParseInitializers(Tokenizer t)
+        {
+            if (!t.NextIs(TokenType.Operator, "{", true))
+                return null;
+            var inits = new List<AstNode>();
+            while (true)
+            {
+                var lookahead = t.Peek();
+                if (lookahead.IsOperator("{"))
+                {
+                    var dictInit = ParseKeyValueInitializer(t);
+                    inits.Add(dictInit);
+                }
+                else if (lookahead.IsOperator("["))
+                {
+                    var arrayInit = ParseArrayInitializer(t);
+                    inits.Add(arrayInit);
+                }
+                else
+                {
+                    t.Advance();
+                    var l2 = t.Peek();
+                    t.PutBack(lookahead);
+                    if (lookahead.IsType(TokenType.Identifier) && l2.IsOperator("="))
+                    {
+                        var init = ParsePropertyInitializer(t);
+                        inits.Add(init);
+                    }
+                    else
+                    {
+                        var init = ParseExpressionNonComma(t);
+                        inits.Add(init);
+                    }
+                }
+
+                if (t.NextIs(TokenType.Operator, ",", true))
+                    continue;
+                break;
+            }
+
+            t.Expect(TokenType.Operator, "}");
+            return inits;
+        }
+
+        private AstNode ParseKeyValueInitializer(Tokenizer t)
+        {
+            var startToken = t.Expect(TokenType.Operator, "{");
+            var key = ParseExpressionNonComma(t);
+            t.Expect(TokenType.Operator, ",");
+            var value = ParseExpressionNonComma(t);
+            t.Expect(TokenType.Operator, "}");
+            return new KeyValueInitializerNode
+            {
+                Location = startToken.Location,
+                Key = key,
+                Value = value
+            };
+        }
+
+        private AstNode ParseArrayInitializer(Tokenizer t)
+        {
+            var startToken = t.Expect(TokenType.Operator, "[");
+            // TODO: multi-dimentional arrays "[" 0, 1 "]" "=" ...
+            var intToken = t.Expect(TokenType.Integer);
+            t.Expect(TokenType.Operator, "]");
+            t.Expect(TokenType.Operator, "=");
+            var value = ParseExpressionNonComma(t);
+            return new ArrayInitializerNode
+            {
+                Location = startToken.Location,
+                Key = new IntegerNode(intToken),
+                Value = value
+            };
+        }
+
+        private AstNode ParsePropertyInitializer(Tokenizer t)
+        {
+            var propertyToken = t.Expect(TokenType.Identifier);
+            t.Expect(TokenType.Operator, "=");
+            var value = ParseExpressionNonComma(t);
+            return new PropertyInitializerNode
+            {
+                Location = propertyToken.Location,
+                Property = new IdentifierNode(propertyToken),
+                Value = value
             };
         }
 
