@@ -532,17 +532,17 @@ namespace Scoop
         private AstNode ParseNew(Tokenizer t)
         {
             var newToken = t.GetNext();
-            // TODO: new { } anonymous object syntax
-            var typeNode = ParseType(t);
-            var args = ParseArgumentList(t);
-            var inits = ParseInitializers(t);
-            return new NewNode
+            var newNode = new NewNode
             {
-                Location = newToken.Location,
-                Type = typeNode,
-                Arguments = args,
-                Initializers = inits
+                Location = newToken.Location
             };
+            if (!t.NextIs(TokenType.Operator, "{"))
+            {
+                newNode.Type = ParseType(t);
+                newNode.Arguments = ParseArgumentList(t);
+            }
+            newNode.Initializers = ParseInitializers(t);
+            return newNode;
         }
 
         private List<AstNode> ParseInitializers(Tokenizer t)

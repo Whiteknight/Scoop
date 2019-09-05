@@ -498,22 +498,33 @@ namespace Scoop.Transpiler
 
         public AstNode VisitNew(NewNode n)
         {
-            Append("new ");
-            Visit(n.Type);
-            if (!n.Arguments.IsNullOrEmpty() || n.Initializers.IsNullOrEmpty())
+            Append("new");
+            // Tries to output one of the following forms:
+            // new {+}
+            // new MyType(*)
+            // new MyType(+) {+}
+            // new MyType {+}
+            if (n.Type != null)
             {
-                Append("(");
-                if (n.Arguments != null && n.Arguments.Any())
+                Append(" ");
+                Visit(n.Type);
+                // If we have arguments, output parens
+                // If we have no arguments AND we have no initializers, output empty parens
+                if (!n.Arguments.IsNullOrEmpty() || n.Initializers.IsNullOrEmpty())
                 {
-                    Visit(n.Arguments[0]);
-                    for (int i = 1; i < n.Arguments.Count; i++)
+                    Append("(");
+                    if (n.Arguments != null && n.Arguments.Any())
                     {
-                        Append(", ");
-                        Visit(n.Arguments[i]);
+                        Visit(n.Arguments[0]);
+                        for (int i = 1; i < n.Arguments.Count; i++)
+                        {
+                            Append(", ");
+                            Visit(n.Arguments[i]);
+                        }
                     }
-                }
 
-                Append(")");
+                    Append(")");
+                }
             }
 
             if (!n.Initializers.IsNullOrEmpty())

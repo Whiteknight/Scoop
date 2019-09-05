@@ -176,5 +176,26 @@ namespace Scoop.Tests.Parsing
                 }
             );
         }
+
+        [Test]
+        public void New_AnonymousType()
+        {
+            var target = new Parser();
+            var result = target.ParseStatement(@"new { A = ""test"" };");
+            result.Should().MatchAst(
+                new NewNode
+                {
+                    Initializers = new List<AstNode>
+                    {
+                        new PropertyInitializerNode
+                        {
+                            Property = new IdentifierNode("A"),
+                            Value = new StringNode("\"test\"")
+                        }
+                    }
+
+                }
+            );
+        }
     }
 }
