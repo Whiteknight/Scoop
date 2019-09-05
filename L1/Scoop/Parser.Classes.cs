@@ -46,30 +46,26 @@ namespace Scoop
             var members = new List<AstNode>();
             while (true)
             {
-                var lookahead = t.GetNext();
-                if (lookahead.Is(TokenType.Operator, "}"))
-                {
-                    t.PutBack(lookahead);
+                var lookaheads = t.Peek(2);
+                if (lookaheads[0].Is(TokenType.Operator, "}"))
                     break;
-                }
 
-                if (lookahead.IsType(TokenType.CSharpLiteral))
+                if (lookaheads[0].IsType(TokenType.CSharpLiteral))
                 {
-                    members.Add(new CSharpNode(lookahead));
+                    t.Advance();
+                    members.Add(new CSharpNode(lookaheads[0]));
                     continue;
                 }
 
-                if (lookahead.IsKeyword("public", "private"))
+                if (lookaheads[0].IsKeyword("public", "private"))
                 {
-                    var lookahead2 = t.Peek();
-                    t.PutBack(lookahead);
-                    if (lookahead2.IsKeyword("class"))
+                    if (lookaheads[1].IsKeyword("class"))
                     {
                         var nestedClass = ParseClass(t);
                         members.Add(nestedClass);
                         continue;
                     }
-                    if (lookahead2.IsKeyword("interface"))
+                    if (lookaheads[1].IsKeyword("interface"))
                     {
                         var nestedClass = ParseInterface(t);
                         members.Add(nestedClass);
@@ -81,7 +77,7 @@ namespace Scoop
                     continue;
                 }
 
-                throw ParsingException.CouldNotParseRule(nameof(ParseClassBody), lookahead);
+                throw ParsingException.CouldNotParseRule(nameof(ParseClassBody), lookaheads[0]);
             }
 
             return members;

@@ -92,8 +92,7 @@ namespace Scoop
                 Name = new IdentifierNode(nameToken)
             };
 
-            var lookahead = t.Peek();
-            if (!lookahead.Is(TokenType.Operator, "="))
+            if (!t.Peek().Is(TokenType.Operator, "="))
                 return declareNode;
 
             var assignmentToken = t.GetNext();

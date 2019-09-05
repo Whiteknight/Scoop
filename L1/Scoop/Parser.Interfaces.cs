@@ -46,8 +46,7 @@ namespace Scoop
             var members = new List<AstNode>();
             while (true)
             {
-                var lookahead = t.Peek();
-                if (lookahead.IsOperator("}"))
+                if (t.Peek().IsOperator("}"))
                     break;
                 var returnType = ParseType(t);
                 var nameToken = t.GetNext();

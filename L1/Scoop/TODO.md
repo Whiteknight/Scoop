@@ -8,7 +8,10 @@
    1. Methods
 1. ":" "this" "(" args ")" syntax for constructors
 1. "using" "(" Non-Assignment Expression ")"
-1. Improved test coverage
+1. "async" and "await"
+1. "new" "{" "}" anonymous object syntax
+1. enums
+1. Comments and cleanups for parser rules
 
 ## L2 Items
 

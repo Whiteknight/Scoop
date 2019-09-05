@@ -22,6 +22,7 @@ namespace Scoop
                 {
                     t.Advance();
                     // TODO: Size
+                    // TODO: "[" a, b, c "]" multi-dimensional array syntax
                     t.Expect(TokenType.Operator, "]");
                     type = new ArrayTypeNode
                     {
@@ -64,8 +65,7 @@ namespace Scoop
             if (typeNode == null)
                 return null;
 
-            var lookahead = t.Peek();
-            if (lookahead.IsOperator("<"))
+            if (t.Peek().IsOperator("<"))
             {
                 t.Advance();
                 typeNode.GenericArguments = new List<AstNode>();

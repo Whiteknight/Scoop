@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
@@ -49,16 +48,16 @@ namespace Scoop
 
         private AstNode ParseExpressionLambda(Tokenizer t)
         {
-            // "() =>" case, which the expression parser won't deal with
-            var l1 = t.GetNext();
-            var l2 = t.GetNext();
-            var l3 = t.GetNext();
-            if (l1.IsOperator("(") && l2.IsOperator(")") && l3.IsOperator("=>"))
+            // "(" ")" "=>" ( <expression> | "{" <methodBody> "}" )
+            var lookaheads = t.Peek(3);
+            if (lookaheads[0].IsOperator("(") && lookaheads[1].IsOperator(")") && lookaheads[2].IsOperator("=>"))
             {
-                var lambdaToken = l3;
+                var startToken = t.Expect(TokenType.Operator, "(");
+                t.Expect(TokenType.Operator, ")");
+                t.Expect(TokenType.Operator, "=>");
                 var lambdaNode = new LambdaNode
                 {
-                    Location = lambdaToken.Location,
+                    Location = startToken.Location,
                     Parameters = new List<AstNode>()
                 };
 
@@ -72,14 +71,14 @@ namespace Scoop
 
                 return lambdaNode;
             }
-            t.PutBack(l3);
-            t.PutBack(l2);
-            t.PutBack(l1);
 
-            // Otherwise parse the expression and see if it looks like the start of a lambda
+            // <assignmentExpression>
+            // <Identifier> "=>" ( <expression> | "{" <methodBody> "}" )
+            // "(" <identifierList> ")"  "=>" ( <expression> | "{" <methodBody> "}" )
             var expr = ParseExpressionAssignment(t);
             if ((expr is IdentifierNode || expr is ListNode) && t.Peek().IsOperator("=>"))
             {
+                // TODO: if expr is a ListNode, test that all elements are IdentifierNodes
                 var lambdaToken = t.GetNext();
                 var lambdaNode = new LambdaNode
                 {
@@ -127,6 +126,8 @@ namespace Scoop
 
         private AstNode ParseExpressionConditional(Tokenizer t)
         {
+            // <coalesceExpression>
+            // <coalesceExpression> "?" <coalesceExpression> ":" <coalesceExpression>
             var left = ParseExpressionCoalesce(t);
             while (t.Peek().IsOperator("?"))
             {
@@ -148,6 +149,8 @@ namespace Scoop
 
         private AstNode ParseExpressionCoalesce(Tokenizer t)
         {
+            // <logicalExpression>
+            // <logicalExpression> "??" <logicalExpression>
             var left = ParseExpressionLogical(t);
             while (t.Peek().IsOperator("??"))
             {
@@ -314,6 +317,7 @@ namespace Scoop
 
         private bool IsGenericTypeArgument(Tokenizer t)
         {
+            // TODO: Needs improvement to be more robust and correct
             var putbacks = new Stack<Token>();
             int angleBracketDepth = 0;
             bool success = true;
@@ -382,6 +386,7 @@ namespace Scoop
                     {
                         Location = lookahead.Location,
                         Instance = current,
+                        // TODO: Instead of a bool here, use an OperatorNode
                         IgnoreNulls = lookahead.Value == "?.",
                         MemberName = new IdentifierNode(identifier)
                     };
@@ -478,39 +483,41 @@ namespace Scoop
             // Some of these "terminal" values may themselves be productions, but
             // are treated as a single value for the purposes of the expression parser
             // "true" | "false" | "null" | <Identifier> | <String> | <Number> | <new> | "(" <Expression> ")"
-            var lookahead = t.Peek();
+            var lookahead = t.GetNext();
 
             if (lookahead.IsKeyword("true", "false", "null"))
-                return new KeywordNode(t.GetNext());
+                return new KeywordNode(lookahead);
 
             if (lookahead.IsType(TokenType.Identifier))
-                return new IdentifierNode(t.GetNext());
+                return new IdentifierNode(lookahead);
 
             if (lookahead.IsType(TokenType.String))
-                return new StringNode(t.GetNext());
+                return new StringNode(lookahead);
             if (lookahead.IsType(TokenType.Character))
-                return new CharNode(t.GetNext());
+                return new CharNode(lookahead);
             if (lookahead.IsType(TokenType.Integer))
-                return new IntegerNode(t.GetNext());
+                return new IntegerNode(lookahead);
             if (lookahead.IsType(TokenType.UInteger))
-                return new UIntegerNode(t.GetNext());
+                return new UIntegerNode(lookahead);
             if (lookahead.IsType(TokenType.Long))
-                return new LongNode(t.GetNext());
+                return new LongNode(lookahead);
             if (lookahead.IsType(TokenType.ULong))
-                return new ULongNode(t.GetNext());
+                return new ULongNode(lookahead);
             if (lookahead.IsType(TokenType.Decimal))
-                return new DecimalNode(t.GetNext());
+                return new DecimalNode(lookahead);
             if (lookahead.IsType(TokenType.Float))
-                return new FloatNode(t.GetNext());
+                return new FloatNode(lookahead);
             if (lookahead.IsType(TokenType.Double))
-                return new DoubleNode(t.GetNext());
+                return new DoubleNode(lookahead);
 
             if (lookahead.IsKeyword("new"))
+            {
+                t.PutBack(lookahead);
                 return ParseNew(t);
+            }
 
             if (lookahead.IsOperator("("))
             {
-                t.Expect(TokenType.Operator, "(");
                 if (t.Peek().IsOperator(")"))
                     throw ParsingException.CouldNotParseRule(nameof(ParseExpressionTerminal), t.Peek());
 
@@ -545,23 +552,20 @@ namespace Scoop
             var inits = new List<AstNode>();
             while (true)
             {
-                var lookahead = t.Peek();
-                if (lookahead.IsOperator("{"))
+                var lookaheads = t.Peek(2);
+                if (lookaheads[0].IsOperator("{"))
                 {
                     var dictInit = ParseKeyValueInitializer(t);
                     inits.Add(dictInit);
                 }
-                else if (lookahead.IsOperator("["))
+                else if (lookaheads[0].IsOperator("["))
                 {
                     var arrayInit = ParseArrayInitializer(t);
                     inits.Add(arrayInit);
                 }
                 else
                 {
-                    t.Advance();
-                    var l2 = t.Peek();
-                    t.PutBack(lookahead);
-                    if (lookahead.IsType(TokenType.Identifier) && l2.IsOperator("="))
+                    if (lookaheads[0].IsType(TokenType.Identifier) && lookaheads[1].IsOperator("="))
                     {
                         var init = ParsePropertyInitializer(t);
                         inits.Add(init);
