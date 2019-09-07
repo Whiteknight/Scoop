@@ -33,8 +33,12 @@ namespace Scoop.Transpiler
 
         public AstNode VisitConst(ConstNode n)
         {
-            Visit(n.AccessModifier ?? new KeywordNode("private"));
-            Append(" const ");
+            if (n.AccessModifier != null)
+            {
+                Visit(n.AccessModifier);
+                Append(" ");
+            }
+            Append("const ");
             Visit(n.Type);
             Append(" ");
             Visit(n.Name);

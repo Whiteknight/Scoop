@@ -276,5 +276,39 @@ public async Task TestMethod(Task t)
                 }
             );
         }
+
+        [Test]
+        public void ParseMethod_Const()
+        {
+            var target = new Parser();
+            var result = target.ParseClassMember(@"
+public int TestMethod()
+{
+    const int myValue = 5;
+    return myValue;
+}");
+            result.Should().MatchAst(
+                new MethodNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    ReturnType = new TypeNode("int"),
+                    Name = new IdentifierNode("TestMethod"),
+                    Parameters = new List<AstNode>(),
+                    Statements = new List<AstNode>
+                    {
+                        new ConstNode
+                        {
+                            Type = new TypeNode("int"),
+                            Name = new IdentifierNode("myValue"),
+                            Value = new IntegerNode(5)
+                        },
+                        new ReturnNode
+                        {
+                            Expression = new IdentifierNode("myValue")
+                        }
+                    }
+                }
+            );
+        }
     }
 }

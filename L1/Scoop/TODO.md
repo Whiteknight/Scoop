@@ -12,13 +12,13 @@ These items are required in L1 before we call it "complete" and cutover to L2.
 1. Comments and cleanups for parser rules
 1. Improve test coverage of transpiler
 1. enums
-1. "const" keyword in methods
 
 ## Items we might want in L1
 
 These items we do want to have, though it's not clear whether to put them in L1
 or save them for after L2 cutover
 
+1. Attributes (can go on classes, interfaces, fields, constructors,  methods, method return types, method parameters)
 1. "try"/"catch"/"when"/"finally"/re"throw;" (If we want these as-is, put them in L1. Otherwise, put a replacement in L2)
 1. partial methods?
 1. "params" keyword

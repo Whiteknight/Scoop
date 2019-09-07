@@ -39,6 +39,8 @@ namespace Scoop
                 return ParseReturn(t);
             if (lookahead.IsKeyword("var"))
                 return ParseDeclaration(t);
+            if (lookahead.IsKeyword("const"))
+                return ParseConstDeclaration(t);
 
             return ParseExpression(t);
         }
@@ -115,6 +117,20 @@ namespace Scoop
                 Operator = new OperatorNode(assignmentToken),
                 Right = expr
             };
+        }
+
+        private AstNode ParseConstDeclaration(Tokenizer t)
+        {
+            // "const" ("var" | <type>) <ident> "=" <expression>
+            var constNode = new ConstNode
+            {
+                Location = t.Expect(TokenType.Keyword, "const").Location,
+                Type = t.Peek().IsKeyword("var") ? new TypeNode(t.GetNext().Value) : ParseType(t),
+                Name = new IdentifierNode(t.Expect(TokenType.Identifier))
+            };
+            t.Expect(TokenType.Operator, "=");
+            constNode.Value = ParseExpression(t);
+            return constNode;
         }
     }
 }
