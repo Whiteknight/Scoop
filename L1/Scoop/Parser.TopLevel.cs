@@ -69,6 +69,8 @@ namespace Scoop
                     continue;
                 }
 
+                // TODO: struct, enum
+
                 throw ParsingException.CouldNotParseRule(nameof(ParseNamespace), lookahead);
             }
             t.Expect(TokenType.Operator, "}");

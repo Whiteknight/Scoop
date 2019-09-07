@@ -11,16 +11,15 @@ namespace Scoop
 
         private ClassNode ParseClass(Tokenizer t)
         {
-            var accessModifierToken = t.Expect(TokenType.Keyword, "public", "private");
-            t.Expect(TokenType.Keyword, "class");
-            var classNameToken = t.Expect(TokenType.Identifier);
-            var genericTypeParams = ParseGenericTypeParametersList(t);
             var classNode = new ClassNode
             {
-                AccessModifier = new KeywordNode(accessModifierToken),
-                Name = new IdentifierNode(classNameToken),
-                GenericTypeParameters = genericTypeParams,
+                AccessModifier = new KeywordNode(t.Expect(TokenType.Keyword, "public", "private")),
             };
+            if (t.Peek().IsKeyword("partial"))
+                classNode.Modifiers = new List<KeywordNode> { new KeywordNode(t.GetNext()) };
+            classNode.Type = new KeywordNode(t.Expect(TokenType.Keyword, "class", "struct"));
+            classNode.Name = new IdentifierNode(t.Expect(TokenType.Identifier));
+            classNode.GenericTypeParameters = ParseGenericTypeParametersList(t);
             if (t.NextIs(TokenType.Operator, ":", true))
             {
                 classNode.Interfaces = new List<AstNode>();
@@ -71,6 +70,10 @@ namespace Scoop
                         members.Add(nestedClass);
                         continue;
                     }
+
+                    // TODO: struct, enum
+                    // TODO: Class fields (always readonly?)
+                    // TODO: Class-level const values
 
                     var member = ParseConstructorOrMethod(t);
                     members.Add(member);
@@ -213,6 +216,7 @@ namespace Scoop
 
         private List<AstNode> ParseNormalMethodBody(Tokenizer t)
         {
+            // TODO: Method-level const values
             t.Expect(TokenType.Operator, "{");
             var statements = new List<AstNode>();
             if (t.NextIs(TokenType.Operator, "}", true))

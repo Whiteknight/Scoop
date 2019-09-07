@@ -8,7 +8,15 @@ namespace Scoop.SyntaxTree
         // ClassNode contains the class access modifier, class name, inherited interfaces
         // and all the fields/properties/methods/subclasses of the class
 
+        // "public" or "private"
         public KeywordNode AccessModifier { get; set; }
+
+        // "partial", etc
+        public List<KeywordNode> Modifiers { get; set; }
+
+        // "class" or "struct"
+        public KeywordNode Type { get; set; }
+
         public IdentifierNode Name { get; set; }
 
         public List<AstNode> GenericTypeParameters { get; set; }

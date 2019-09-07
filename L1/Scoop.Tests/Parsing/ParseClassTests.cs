@@ -17,6 +17,7 @@ namespace Scoop.Tests.Parsing
                 new ClassNode
                 {
                     AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
                     Members = new List<AstNode>()
                 }
@@ -40,6 +41,7 @@ public class MyClass
                 new ClassNode
                 {
                     AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
                     Members = new List<AstNode>
                     {
@@ -82,6 +84,7 @@ public class MyClass
                 new ClassNode
                 {
                     AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
                     Members = new List<AstNode>
                     {
@@ -120,6 +123,7 @@ public class MyClass
                 new ClassNode
                 {
                     AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
                     Members = new List<AstNode>
                     {
@@ -161,6 +165,7 @@ public class MyClass
                 new ClassNode
                 {
                     AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
                     Members = new List<AstNode>
                     {
@@ -209,6 +214,7 @@ public class MyClass
                 new ClassNode
                 {
                     AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
                     Members = new List<AstNode>
                     {
@@ -259,6 +265,7 @@ public class MyClass
                 new ClassNode
                 {
                     AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
                     Members = new List<AstNode>
                     {
@@ -307,6 +314,7 @@ public class MyClass
                 new ClassNode
                 {
                     AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
                     Members = new List<AstNode>
                     {
@@ -352,6 +360,7 @@ public class MyClass
                 new ClassNode
                 {
                     AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
                     Members = new List<AstNode>
                     {
@@ -401,6 +410,7 @@ public class MyClass<TA>
                 new ClassNode
                 {
                     AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
                     GenericTypeParameters = new List<AstNode>
                     {
@@ -452,12 +462,14 @@ public class MyClass
                 new ClassNode
                 {
                     AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
                     Members = new List<AstNode>
                     {
                         new ClassNode
                         {
                             AccessModifier = new KeywordNode("public"),
+                            Type = new KeywordNode("class"),
                             Name = new IdentifierNode("ChildClass"),
                             Members = new List<AstNode>()
                         }
@@ -479,6 +491,7 @@ public class MyClass
                 new ClassNode
                 {
                     AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
                     Members = new List<AstNode>
                     {
@@ -502,6 +515,7 @@ public class MyClass
                 new ClassNode
                 {
                     AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
                     Interfaces = new List<AstNode>
                     {
@@ -514,6 +528,39 @@ public class MyClass
                             Name = new IdentifierNode("IFaceB")
                         }
                     },
+                    Members = new List<AstNode>()
+                }
+            );
+        }
+
+        [Test]
+        public void ParseClass_Struct()
+        {
+            var target = new Parser();
+            var result = target.ParseClass("public struct MyClass { }");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("struct"),
+                    Name = new IdentifierNode("MyClass"),
+                    Members = new List<AstNode>()
+                }
+            );
+        }
+
+        [Test]
+        public void ParseClass_Partial()
+        {
+            var target = new Parser();
+            var result = target.ParseClass("public partial class MyClass { }");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Modifiers = new List<KeywordNode> { new KeywordNode("partial") },
+                    Type = new KeywordNode("class"),
+                    Name = new IdentifierNode("MyClass"),
                     Members = new List<AstNode>()
                 }
             );

@@ -7,9 +7,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scoop", "Scoop\Scoop.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scoop.Tests", "Scoop.Tests\Scoop.Tests.csproj", "{0E16B05F-9CC3-425A-85B3-994A2EF25840}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Scoop.Cli", "Scoop.Cli\Scoop.Cli.csproj", "{1C9FCFC6-17F6-4BA4-8382-85D4DC6B16A5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scoop.Cli", "Scoop.Cli\Scoop.Cli.csproj", "{1C9FCFC6-17F6-4BA4-8382-85D4DC6B16A5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Scoop.Example", "Scoop.Example\Scoop.Example.csproj", "{C29DBF98-EB31-468B-92DA-FDA15790B715}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scoop.Example", "Scoop.Example\Scoop.Example.csproj", "{C29DBF98-EB31-468B-92DA-FDA15790B715}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1A7A0CF4-6CA4-43A8-9E89-C57DE43FC04C}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

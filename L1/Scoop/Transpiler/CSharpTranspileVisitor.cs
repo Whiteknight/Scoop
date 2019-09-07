@@ -53,8 +53,25 @@ namespace Scoop.Transpiler
 
         public AstNode VisitClass(ClassNode n)
         {
-            Visit(n.AccessModifier);
-            Append(" sealed class ");
+            // Sometimes C# treats explicit "private" as an error, so never print it here.
+            if (n.AccessModifier.Keyword != "private")
+            {
+                Visit(n.AccessModifier);
+                Append(" ");
+            }
+            Append("sealed");
+            if (n.Modifiers != null)
+            {
+                for (int i = 0; i < n.Modifiers.Count; i++)
+                {
+                    Append(" ");
+                    Visit(n.Modifiers[i]);
+                }
+            }
+
+            Append(" ");
+            Visit(n.Type);
+            Append(" ");
             Visit(n.Name);
             if (!n.GenericTypeParameters.IsNullOrEmpty())
             {

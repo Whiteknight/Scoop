@@ -27,6 +27,7 @@ Classical, procedural control structures are removed in Scoop. These structures 
 * Loops `while`, `do`/`while`, `for` and `foreach` and keywords `break` and `continue` are removed
 * `try`/`catch`/`finally` is removed (though these or something like them may eventually be re-added to support this necessary functionality)
 * `goto` is removed
+* Blocks "{" "}" are disallowed along with all variable scoping rules. Variables in a method are scoped to the method no matter where they are declared. Structures which are included, such as "using" only support a single statement instead of a block (it's suggested to use that opportunity to call a method if you want to execute multiple statements or have a separate scope for variables)
 
 ### Concrete Inheritance
 
@@ -75,6 +76,7 @@ Due to the syntactical nature of C#, some features which may be benign or even d
 1. Declaring variables with explicit types is disallowed. The `var` keyword must be used for all variable declarations (parameter declarations may use type names like normal). This is because of the difficulty of parsing type names without contextual clues.
     * Likewise the `(type)` cast operator is disallowed. It is too difficult to differentiate this operator from an expression without contextual clues and arbitrary lookahead. The `as` and `is` keywords are implemented for reference types, though there is currently no way to cast to a value type in Scoop L1 (L2 may add new, unambiguous, syntax to address this shortcoming)
 1. LINQ keywords and integrated queries are removed from the language, including keywords `select`, `from`, `let`. The integrated query language requires a lot of effort to parse correctly, when all the same functionality can be reproduced using LINQ method chains.
+1. Local methods are not implemented. 
 
 ### Features To Be Determined
 
@@ -87,3 +89,6 @@ Several features of C# are desirable to have in Scoop but may not be strictly ne
 
 It is not yet known how L1 will interact with C#8. Some features of the new language version are desireable to have, and other features are not. The L1-L2 cutover may happen before the general release of C#8 in which case new features, if desired, will be implemented in a later layer.
 
+## Transpiler Features
+
+Scoop L1 will not include several basic parts of a compiler, for brevity and ease of implementation. L1 will not include a symbol table, for example, instead leaving the work of managing variable scope and variable lifetimes to Roslyn. Validation, if any, will focus on problems related specifically to Scoop syntax and semantics. Any error or warning which can be caught and handled by Roslyn will be passed through. L1 also will not include any kind of optimizer and absolutely no IL code generation.

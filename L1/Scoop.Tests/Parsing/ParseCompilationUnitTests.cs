@@ -45,6 +45,7 @@ namespace Scoop.Tests.Parsing
                                 new ClassNode
                                 {
                                     AccessModifier = new KeywordNode("public"),
+                                    Type = new KeywordNode("class"),
                                     Name = new IdentifierNode("MyClass"),
                                     Members = new List<AstNode>()
                                 }

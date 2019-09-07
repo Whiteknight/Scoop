@@ -1,6 +1,6 @@
 namespace Scoop.Example
 {
-    public sealed class MyClass 
+    public class MyClass 
     {
         public MyClass()
         {

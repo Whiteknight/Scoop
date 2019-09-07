@@ -21,9 +21,11 @@ namespace Scoop
             "namespace",
             "new",
             "null",
+            "partial",
             "private",
             "public",
             "return",
+            "struct",
             "true",
             "using",
             "var"
