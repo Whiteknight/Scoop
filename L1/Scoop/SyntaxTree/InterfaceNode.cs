@@ -2,11 +2,12 @@
 
 namespace Scoop.SyntaxTree
 {
-    public class InterfaceNode : AstNode
+    public class InterfaceNode : AstNode, IHasAttributes
     {
         // ClassNode contains the class access modifier, class name, inherited interfaces
         // and all the fields/properties/methods/subclasses of the class
 
+        public List<AttributeNode> Attributes { get; set; }
         public KeywordNode AccessModifier { get; set; }
         public IdentifierNode Name { get; set; }
 

@@ -435,6 +435,7 @@ namespace Scoop
                 var lookahead = t.Peek();
                 if (lookahead.IsOperator(")"))
                     break;
+                // TODO: <namedArgument> ":" <expression>
                 var arg = ParseExpressionLambda(t);
                 args.Add(arg);
                 if (t.Peek().IsOperator(","))

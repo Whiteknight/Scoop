@@ -3,10 +3,12 @@ using System.Collections.Generic;
 
 namespace Scoop.SyntaxTree
 {
-    public class ClassNode : AstNode
+    public class ClassNode : AstNode, IHasAttributes
     {
         // ClassNode contains the class access modifier, class name, inherited interfaces
         // and all the fields/properties/methods/subclasses of the class
+
+        public List<AttributeNode> Attributes { get; set; }
 
         // "public" or "private"
         public KeywordNode AccessModifier { get; set; }

@@ -57,6 +57,51 @@ namespace Scoop.Tests.Parsing
         }
 
         [Test]
+        public void Namespace_Class_Attribute()
+        {
+            var target = new Parser();
+            var result = target.ParseUnit(@"
+namespace A 
+{ 
+    [MyAttr]
+    public class MyClass 
+    { 
+    } 
+}");
+            result.Should().MatchAst(
+                new CompilationUnitNode
+                {
+                    Namespaces = new List<NamespaceNode>
+                    {
+                        new NamespaceNode
+                        {
+                            Name = new DottedIdentifierNode("A"),
+                            Declarations = new List<AstNode>
+                            {
+                                new ClassNode
+                                {
+                                    Attributes = new List<AttributeNode>
+                                    {
+                                        new AttributeNode
+                                        {
+                                            Type = new TypeNode("MyAttr")
+                                        }
+                                    },
+                                    AccessModifier = new KeywordNode("public"),
+                                    Type = new KeywordNode("class"),
+                                    Name = new IdentifierNode("MyClass"),
+                                    Members = new List<AstNode>()
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        
+
+        [Test]
         public void ParseInterface()
         {
             var target = new Parser();

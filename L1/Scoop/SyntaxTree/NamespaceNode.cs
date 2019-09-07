@@ -2,8 +2,10 @@
 
 namespace Scoop.SyntaxTree
 {
-    public class NamespaceNode : AstNode
+    public class NamespaceNode : AstNode, IHasAttributes
     {
+        public List<AttributeNode> Attributes { get; set; }
+
         public DottedIdentifierNode Name { get; set; }
         // classes, interfaces, etc
         public List<AstNode> Declarations { get; set; }

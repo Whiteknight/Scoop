@@ -22,6 +22,31 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public AstNode VisitAttribute(AttributeNode n)
+        {
+            Append("[");
+            if (n.Target != null)
+            {
+                Visit(n.Target);
+                Append(": ");
+            }
+
+            Visit(n.Type);
+            if (!n.Arguments.IsNullOrEmpty())
+            {
+                Append("(");
+                Visit(n.Arguments.First());
+                foreach (var a in n.Arguments.Skip(1))
+                {
+                    Append(", ");
+                    Visit(a);
+                }
+                Append(")");
+            }
+            Append("]");
+            return n;
+        }
+
         public AstNode VisitCast(CastNode n)
         {
             Append("(");
@@ -69,6 +94,12 @@ namespace Scoop.Transpiler
 
         public AstNode VisitClass(ClassNode n)
         {
+            if (!n.Attributes.IsNullOrEmpty())
+            {
+                foreach (var a in n.Attributes)
+                    Visit(a);
+            }
+
             // Sometimes C# treats explicit "private" as an error, so never print it here.
             if (n.AccessModifier?.Keyword != "private")
             {
@@ -179,6 +210,11 @@ namespace Scoop.Transpiler
 
         public AstNode VisitConstructor(ConstructorNode n)
         {
+            if (!n.Attributes.IsNullOrEmpty())
+            {
+                foreach (var a in n.Attributes)
+                    Visit(a);
+            }
             Visit(n.AccessModifier ?? new KeywordNode("private"));
             Append(" ");
             Visit(n.ClassName);
@@ -255,6 +291,11 @@ namespace Scoop.Transpiler
 
         public AstNode VisitEnum(EnumNode n)
         {
+            if (!n.Attributes.IsNullOrEmpty())
+            {
+                foreach (var a in n.Attributes)
+                    Visit(a);
+            }
             if (n.AccessModifier != null)
             {
                 Visit(n.AccessModifier);
@@ -282,6 +323,11 @@ namespace Scoop.Transpiler
 
         public AstNode VisitEnumMember(EnumMemberNode n)
         {
+            if (!n.Attributes.IsNullOrEmpty())
+            {
+                foreach (var a in n.Attributes)
+                    Visit(a);
+            }
             Visit(n.Name);
             if (n.Value != null)
             {
@@ -345,6 +391,11 @@ namespace Scoop.Transpiler
 
         public AstNode VisitInterface(InterfaceNode n)
         {
+            if (!n.Attributes.IsNullOrEmpty())
+            {
+                foreach (var a in n.Attributes)
+                    Visit(a);
+            }
             Visit(n.AccessModifier ?? new KeywordNode("private"));
             Append(" interface ");
             Visit(n.Name);
@@ -518,6 +569,11 @@ namespace Scoop.Transpiler
 
         public AstNode VisitMethod(MethodNode n)
         {
+            if (!n.Attributes.IsNullOrEmpty())
+            {
+                foreach (var a in n.Attributes)
+                    Visit(a);
+            }
             Visit(n.AccessModifier ?? new KeywordNode("private"));
             Append(" ");
             Visit(n.ReturnType);
@@ -709,6 +765,11 @@ namespace Scoop.Transpiler
 
         public AstNode VisitParameter(ParameterNode n)
         {
+            if (!n.Attributes.IsNullOrEmpty())
+            {
+                foreach (var a in n.Attributes)
+                    Visit(a);
+            }
             Visit(n.Type);
             Append(" ");
             Visit(n.Name);

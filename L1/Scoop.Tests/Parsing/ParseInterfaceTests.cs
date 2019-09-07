@@ -260,6 +260,5 @@ public interface MyInterface<TA>
                 }
             );
         }
-
     }
 }

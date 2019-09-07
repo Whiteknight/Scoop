@@ -15,6 +15,7 @@ namespace Scoop
                 var lookahead = t.Peek();
                 if (lookahead.Type == TokenType.EndOfInput)
                     break;
+                // TODO: assembly-level attributes
 
                 if (lookahead.IsKeyword("using"))
                 {
@@ -50,26 +51,27 @@ namespace Scoop
                 if (t.Peek().Is(TokenType.Operator, "}"))
                     break;
 
+                var attributes = ParseAttributes(t);
                 var lookaheads = t.Peek(2);
                 var lookahead = lookaheads[0].IsKeyword("public", "private") ? lookaheads[1] : lookaheads[0];
 
                 if (lookahead.IsKeyword("class", "struct"))
                 {
-                    var classNode = ParseClass(t);
+                    var classNode = ParseClass(t, attributes);
                     namespaceNode.AddDeclaration(classNode);
                     continue;
                 }
 
                 if (lookahead.IsKeyword("interface"))
                 {
-                    var ifaceNode = ParseInterface(t);
+                    var ifaceNode = ParseInterface(t, attributes);
                     namespaceNode.AddDeclaration(ifaceNode);
                     continue;
                 }
 
                 if (lookahead.IsKeyword("enum"))
                 {
-                    var enumNode = ParseEnum(t);
+                    var enumNode = ParseEnum(t, attributes);
                     namespaceNode.AddDeclaration(enumNode);
                     continue;
                 }

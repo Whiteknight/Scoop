@@ -7,43 +7,41 @@ namespace Scoop
     public partial class Parser
     {
         // Helper method to start parsing at the interface level, mostly to simplify unit tests
-        public InterfaceNode ParseInterface(string s) => ParseInterface(new Tokenizer(new StringCharacterSequence(s)));
+        public InterfaceNode ParseInterface(string s) => ParseInterface(new Tokenizer(s), null);
 
-        private InterfaceNode ParseInterface(Tokenizer t)
+        private InterfaceNode ParseInterface(Tokenizer t, List<AttributeNode> attributes)
         {
-            var accessModifierToken = t.Expect(TokenType.Keyword, "public", "private");
-            t.Expect(TokenType.Keyword, "interface");
-            var classNameToken = t.Expect(TokenType.Identifier);
-            var genericTypeParams = ParseGenericTypeParametersList(t);
-            var interfaceNode = new InterfaceNode
+            return new InterfaceNode
             {
-                AccessModifier = new KeywordNode(accessModifierToken),
-                Name = new IdentifierNode(classNameToken),
-                GenericTypeParameters = genericTypeParams,
-                
+                Attributes = attributes ?? ParseAttributes(t),
+                AccessModifier = new KeywordNode(t.Expect(TokenType.Keyword, "public", "private")),
+                Location = t.Expect(TokenType.Keyword, "interface").Location,
+                Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
+                GenericTypeParameters = ParseGenericTypeParametersList(t),
+                Interfaces = t.NextIs(TokenType.Operator, ":", true) ? ParseInheritanceList(t) : null,
+                TypeConstraints = ParseTypeConstraints(t),
+                Members = ParseInterfaceBody(t)
             };
-            if (t.NextIs(TokenType.Operator, ":", true))
+        }
+
+        private List<AstNode> ParseInheritanceList(Tokenizer t)
+        {
+            var interfaces = new List<AstNode>();
+            var contractType = ParseType(t);
+            interfaces.Add(contractType);
+            while (t.NextIs(TokenType.Operator, ",", true))
             {
-                interfaceNode.Interfaces = new List<AstNode>();
-                var contractType = ParseType(t);
-                interfaceNode.Interfaces.Add(contractType);
-                while (t.NextIs(TokenType.Operator, ",", true))
-                {
-                    contractType = ParseType(t);
-                    interfaceNode.Interfaces.Add(contractType);
-                }
+                contractType = ParseType(t);
+                interfaces.Add(contractType);
             }
 
-            interfaceNode.TypeConstraints = ParseTypeConstraints(t);
-            t.Expect(TokenType.Operator, "{");
-            interfaceNode.Members = ParseInterfaceBody(t);
-            t.Expect(TokenType.Operator, "}");
-            return interfaceNode;
+            return interfaces;
         }
 
         private List<AstNode> ParseInterfaceBody(Tokenizer t)
         {
             // <methodSignature>*
+            t.Expect(TokenType.Operator, "{");
             var members = new List<AstNode>();
             while (true)
             {
@@ -64,7 +62,7 @@ namespace Scoop
                 });
                 t.Expect(TokenType.Operator, ";");
             }
-
+            t.Expect(TokenType.Operator, "}");
             return members;
         }
     }

@@ -7,39 +7,27 @@ namespace Scoop
     public partial class Parser
     {
         // Helper method to start parsing at the class level, mostly to simplify unit tests
-        public ClassNode ParseClass(string s) => ParseClass(new Tokenizer(new StringCharacterSequence(s)));
+        public ClassNode ParseClass(string s) => ParseClass(new Tokenizer(s), null);
 
-        private ClassNode ParseClass(Tokenizer t)
+        private ClassNode ParseClass(Tokenizer t, List<AttributeNode> attributes)
         {
-            var classNode = new ClassNode
+            return new ClassNode
             {
+                Attributes = attributes ?? ParseAttributes(t),
                 AccessModifier = new KeywordNode(t.Expect(TokenType.Keyword, "public", "private")),
+                Modifiers = t.NextIs(TokenType.Keyword, "partial") ? new List<KeywordNode> { new KeywordNode(t.GetNext()) } : null,
+                Type = new KeywordNode(t.Expect(TokenType.Keyword, "class", "struct")),
+                Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
+                GenericTypeParameters = ParseGenericTypeParametersList(t),
+                Interfaces = t.NextIs(TokenType.Operator, ":", true) ? ParseInheritanceList(t) : null,
+                TypeConstraints = ParseTypeConstraints(t),
+                Members = ParseClassBody(t)
             };
-            if (t.Peek().IsKeyword("partial"))
-                classNode.Modifiers = new List<KeywordNode> { new KeywordNode(t.GetNext()) };
-            classNode.Type = new KeywordNode(t.Expect(TokenType.Keyword, "class", "struct"));
-            classNode.Name = new IdentifierNode(t.Expect(TokenType.Identifier));
-            classNode.GenericTypeParameters = ParseGenericTypeParametersList(t);
-            if (t.NextIs(TokenType.Operator, ":", true))
-            {
-                classNode.Interfaces = new List<AstNode>();
-                var contractType = ParseType(t);
-                classNode.Interfaces.Add(contractType);
-                while (t.NextIs(TokenType.Operator, ",", true))
-                {
-                    contractType = ParseType(t);
-                    classNode.Interfaces.Add(contractType);
-                }
-            }
-            classNode.TypeConstraints = ParseTypeConstraints(t);
-            t.Expect(TokenType.Operator, "{");
-            classNode.Members = ParseClassBody(t);
-            t.Expect(TokenType.Operator, "}");
-            return classNode;
         }
 
         private List<AstNode> ParseClassBody(Tokenizer t)
         {
+            t.Expect(TokenType.Operator, "{");
             var members = new List<AstNode>();
             while (true)
             {
@@ -53,43 +41,46 @@ namespace Scoop
                     continue;
                 }
 
+                var attributes = ParseAttributes(t);
                 var lookaheads = t.Peek(2);
                 // For now, everything must have explicit "public" or "private". We don't infer
                 // "private" if neither is specified.
                 // TODO: Allow no-modifier to infer "private"
                 if (lookaheads[0].IsKeyword("public", "private") && lookaheads[1].IsKeyword("class", "struct"))
                 {
-                    members.Add(ParseClass(t));
+                    var classMember = ParseClass(t, attributes);
+                    members.Add(classMember);
                     continue;
                 }
 
                 if (lookaheads[0].IsKeyword("public", "private") && lookaheads[1].IsKeyword("interface"))
                 {
-                    members.Add(ParseInterface(t));
+                    var ifaceMember = ParseInterface(t, attributes);
+                    members.Add(ifaceMember);
                     continue;
                 }
                 if (lookaheads[0].IsKeyword("public", "private") && lookaheads[1].IsKeyword("enum"))
                 {
-                    members.Add(ParseEnum(t));
+                    var enumMember = ParseEnum(t, attributes);
+                    members.Add(enumMember);
                     continue;
                 }
 
-                var member = ParseClassMember(t);
+                var member = ParseClassMember(t, attributes);
                 members.Add(member);
             }
-
+            t.Expect(TokenType.Operator, "}");
             return members;
         }
 
-        public EnumNode ParseEnum(string s) => ParseEnum(new Tokenizer(s));
-        private EnumNode ParseEnum(Tokenizer t)
+        public EnumNode ParseEnum(string s) => ParseEnum(new Tokenizer(s), null);
+        private EnumNode ParseEnum(Tokenizer t, List<AttributeNode> attributes)
         {
-            var accessModifier = t.Peek().IsKeyword("public", "private") ? new KeywordNode(t.GetNext()) : null;
-            var enumToken = t.Expect(TokenType.Keyword, "enum");
             var enumNode = new EnumNode
             {
-                Location = enumToken.Location,
-                AccessModifier = accessModifier,
+                Attributes = attributes ?? ParseAttributes(t),
+                AccessModifier = t.Peek().IsKeyword("public", "private") ? new KeywordNode(t.GetNext()) : null,
+                Location = t.Expect(TokenType.Keyword, "enum").Location,
                 Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
                 Members = new List<EnumMemberNode>()
             };
@@ -99,18 +90,13 @@ namespace Scoop
 
             while (true)
             {
-                var name = t.Expect(TokenType.Identifier);
                 var member = new EnumMemberNode
                 {
-                    Location = name.Location,
-                    Name = new IdentifierNode(name)
+                    Attributes = ParseAttributes(t),
+                    Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
+                    Value = t.NextIs(TokenType.Operator, "=", true) ? new IntegerNode(t.Expect(TokenType.Integer)) : null
                 };
-                if (t.Peek().IsOperator("="))
-                {
-                    t.Advance();
-                    member.Value = new IntegerNode(t.Expect(TokenType.Integer));
-                }
-
+                member.Location = member.Name.Location;
                 enumNode.Members.Add(member);
                 if (t.Peek().IsOperator("}"))
                     break;
@@ -123,9 +109,10 @@ namespace Scoop
             return enumNode;
         }
 
-        public AstNode ParseClassMember(string s) => ParseClassMember(new Tokenizer(s));
-        private AstNode ParseClassMember(Tokenizer t)
+        public AstNode ParseClassMember(string s) => ParseClassMember(new Tokenizer(s), null);
+        private AstNode ParseClassMember(Tokenizer t, List<AttributeNode> attributes)
         {
+            attributes = attributes ?? ParseAttributes(t);
             var accessModifier = t.Peek().IsKeyword("public", "private") ? new KeywordNode(t.GetNext()) : null;
             if (t.NextIs(TokenType.Keyword, "const"))
             {
@@ -150,9 +137,9 @@ namespace Scoop
             {
                 // Constructor
                 // <accessModifier>? <type> <parameterList> <methodBody>
-                // TODO: ":" "this" "(" <args> ")"
                 var ctor = new ConstructorNode
                 {
+                    Attributes = attributes,
                     Location = returnType.Location,
                     AccessModifier = accessModifier,
                     Parameters = ParseParameterList(t),
@@ -172,6 +159,7 @@ namespace Scoop
                 // <accessModifier>? "async"? <type> <ident> <genericTypeParameters>? <parameterList> <typeConstraints>? <methodBody>
                 var method = new MethodNode
                 {
+                    Attributes = attributes,
                     Location = name.Location,
                     AccessModifier = accessModifier
                 };
@@ -192,6 +180,7 @@ namespace Scoop
                 // <type> <ident> ";"
                 var field = new FieldNode
                 {
+                    Attributes = attributes,
                     Location = name.Location,
                     Type = returnType,
                     Name = name
@@ -232,38 +221,31 @@ namespace Scoop
         {
             t.Expect(TokenType.Operator, "(");
             var parameterList = new List<ParameterNode>();
-            var lookahead = t.Peek();
-            if (!lookahead.IsOperator(")"))
+            if (t.NextIs(TokenType.Operator, ")", true))
+                return parameterList;
+
+            while (true)
             {
-                while (true)
+                var parameter = new ParameterNode
                 {
-                    var type = ParseType(t);
-                    var nameToken = t.Expect(TokenType.Identifier);
-                    var parameter = new ParameterNode
-                    {
-                        Location = type.Location,
-                        Type = type,
-                        Name = new IdentifierNode(nameToken)
-                    };
-                    if (t.Peek().IsOperator("="))
-                    {
-                        t.Advance();
-                        parameter.DefaultValue = ParseExpression(t);
-                    }
-
-                    parameterList.Add(parameter);
-                    lookahead = t.Peek();
-                    if (lookahead.IsOperator(","))
-                    {
-                        t.Advance();
-                        continue;
-                    }
-
-                    if (lookahead.IsOperator(")"))
-                        break;
-
-                    throw ParsingException.CouldNotParseRule(nameof(ParseParameterList), lookahead);
+                    Attributes = ParseAttributes(t),
+                    Type = ParseType(t),
+                    Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
+                    DefaultValue = t.NextIs(TokenType.Operator, "=", true) ? ParseExpression(t) : null
+                };
+                parameter.Location = parameter.Type.Location;
+                parameterList.Add(parameter);
+                var lookahead = t.Peek();
+                if (lookahead.IsOperator(","))
+                {
+                    t.Advance();
+                    continue;
                 }
+
+                if (lookahead.IsOperator(")"))
+                    break;
+
+                throw ParsingException.CouldNotParseRule(nameof(ParseParameterList), lookahead);
             }
 
             t.Expect(TokenType.Operator, ")");

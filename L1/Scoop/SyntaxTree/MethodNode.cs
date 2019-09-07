@@ -2,11 +2,12 @@
 
 namespace Scoop.SyntaxTree
 {
-    public class MethodNode : AstNode
+    public class MethodNode : AstNode, IHasAttributes
     {
         // Represents a single method including access modifier, return type, name, parameters
         // and body
 
+        public List<AttributeNode> Attributes { get; set; }
         public KeywordNode AccessModifier { get; set; }
         public List<KeywordNode> Modifiers { get; set; }
         public AstNode ReturnType { get; set; }
@@ -26,10 +27,11 @@ namespace Scoop.SyntaxTree
         }
     }
 
-    public class MethodDeclareNode : AstNode
+    public class MethodDeclareNode : AstNode, IHasAttributes
     {
         // Represents a declaration of a method in an interface
 
+        public List<AttributeNode> Attributes { get; set; }
         public AstNode ReturnType { get; set; }
         public IdentifierNode Name { get; set; }
         public List<ParameterNode> Parameters { get; set; }

@@ -9,6 +9,7 @@
     {
         AstNode VisitArrayInitializer(ArrayInitializerNode n);
         AstNode VisitArrayType(ArrayTypeNode n);
+        AstNode VisitAttribute(AttributeNode n);
         AstNode VisitCast(CastNode n);
         AstNode VisitCompilationUnit(CompilationUnitNode n);
         AstNode VisitConst(ConstNode n);

@@ -44,6 +44,8 @@ namespace Scoop.Tokenization
         {
             if (Type != TokenType.Keyword)
                 return false;
+            if (keywords == null || keywords.Length == 0)
+                return true;
             foreach (var keyword in keywords)
             {
                 if (keyword == Value)
