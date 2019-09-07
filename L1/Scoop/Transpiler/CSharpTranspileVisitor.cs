@@ -253,6 +253,45 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public AstNode VisitEnum(EnumNode n)
+        {
+            if (n.AccessModifier != null)
+            {
+                Visit(n.AccessModifier);
+                Append(" ");
+            }
+
+            Append("enum ");
+            Visit(n.Name);
+            Append("{");
+            IncreaseIndent();
+            if (n.Members.Any())
+            {
+                Visit(n.Members.First());
+                foreach (var m in n.Members.Skip(1))
+                {
+                    AppendLineAndIndent(",");
+                    Visit(m);
+                }
+            }
+            DecreaseIndent();
+            AppendLineAndIndent();
+            Append("}");
+            return n;
+        }
+
+        public AstNode VisitEnumMember(EnumMemberNode n)
+        {
+            Visit(n.Name);
+            if (n.Value != null)
+            {
+                Append(" = ");
+                Visit(n.Value);
+            }
+
+            return n;
+        }
+
         public AstNode VisitField(FieldNode n)
         {
             Append("private readonly ");

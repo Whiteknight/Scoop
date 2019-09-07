@@ -50,12 +50,11 @@ namespace Scoop
                 if (t.Peek().Is(TokenType.Operator, "}"))
                     break;
 
-                var accessModifier = t.Expect(TokenType.Keyword, "public", "private");
-                var lookahead = t.Peek();
+                var lookaheads = t.Peek(2);
+                var lookahead = lookaheads[0].IsKeyword("public", "private") ? lookaheads[1] : lookaheads[0];
 
-                if (lookahead.IsKeyword("class"))
+                if (lookahead.IsKeyword("class", "struct"))
                 {
-                    t.PutBack(accessModifier);
                     var classNode = ParseClass(t);
                     namespaceNode.AddDeclaration(classNode);
                     continue;
@@ -63,13 +62,17 @@ namespace Scoop
 
                 if (lookahead.IsKeyword("interface"))
                 {
-                    t.PutBack(accessModifier);
-                    var classNode = ParseInterface(t);
-                    namespaceNode.AddDeclaration(classNode);
+                    var ifaceNode = ParseInterface(t);
+                    namespaceNode.AddDeclaration(ifaceNode);
                     continue;
                 }
 
-                // TODO: struct, enum
+                if (lookahead.IsKeyword("enum"))
+                {
+                    var enumNode = ParseEnum(t);
+                    namespaceNode.AddDeclaration(enumNode);
+                    continue;
+                }
 
                 throw ParsingException.CouldNotParseRule(nameof(ParseNamespace), lookahead);
             }
@@ -79,7 +82,7 @@ namespace Scoop
 
         private UsingDirectiveNode ParseUsingDirective(Tokenizer t)
         {
-            // "using" <namespaceName>
+            // "using" <namespaceName> ";"
             var usingToken = t.Expect(TokenType.Keyword, "using");
             var directive = new UsingDirectiveNode
             {

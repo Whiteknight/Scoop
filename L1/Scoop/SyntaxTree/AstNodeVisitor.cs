@@ -21,6 +21,8 @@
         AstNode VisitDecimal(DecimalNode n);
         AstNode VisitDottedIdentifier(DottedIdentifierNode n);
         AstNode VisitDouble(DoubleNode n);
+        AstNode VisitEnum(EnumNode n);
+        AstNode VisitEnumMember(EnumMemberNode n);
         AstNode VisitField(FieldNode n);
         AstNode VisitFloat(FloatNode n);
         AstNode VisitIdentifier(IdentifierNode n);

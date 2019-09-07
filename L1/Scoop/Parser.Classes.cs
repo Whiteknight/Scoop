@@ -68,13 +68,59 @@ namespace Scoop
                     members.Add(ParseInterface(t));
                     continue;
                 }
-                // TODO: enum
+                if (lookaheads[0].IsKeyword("public", "private") && lookaheads[1].IsKeyword("enum"))
+                {
+                    members.Add(ParseEnum(t));
+                    continue;
+                }
 
                 var member = ParseClassMember(t);
                 members.Add(member);
             }
 
             return members;
+        }
+
+        public EnumNode ParseEnum(string s) => ParseEnum(new Tokenizer(s));
+        private EnumNode ParseEnum(Tokenizer t)
+        {
+            var accessModifier = t.Peek().IsKeyword("public", "private") ? new KeywordNode(t.GetNext()) : null;
+            var enumToken = t.Expect(TokenType.Keyword, "enum");
+            var enumNode = new EnumNode
+            {
+                Location = enumToken.Location,
+                AccessModifier = accessModifier,
+                Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
+                Members = new List<EnumMemberNode>()
+            };
+            t.Expect(TokenType.Operator, "{");
+            if (t.NextIs(TokenType.Operator, "}", true))
+                return enumNode;
+
+            while (true)
+            {
+                var name = t.Expect(TokenType.Identifier);
+                var member = new EnumMemberNode
+                {
+                    Location = name.Location,
+                    Name = new IdentifierNode(name)
+                };
+                if (t.Peek().IsOperator("="))
+                {
+                    t.Advance();
+                    member.Value = new IntegerNode(t.Expect(TokenType.Integer));
+                }
+
+                enumNode.Members.Add(member);
+                if (t.Peek().IsOperator("}"))
+                    break;
+                if (t.NextIs(TokenType.Operator, ",", true))
+                    continue;
+                throw ParsingException.CouldNotParseRule(nameof(ParseEnum), t.Peek());
+            }
+            t.Expect(TokenType.Operator, "}");
+
+            return enumNode;
         }
 
         public AstNode ParseClassMember(string s) => ParseClassMember(new Tokenizer(s));
