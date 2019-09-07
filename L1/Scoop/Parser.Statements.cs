@@ -10,6 +10,7 @@ namespace Scoop
 
         private AstNode ParseStatement(Tokenizer t)
         {
+            // <csharpLiteral> | <usingStatement> | (<unterminatedStatement> ";") | null
             // Skip over any bare semicolons, which indicate an empty statement.
             while (t.Peek().IsOperator(";"))
                 t.Advance();
@@ -44,20 +45,22 @@ namespace Scoop
 
         private UsingStatementNode ParseUsingStatement(Tokenizer t)
         {
-            // TODO: "using" "(" <nonAssignmentExpression> ")"
+            // "using" "(" "var" <ident> "=" <expression> ")" <statement>
+            // "using" "(" <expression> ")" <statement>
             var usingToken = t.Expect(TokenType.Keyword, "using");
             t.Expect(TokenType.Operator, "(");
-            var declareToken = t.Expect(TokenType.Keyword, "var");
-            var variable = t.Expect(TokenType.Identifier);
-            var assign = t.Expect(TokenType.Operator, "=");
-            var source = ParseExpressionConditional(t);
-            t.Expect(TokenType.Operator, ")");
-            // TODO: Multiple statements in a "{" "}" block?
-            var statement = ParseStatement(t);
-            return new UsingStatementNode
+            var lookaheads = t.Peek(2);
+            var usingNode = new UsingStatementNode
             {
-                Location = usingToken.Location,
-                Disposable = new InfixOperationNode
+                Location = usingToken.Location
+            };
+            if (lookaheads[0].IsKeyword("var") && lookaheads[1].IsType(TokenType.Identifier))
+            {
+                var declareToken = t.Expect(TokenType.Keyword, "var");
+                var variable = t.Expect(TokenType.Identifier);
+                var assign = t.Expect(TokenType.Operator, "=");
+                var source = ParseExpressionConditional(t);
+                usingNode.Disposable = new InfixOperationNode
                 {
                     Location = declareToken.Location,
                     Left = new VariableDeclareNode
@@ -67,13 +70,19 @@ namespace Scoop
                     },
                     Operator = new OperatorNode(assign),
                     Right = source
-                },
-                Statement = statement
-            };
+                };
+            }
+            else
+                usingNode.Disposable = ParseExpressionNonComma(t);
+            t.Expect(TokenType.Operator, ")");
+            var statement = ParseStatement(t);
+            usingNode.Statement = statement;
+            return usingNode;
         }
 
         private ReturnNode ParseReturn(Tokenizer t)
         {
+            // "return" <expression>
             var returnToken = t.Expect(TokenType.Keyword, "return");
             return new ReturnNode
             {
@@ -84,6 +93,7 @@ namespace Scoop
 
         private AstNode ParseDeclaration(Tokenizer t)
         {
+            // "var" <ident> ("=" <expression>)?
             var varToken = t.Expect(TokenType.Keyword, "var");
             var nameToken = t.Expect(TokenType.Identifier);
             var declareNode = new VariableDeclareNode

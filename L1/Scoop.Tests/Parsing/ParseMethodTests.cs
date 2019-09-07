@@ -66,7 +66,7 @@ public List<int[]> GetListOfIntArrays()
         }
 
         [Test]
-        public void ParseMethod_UsingStatement()
+        public void ParseMethod_UsingStatementAssignment()
         {
             var target = new Parser();
             var result = target.ParseClassMember(@"
@@ -98,6 +98,47 @@ public void MyMethod()
                                     Type = new TypeNode("Disposable"),
                                     Arguments = new List<AstNode>()
                                 }
+                            },
+                            Statement = new InvokeNode
+                            {
+                                Instance = new MemberAccessNode
+                                {
+                                    Instance = new IdentifierNode("x"),
+                                    MemberName = new IdentifierNode("DoWork")
+                                },
+                                Arguments = new List<AstNode>()
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void ParseMethod_UsingStatementExpression()
+        {
+            var target = new Parser();
+            var result = target.ParseClassMember(@"
+public void MyMethod()
+{
+    using (new Disposable())
+        x.DoWork();
+}");
+            result.Should().MatchAst(
+                new MethodNode
+                {
+                    Name = new IdentifierNode("MyMethod"),
+                    AccessModifier = new KeywordNode("public"),
+                    ReturnType = new TypeNode("void"),
+                    Parameters = new List<AstNode>(),
+                    Statements = new List<AstNode>
+                    {
+                        new UsingStatementNode
+                        {
+                            Disposable = new NewNode
+                            {
+                                Type = new TypeNode("Disposable"),
+                                Arguments = new List<AstNode>()
                             },
                             Statement = new InvokeNode
                             {
