@@ -12,7 +12,7 @@ namespace Scoop.Tests.Parsing
         public void ParseMethod_NewListOfMyClass()
         {
             var target = new Parser();
-            var result = target.ParseConstructorOrMethod(@"
+            var result = target.ParseClassMember(@"
 public List<int[]> GetListOfIntArrays()
 {
     return new List<int[]>();
@@ -69,7 +69,7 @@ public List<int[]> GetListOfIntArrays()
         public void ParseMethod_UsingStatement()
         {
             var target = new Parser();
-            var result = target.ParseConstructorOrMethod(@"
+            var result = target.ParseClassMember(@"
 public void MyMethod()
 {
     using (var x = new Disposable())
@@ -118,7 +118,7 @@ public void MyMethod()
         public void ParseMethod_Parameters()
         {
             var target = new Parser();
-            var result = target.ParseConstructorOrMethod(@"
+            var result = target.ParseClassMember(@"
 public void TestMethod(int a, double b, string c)
 {
 }");
@@ -167,7 +167,7 @@ public void TestMethod(int a, double b, string c)
         public void ParseMethod_DefaultParameter()
         {
             var target = new Parser();
-            var result = target.ParseConstructorOrMethod(@"
+            var result = target.ParseClassMember(@"
 public void TestMethod(int a = 5)
 {
 }");
@@ -193,6 +193,45 @@ public void TestMethod(int a = 5)
                         }
                     },
                     Statements = new List<AstNode>()
+                }
+            );
+        }
+
+        [Test]
+        public void ParseMethod_AsyncAwait()
+        {
+            var target = new Parser();
+            var result = target.ParseClassMember(@"
+public async Task TestMethod(Task t)
+{
+    await t;
+}");
+            result.Should().MatchAst(
+                new MethodNode
+                {
+                    Name = new IdentifierNode("TestMethod"),
+                    AccessModifier = new KeywordNode("public"),
+                    Modifiers = new List<KeywordNode>
+                    {
+                        new KeywordNode("async")
+                    },
+                    ReturnType = new TypeNode("Task"),
+                    Parameters = new List<AstNode>
+                    {
+                        new ParameterNode
+                        {
+                            Type = new TypeNode("Task"),
+                            Name = new IdentifierNode("t")
+                        }
+                    },
+                    Statements = new List<AstNode>
+                    {
+                        new PrefixOperationNode
+                        {
+                            Operator = new OperatorNode("await"),
+                            Right = new IdentifierNode("t")
+                        }
+                    }
                 }
             );
         }

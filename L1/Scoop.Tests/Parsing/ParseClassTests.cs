@@ -565,5 +565,61 @@ public class MyClass
                 }
             );
         }
+
+        [Test]
+        public void ParseClass_Const()
+        {
+            var target = new Parser();
+            var result = target.ParseClass(@"
+public class MyClass 
+{
+    private const string test = ""value"";
+}");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
+                    Name = new IdentifierNode("MyClass"),
+                    Members = new List<AstNode>
+                    {
+                        new ConstNode
+                        {
+                            AccessModifier = new KeywordNode("private"),
+                            Type = new TypeNode("string"),
+                            Name = new IdentifierNode("test"),
+                            Value = new StringNode("\"value\"")
+                        }
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void ParseClass_Field()
+        {
+            var target = new Parser();
+            var result = target.ParseClass(@"
+public class MyClass 
+{
+    string _test;
+}");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
+                    Name = new IdentifierNode("MyClass"),
+                    Members = new List<AstNode>
+                    {
+                        new FieldNode
+                        {
+                            Type = new TypeNode("string"),
+                            Name = new IdentifierNode("_test")
+                        }
+                    }
+                }
+            );
+        }
     }
 }

@@ -31,6 +31,18 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public AstNode VisitConst(ConstNode n)
+        {
+            Visit(n.AccessModifier ?? new KeywordNode("private"));
+            Append(" const ");
+            Visit(n.Type);
+            Append(" ");
+            Visit(n.Name);
+            Append(" = ");
+            Visit(n.Value);
+            return n;
+        }
+
         public AstNode VisitChar(CharNode n)
         {
             Append("'");
@@ -54,7 +66,7 @@ namespace Scoop.Transpiler
         public AstNode VisitClass(ClassNode n)
         {
             // Sometimes C# treats explicit "private" as an error, so never print it here.
-            if (n.AccessModifier.Keyword != "private")
+            if (n.AccessModifier?.Keyword != "private")
             {
                 Visit(n.AccessModifier);
                 Append(" ");
@@ -149,7 +161,7 @@ namespace Scoop.Transpiler
 
         public AstNode VisitConstructor(ConstructorNode n)
         {
-            Visit(n.AccessModifier);
+            Visit(n.AccessModifier ?? new KeywordNode("private"));
             Append(" ");
             Visit(n.ClassName);
             Append("(");
@@ -208,6 +220,15 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public AstNode VisitField(FieldNode n)
+        {
+            Append("private readonly ");
+            Visit(n.Type);
+            Append(" ");
+            Visit(n.Name);
+            return n;
+        }
+
         public AstNode VisitFloat(FloatNode n)
         {
             Append(n.Value.ToString(CultureInfo.InvariantCulture));
@@ -252,7 +273,7 @@ namespace Scoop.Transpiler
 
         public AstNode VisitInterface(InterfaceNode n)
         {
-            Visit(n.AccessModifier);
+            Visit(n.AccessModifier ?? new KeywordNode("private"));
             Append(" interface ");
             Visit(n.Name);
             if (!n.GenericTypeParameters.IsNullOrEmpty())
@@ -411,7 +432,7 @@ namespace Scoop.Transpiler
 
         public AstNode VisitMethod(MethodNode n)
         {
-            Visit(n.AccessModifier);
+            Visit(n.AccessModifier ?? new KeywordNode("private"));
             Append(" ");
             Visit(n.ReturnType);
             Append(" ");

@@ -45,88 +45,117 @@ namespace Scoop
             var members = new List<AstNode>();
             while (true)
             {
-                var lookaheads = t.Peek(2);
-                if (lookaheads[0].Is(TokenType.Operator, "}"))
+                var lookahead = t.Peek();
+                if (lookahead.Is(TokenType.Operator, "}"))
                     break;
 
-                if (lookaheads[0].IsType(TokenType.CSharpLiteral))
+                if (lookahead.IsType(TokenType.CSharpLiteral))
                 {
-                    t.Advance();
-                    members.Add(new CSharpNode(lookaheads[0]));
+                    members.Add(new CSharpNode(t.GetNext()));
                     continue;
                 }
 
-                if (lookaheads[0].IsKeyword("public", "private"))
+                var lookaheads = t.Peek(2);
+                // For now, everything must have explicit "public" or "private". We don't infer
+                // "private" if neither is specified.
+                // TODO: Allow no-modifier to infer "private"
+                if (lookaheads[0].IsKeyword("public", "private") && lookaheads[1].IsKeyword("class", "struct"))
                 {
-                    if (lookaheads[1].IsKeyword("class"))
-                    {
-                        var nestedClass = ParseClass(t);
-                        members.Add(nestedClass);
-                        continue;
-                    }
-                    if (lookaheads[1].IsKeyword("interface"))
-                    {
-                        var nestedClass = ParseInterface(t);
-                        members.Add(nestedClass);
-                        continue;
-                    }
-
-                    // TODO: struct, enum
-                    // TODO: Class fields (always readonly?)
-                    // TODO: Class-level const values
-
-                    var member = ParseConstructorOrMethod(t);
-                    members.Add(member);
+                    members.Add(ParseClass(t));
                     continue;
                 }
 
-                throw ParsingException.CouldNotParseRule(nameof(ParseClassBody), lookaheads[0]);
+                if (lookaheads[0].IsKeyword("public", "private") && lookaheads[1].IsKeyword("interface"))
+                {
+                    members.Add(ParseInterface(t));
+                    continue;
+                }
+                // TODO: enum
+
+                var member = ParseClassMember(t);
+                members.Add(member);
             }
 
             return members;
         }
 
-        public AstNode ParseConstructorOrMethod(string s) => ParseConstructorOrMethod(new Tokenizer(new StringCharacterSequence(s)));
-
-        private AstNode ParseConstructorOrMethod(Tokenizer t)
+        public AstNode ParseClassMember(string s) => ParseClassMember(new Tokenizer(s));
+        private AstNode ParseClassMember(Tokenizer t)
         {
-            var accessModifier = t.Expect(TokenType.Keyword, "public", "private");
-            // TODO: "async"
-            var returnType = ParseType(t);
-            AstNode node = null;
-            if (t.NextIs(TokenType.Operator, "("))
+            var accessModifier = t.Peek().IsKeyword("public", "private") ? new KeywordNode(t.GetNext()) : null;
+            if (t.NextIs(TokenType.Keyword, "const"))
             {
-                // It's a constructor
+                // constant
+                // <accessModifier>? "const" <type> <ident> "=" <expression>  ";"
+                var constNode = new ConstNode
+                {
+                    Location = t.GetNext().Location,
+                    AccessModifier = accessModifier,
+                    Type = ParseType(t),
+                    Name = new IdentifierNode(t.Expect(TokenType.Identifier))
+                };
+                t.Expect(TokenType.Operator, "=");
+                constNode.Value = ParseExpressionNonComma(t);
+                t.Expect(TokenType.Operator, ";");
+                return constNode;
+            }
+
+            var asyncModifier = t.NextIs(TokenType.Keyword, "async") ? new KeywordNode(t.GetNext()) : null;
+            var returnType = ParseType(t);
+            if (asyncModifier == null && t.NextIs(TokenType.Operator, "("))
+            {
+                // Constructor
+                // <accessModifier>? <type> <parameterList> <methodBody>
                 // TODO: ":" "this" "(" <args> ")"
                 var ctor = new ConstructorNode
                 {
-                    Location = accessModifier.Location,
-                    AccessModifier = new KeywordNode(accessModifier),
+                    Location = returnType.Location,
+                    AccessModifier = accessModifier,
                     Parameters = ParseParameterList(t),
                     Statements = ParseMethodBody(t)
                 };
                 if (!(returnType is TypeNode returnTypeNode) || !returnTypeNode.GenericArguments.IsNullOrEmpty())
                     throw new ParsingException($"Invalid name for constructor at {returnType.Location}");
                 ctor.ClassName = returnTypeNode.Name;
-                node = ctor;
-            }
-            else
-            {
-                var name = t.Expect(TokenType.Identifier);
-                node = new MethodNode
-                {
-                    Location = accessModifier.Location,
-                    AccessModifier = new KeywordNode(accessModifier),
-                    ReturnType = returnType,
-                    Name = new IdentifierNode(name),
-                    GenericTypeParameters = ParseGenericTypeParametersList(t),
-                    Parameters = ParseParameterList(t),
-                    // TODO: "where" <genericTypeParameter> ":" <typeConstraints>
-                    Statements = ParseMethodBody(t)
-                };
+                return ctor;
             }
 
-            return node;
+            var name = new IdentifierNode(t.Expect(TokenType.Identifier));
+            if (asyncModifier != null || t.Peek().IsOperator("<", "("))
+            {
+                // Method
+                // <accessModifier>? "async"? <type> <ident> <genericTypeParameters>? <parameterList> <methodBody>
+                var method = new MethodNode
+                {
+                    Location = name.Location,
+                    AccessModifier = accessModifier
+                };
+                if (asyncModifier != null)
+                    method.AddModifier(asyncModifier);
+                method.ReturnType = returnType;
+                method.Name = name;
+                method.GenericTypeParameters = ParseGenericTypeParametersList(t);
+                method.Parameters = ParseParameterList(t);
+                // TODO: "where" <genericTypeParameter> ":" <typeConstraints>
+                method.Statements = ParseMethodBody(t);
+                return method;
+            }
+
+            if (accessModifier == null)
+            {
+                // It's a field. Fields may not have access modifier, because they are always private
+                // <type> <ident> ";"
+                var field = new FieldNode
+                {
+                    Location = name.Location,
+                    Type = returnType,
+                    Name = name
+                };
+                t.Expect(TokenType.Operator, ";");
+                return field;
+            }
+
+            throw ParsingException.CouldNotParseRule(nameof(ParseClassMember), t.Peek());
         }
 
         private List<AstNode> ParseGenericTypeParametersList(Tokenizer t)

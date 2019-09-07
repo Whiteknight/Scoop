@@ -11,6 +11,7 @@
         AstNode VisitArrayType(ArrayTypeNode n);
         AstNode VisitCast(CastNode n);
         AstNode VisitCompilationUnit(CompilationUnitNode n);
+        AstNode VisitConst(ConstNode n);
         AstNode VisitChar(CharNode n);
         AstNode VisitChildType(ChildTypeNode n);
         AstNode VisitClass(ClassNode n);
@@ -20,6 +21,7 @@
         AstNode VisitDecimal(DecimalNode n);
         AstNode VisitDottedIdentifier(DottedIdentifierNode n);
         AstNode VisitDouble(DoubleNode n);
+        AstNode VisitField(FieldNode n);
         AstNode VisitFloat(FloatNode n);
         AstNode VisitIdentifier(IdentifierNode n);
         AstNode VisitIndex(IndexNode n);

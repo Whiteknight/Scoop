@@ -10,12 +10,11 @@ These items are required in L1 before we call it "complete" and cutover to L2.
    1. Methods
 1. ":" "this" "(" args ")" syntax for constructors
 1. "using" "(" Non-Assignment Expression ")"
-1. "async" and "await"
-1. Class fields (default to readonly)
+1. "await"
 1. Comments and cleanups for parser rules
 1. Improve test coverage of transpiler
 1. enums
-1. "const" keyword in methods and classes
+1. "const" keyword in methods
 
 ## Items we might want in L1
 

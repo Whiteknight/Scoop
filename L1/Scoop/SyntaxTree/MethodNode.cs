@@ -8,6 +8,7 @@ namespace Scoop.SyntaxTree
         // and body
 
         public KeywordNode AccessModifier { get; set; }
+        public List<KeywordNode> Modifiers { get; set; }
         public AstNode ReturnType { get; set; }
         public IdentifierNode Name { get; set; }
         public List<AstNode> Parameters { get; set; }
@@ -15,6 +16,13 @@ namespace Scoop.SyntaxTree
         public List<AstNode> GenericTypeParameters { get; set; }
 
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitMethod(this);
+
+        public void AddModifier(KeywordNode modifier)
+        {
+            if (Modifiers == null)
+                Modifiers = new List<KeywordNode>();
+            Modifiers.Add(modifier);
+        }
     }
 
     public class MethodDeclareNode : AstNode

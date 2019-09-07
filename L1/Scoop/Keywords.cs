@@ -15,7 +15,10 @@ namespace Scoop
         {
             // C# Keywords which are still allowed
             // (type names like "int" are counted as types not keywords for these purposes)
+            "async",
+            "await",
             "class",
+            "const",
             "false",
             "interface",
             "namespace",
