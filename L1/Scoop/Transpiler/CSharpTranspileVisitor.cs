@@ -113,6 +113,20 @@ namespace Scoop.Transpiler
                 }
             }
 
+            if (!n.GenericTypeParameters.IsNullOrEmpty() && !n.TypeConstraints.IsNullOrEmpty())
+            {
+                IncreaseIndent();
+                AppendLineAndIndent();
+                Visit(n.TypeConstraints.First());
+                foreach (var tc in n.TypeConstraints.Skip(1))
+                {
+                    AppendLineAndIndent();
+                    Visit(tc);
+                }
+
+                DecreaseIndent();
+            }
+
             AppendLineAndIndent();
             Append("{");
             IncreaseIndent();
@@ -303,7 +317,21 @@ namespace Scoop.Transpiler
                     Visit(n.Interfaces[i]);
                 }
             }
+            if (!n.GenericTypeParameters.IsNullOrEmpty() && !n.TypeConstraints.IsNullOrEmpty())
+            {
+                IncreaseIndent();
+                AppendLineAndIndent();
+                Visit(n.TypeConstraints.First());
+                foreach (var tc in n.TypeConstraints.Skip(1))
+                {
+                    AppendLineAndIndent();
+                    Visit(tc);
+                }
 
+                DecreaseIndent();
+            }
+
+            AppendLineAndIndent();
             AppendLine("{");
             IncreaseIndent();
             AppendLineAndIndent();
@@ -465,7 +493,22 @@ namespace Scoop.Transpiler
                 }
             }
 
-            AppendLineAndIndent(")");
+            Append(")");
+            if (!n.GenericTypeParameters.IsNullOrEmpty() && !n.TypeConstraints.IsNullOrEmpty())
+            {
+                IncreaseIndent();
+                AppendLineAndIndent();
+                Visit(n.TypeConstraints.First());
+                foreach (var tc in n.TypeConstraints.Skip(1))
+                {
+                    AppendLineAndIndent();
+                    Visit(tc);
+                }
+
+                DecreaseIndent();
+            }
+
+            AppendLineAndIndent();
             Append("{");
             IncreaseIndent();
 
@@ -510,7 +553,22 @@ namespace Scoop.Transpiler
                 }
             }
 
-            Append(");");
+            Append(")");
+            if (!n.GenericTypeParameters.IsNullOrEmpty() && !n.TypeConstraints.IsNullOrEmpty())
+            {
+                IncreaseIndent();
+                AppendLineAndIndent();
+                Visit(n.TypeConstraints.First());
+                foreach (var tc in n.TypeConstraints.Skip(1))
+                {
+                    AppendLineAndIndent();
+                    Visit(tc);
+                }
+
+                DecreaseIndent();
+            }
+
+            Append(";");
             return n;
         }
 
@@ -666,6 +724,21 @@ namespace Scoop.Transpiler
                     Visit(n.GenericArguments[i]);
                 }
                 Append(">");
+            }
+
+            return n;
+        }
+
+        public AstNode VisitTypeConstraint(TypeConstraintNode n)
+        {
+            Append("where ");
+            Visit(n.Type);
+            Append(" : ");
+            Visit(n.Constraints.First());
+            foreach (var c in n.Constraints.Skip(1))
+            {
+                Append(", ");
+                Visit(c);
             }
 
             return n;

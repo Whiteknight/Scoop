@@ -31,9 +31,7 @@ namespace Scoop
                     classNode.Interfaces.Add(contractType);
                 }
             }
-
-            // TODO: "where" <genericTypeParameter> ":" <typeConstraints>
-
+            classNode.TypeConstraints = ParseTypeConstraints(t);
             t.Expect(TokenType.Operator, "{");
             classNode.Members = ParseClassBody(t);
             t.Expect(TokenType.Operator, "}");
@@ -124,7 +122,7 @@ namespace Scoop
             if (asyncModifier != null || t.Peek().IsOperator("<", "("))
             {
                 // Method
-                // <accessModifier>? "async"? <type> <ident> <genericTypeParameters>? <parameterList> <methodBody>
+                // <accessModifier>? "async"? <type> <ident> <genericTypeParameters>? <parameterList> <typeConstraints>? <methodBody>
                 var method = new MethodNode
                 {
                     Location = name.Location,
@@ -136,7 +134,7 @@ namespace Scoop
                 method.Name = name;
                 method.GenericTypeParameters = ParseGenericTypeParametersList(t);
                 method.Parameters = ParseParameterList(t);
-                // TODO: "where" <genericTypeParameter> ":" <typeConstraints>
+                method.TypeConstraints = ParseTypeConstraints(t);
                 method.Statements = ParseMethodBody(t);
                 return method;
             }
@@ -260,6 +258,52 @@ namespace Scoop
 
             t.Expect(TokenType.Operator, "}");
             return statements;
+        }
+
+        private List<TypeConstraintNode> ParseTypeConstraints(Tokenizer t)
+        {
+            if (!t.Peek().IsKeyword("where"))
+                return null;
+            var constraints = new List<TypeConstraintNode>();
+            while (t.Peek().IsKeyword("where"))
+            {
+                var constraint = new TypeConstraintNode
+                {
+                    Location = t.GetNext().Location,
+                    Type = new IdentifierNode(t.Expect(TokenType.Identifier)),
+                    Constraints = new List<AstNode>()
+                };
+                t.Expect(TokenType.Operator, ":");
+                while (true)
+                {
+                    var next = t.Peek(3);
+                    if (next[0].IsKeyword("new") && next[1].IsOperator("(") && next[2].IsOperator(")"))
+                    {
+                        t.Advance(3);
+                        constraint.Constraints.Add(new KeywordNode
+                        {
+                            Location = next[0].Location,
+                            Keyword = "new()"
+                        });
+                    }
+
+                    else if (next[0].IsKeyword("class"))
+                        constraint.Constraints.Add(new KeywordNode(t.GetNext()));
+                    else
+                    {
+                        var type = ParseType(t);
+                        constraint.Constraints.Add(type);
+                    }
+
+                    if (t.NextIs(TokenType.Operator, ",", true))
+                        continue;
+                    break;
+                }
+
+                constraints.Add(constraint);
+            }
+
+            return constraints;
         }
     }
 }

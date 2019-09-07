@@ -32,7 +32,8 @@ namespace Scoop
             "throw",
             "true",
             "using",
-            "var"
+            "var",
+            "where"
         };
     }
 }

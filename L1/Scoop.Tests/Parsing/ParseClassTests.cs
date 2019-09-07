@@ -450,6 +450,94 @@ public class MyClass<TA>
         }
 
         [Test]
+        public void ParseClass_GenericClassAndMethodConstraints()
+        {
+            var target = new Parser();
+            var result = target.ParseClass(@"
+public class MyClass<TA> 
+    where TA : class, new()
+{
+    public TB MyMethod<TB, TC>() 
+        where TB : IMyInterface, new()
+        where TC : class, IMyInterface
+    { 
+        return new TB();
+    }
+}");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
+                    Name = new IdentifierNode("MyClass"),
+                    GenericTypeParameters = new List<AstNode>
+                    {
+                        new TypeNode("TA")
+                    },
+                    TypeConstraints = new List<TypeConstraintNode>
+                    {
+                        new TypeConstraintNode
+                        {
+                            Type = new IdentifierNode("TA"),
+                            Constraints = new List<AstNode>
+                            {
+                                new KeywordNode("class"),
+                                new KeywordNode("new()")
+                            }
+                        }
+                    },
+                    Members = new List<AstNode>
+                    {
+                        new MethodNode
+                        {
+                            AccessModifier = new KeywordNode("public"),
+                            ReturnType = new TypeNode("TB"),
+                            Name = new IdentifierNode("MyMethod"),
+                            GenericTypeParameters = new List<AstNode>
+                            {
+                                new TypeNode("TB"),
+                                new TypeNode("TC")
+                            },
+                            Parameters = new List<AstNode>(),
+                            TypeConstraints = new List<TypeConstraintNode>
+                            {
+                                new TypeConstraintNode
+                                {
+                                    Type = new IdentifierNode("TB"),
+                                    Constraints = new List<AstNode>
+                                    {
+                                        new TypeNode("IMyInterface"),
+                                        new KeywordNode("new()")
+                                    }
+                                },
+                                new TypeConstraintNode
+                                {
+                                    Type = new IdentifierNode("TC"),
+                                    Constraints = new List<AstNode>
+                                    {
+                                        new KeywordNode("class"),
+                                        new TypeNode("IMyInterface")
+                                    }
+                                }
+                            },
+                            Statements = new List<AstNode>
+                            {
+                                new ReturnNode
+                                {
+                                    Expression = new NewNode
+                                    {
+                                        Type = new TypeNode("TB"),
+                                        Arguments = new List<AstNode>()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        [Test]
         public void ParseClass_NestedClass()
         {
             var target = new Parser();

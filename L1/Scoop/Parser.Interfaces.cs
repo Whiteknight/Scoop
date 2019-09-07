@@ -33,7 +33,8 @@ namespace Scoop
                     interfaceNode.Interfaces.Add(contractType);
                 }
             }
-            // TODO: "where" <genericTypeParameter> ":" <typeConstraints>
+
+            interfaceNode.TypeConstraints = ParseTypeConstraints(t);
             t.Expect(TokenType.Operator, "{");
             interfaceNode.Members = ParseInterfaceBody(t);
             t.Expect(TokenType.Operator, "}");
@@ -58,6 +59,7 @@ namespace Scoop
                     Name = new IdentifierNode(nameToken),
                     GenericTypeParameters = genericTypeParams,
                     Parameters = parameters,
+                    TypeConstraints = ParseTypeConstraints(t),
                     ReturnType = returnType
                 });
                 t.Expect(TokenType.Operator, ";");

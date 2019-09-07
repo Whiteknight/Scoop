@@ -4,6 +4,10 @@ namespace Scoop.SyntaxTree
 {
     public class KeywordNode : AstNode
     {
+        public KeywordNode()
+        {
+        }
+
         public KeywordNode(Token t)
         {
             if (t.Type != TokenType.Keyword)
@@ -17,7 +21,7 @@ namespace Scoop.SyntaxTree
             Keyword = keyword;
         }
 
-        public string Keyword { get; }
+        public string Keyword { get; set; }
 
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitKeyword(this);
     }

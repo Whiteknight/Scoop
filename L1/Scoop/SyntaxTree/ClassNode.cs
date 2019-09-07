@@ -22,10 +22,12 @@ namespace Scoop.SyntaxTree
         public List<AstNode> GenericTypeParameters { get; set; }
 
         public List<AstNode> Interfaces { get; set; }
+        public List<TypeConstraintNode> TypeConstraints { get; set; }
 
         // Constructors, methods, fields, properties, child classes, etc
         public List<AstNode> Members { get; set; }
 
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitClass(this);
+
     }
 }

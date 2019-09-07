@@ -188,5 +188,78 @@ public interface MyInterface<TA>
                 }
             );
         }
+
+        [Test]
+        public void ParseInterface_GenericInterfaceAndMethodConstraints()
+        {
+            var target = new Parser();
+            var result = target.ParseInterface(@"
+public interface MyInterface<TA> 
+    where TA : class, new()
+{
+    TB MyMethod<TB, TC>() 
+        where TB : IMyInterface, new()
+        where TC : class, IMyInterface;
+}");
+            result.Should().MatchAst(
+                new InterfaceNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Name = new IdentifierNode("MyInterface"),
+                    GenericTypeParameters = new List<AstNode>
+                    {
+                        new TypeNode("TA")
+                    },
+                    TypeConstraints = new List<TypeConstraintNode>
+                    {
+                        new TypeConstraintNode
+                        {
+                            Type = new IdentifierNode("TA"),
+                            Constraints = new List<AstNode>
+                            {
+                                new KeywordNode("class"),
+                                new KeywordNode("new()")
+                            }
+                        }
+                    },
+                    Members = new List<AstNode>
+                    {
+                        new MethodDeclareNode
+                        {
+                            ReturnType = new TypeNode("TB"),
+                            Name = new IdentifierNode("MyMethod"),
+                            GenericTypeParameters = new List<AstNode>
+                            {
+                                new TypeNode("TB"),
+                                new TypeNode("TC")
+                            },
+                            Parameters = new List<AstNode>(),
+                            TypeConstraints = new List<TypeConstraintNode>
+                            {
+                                new TypeConstraintNode
+                                {
+                                    Type = new IdentifierNode("TB"),
+                                    Constraints = new List<AstNode>
+                                    {
+                                        new TypeNode("IMyInterface"),
+                                        new KeywordNode("new()")
+                                    }
+                                },
+                                new TypeConstraintNode
+                                {
+                                    Type = new IdentifierNode("TC"),
+                                    Constraints = new List<AstNode>
+                                    {
+                                        new KeywordNode("class"),
+                                        new TypeNode("IMyInterface")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
     }
 }

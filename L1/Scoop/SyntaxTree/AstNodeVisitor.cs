@@ -51,6 +51,7 @@
         AstNode VisitReturn(ReturnNode n);
         AstNode VisitString(StringNode n);
         AstNode VisitType(TypeNode n);
+        AstNode VisitTypeConstraint(TypeConstraintNode n);
         AstNode VisitUInteger(UIntegerNode n);
         AstNode VisitULong(ULongNode n);
         AstNode VisitUsingDirective(UsingDirectiveNode n);
