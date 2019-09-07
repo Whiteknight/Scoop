@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Collections.Generic;
+using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -146,6 +147,29 @@ namespace Scoop.Tests.Parsing
                     Left = new IdentifierNode("a"),
                     Operator = new OperatorNode("*"),
                     Right = new IdentifierNode("b")
+                }
+            );
+        }
+
+        [Test]
+        public void CoalesceOperator_Throw()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression(@"a ?? throw new Exception()");
+            result.Should().MatchAst(
+                new InfixOperationNode
+                {
+                    Left = new IdentifierNode("a"),
+                    Operator = new OperatorNode("??"),
+                    Right = new PrefixOperationNode
+                    {
+                        Operator = new OperatorNode("throw"),
+                        Right = new NewNode
+                        {
+                            Type = new TypeNode("Exception"),
+                            Arguments = new List<AstNode>()
+                        }
+                    }
                 }
             );
         }

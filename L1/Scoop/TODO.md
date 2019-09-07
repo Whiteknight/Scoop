@@ -10,7 +10,6 @@ These items are required in L1 before we call it "complete" and cutover to L2.
    1. Methods
 1. ":" "this" "(" args ")" syntax for constructors
 1. "using" "(" Non-Assignment Expression ")"
-1. "await"
 1. Comments and cleanups for parser rules
 1. Improve test coverage of transpiler
 1. enums
@@ -21,7 +20,7 @@ These items are required in L1 before we call it "complete" and cutover to L2.
 These items we do want to have, though it's not clear whether to put them in L1
 or save them for after L2 cutover
 
-1. "try"/"catch"/"when"/"finally"/"throw" (If we want these as-is, put them in L1. Otherwise, put a replacement in L2)
+1. "try"/"catch"/"when"/"finally"/re"throw;" (If we want these as-is, put them in L1. Otherwise, put a replacement in L2)
 1. partial methods?
 1. "params" keyword
 1. Validation visitor?

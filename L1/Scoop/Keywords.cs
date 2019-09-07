@@ -29,6 +29,7 @@ namespace Scoop
             "public",
             "return",
             "struct",
+            "throw",
             "true",
             "using",
             "var"

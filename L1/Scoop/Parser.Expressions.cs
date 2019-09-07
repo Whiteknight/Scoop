@@ -300,7 +300,7 @@ namespace Scoop
             // TODO: Loop to get all possible prefixes
             // TODO: <cast> <expr>
             // Probably won't do cast operator because of ambiguous parsing rules
-            if (next.IsOperator("-", "+", "++", "--", "!", "~") || next.IsKeyword("await"))
+            if (next.IsOperator("-", "+", "++", "--", "!", "~") || next.IsKeyword("await", "throw"))
             {
                 var op = t.GetNext();
                 var expr = ParseExpressionPostfix(t);
