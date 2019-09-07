@@ -4,21 +4,20 @@ using Scoop.Tokenization;
 
 namespace Scoop
 {
-    // TODO: "await"
     public partial class Parser
     {
-        public AstNode ParseExpression(string s) => ParseExpression(new Tokenizer(s));
-        private AstNode ParseExpression(Tokenizer t)
+        private AstNode ParseExpressionList(Tokenizer t)
         {
-            // Top-level general-purpose expression parsing method, redirects to the appropriate
-            // precidence level
+            // Top-level general-purpose expression parsing method, allowing the comma operator
+            // This is a relatively rare case.
             return ParseExpressionComma(t);
         }
 
-        private AstNode ParseExpressionNonComma(Tokenizer t)
+        public AstNode ParseExpression(string s) => ParseExpression(new Tokenizer(s));
+        private AstNode ParseExpression(Tokenizer t)
         {
             // Top-level expression parsing method for situations where the comma operator is not
-            // allowed.
+            // allowed. This is the most common case
             return ParseExpressionLambda(t);
         }
 
@@ -521,7 +520,8 @@ namespace Scoop
                 if (t.Peek().IsOperator(")"))
                     throw ParsingException.CouldNotParseRule(nameof(ParseExpressionTerminal), t.Peek());
 
-                var value = ParseExpression(t);
+                // Parse expression list, it may be a tuple literal
+                var value = ParseExpressionList(t);
                 t.Expect(TokenType.Operator, ")");
                 return value;
             }
@@ -572,7 +572,7 @@ namespace Scoop
                     }
                     else
                     {
-                        var init = ParseExpressionNonComma(t);
+                        var init = ParseExpression(t);
                         inits.Add(init);
                     }
                 }
@@ -589,9 +589,9 @@ namespace Scoop
         private AstNode ParseKeyValueInitializer(Tokenizer t)
         {
             var startToken = t.Expect(TokenType.Operator, "{");
-            var key = ParseExpressionNonComma(t);
+            var key = ParseExpression(t);
             t.Expect(TokenType.Operator, ",");
-            var value = ParseExpressionNonComma(t);
+            var value = ParseExpression(t);
             t.Expect(TokenType.Operator, "}");
             return new KeyValueInitializerNode
             {
@@ -608,7 +608,7 @@ namespace Scoop
             var intToken = t.Expect(TokenType.Integer);
             t.Expect(TokenType.Operator, "]");
             t.Expect(TokenType.Operator, "=");
-            var value = ParseExpressionNonComma(t);
+            var value = ParseExpression(t);
             return new ArrayInitializerNode
             {
                 Location = startToken.Location,
@@ -621,7 +621,7 @@ namespace Scoop
         {
             var propertyToken = t.Expect(TokenType.Identifier);
             t.Expect(TokenType.Operator, "=");
-            var value = ParseExpressionNonComma(t);
+            var value = ParseExpression(t);
             return new PropertyInitializerNode
             {
                 Location = propertyToken.Location,

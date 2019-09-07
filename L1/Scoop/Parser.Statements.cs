@@ -73,7 +73,7 @@ namespace Scoop
                 };
             }
             else
-                usingNode.Disposable = ParseExpressionNonComma(t);
+                usingNode.Disposable = ParseExpression(t);
             t.Expect(TokenType.Operator, ")");
             var statement = ParseStatement(t);
             usingNode.Statement = statement;
@@ -87,6 +87,7 @@ namespace Scoop
             return new ReturnNode
             {
                 Location = returnToken.Location,
+                // Parse expression. It may be a tuple literal, but those will be surrounded with parens
                 Expression = ParseExpression(t)
             };
         }
@@ -106,7 +107,7 @@ namespace Scoop
                 return declareNode;
 
             var assignmentToken = t.GetNext();
-            var expr = ParseExpression(t);
+            var expr = ParseExpressionList(t);
             return new InfixOperationNode
             {
                 Location = declareNode.Location,

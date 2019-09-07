@@ -95,7 +95,7 @@ namespace Scoop
                     Name = new IdentifierNode(t.Expect(TokenType.Identifier))
                 };
                 t.Expect(TokenType.Operator, "=");
-                constNode.Value = ParseExpressionNonComma(t);
+                constNode.Value = ParseExpression(t);
                 t.Expect(TokenType.Operator, ";");
                 return constNode;
             }
