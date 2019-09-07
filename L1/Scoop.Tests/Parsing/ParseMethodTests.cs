@@ -36,7 +36,7 @@ public List<int[]> GetListOfIntArrays()
                             }
                         }
                     },
-                    Parameters = new List<AstNode>(),
+                    Parameters = new List<ParameterNode>(),
                     Statements = new List<AstNode>
                     {
                         new ReturnNode
@@ -81,7 +81,7 @@ public void MyMethod()
                     Name = new IdentifierNode("MyMethod"),
                     AccessModifier = new KeywordNode("public"),
                     ReturnType = new TypeNode("void"),
-                    Parameters = new List<AstNode>(),
+                    Parameters = new List<ParameterNode>(),
                     Statements = new List<AstNode>
                     {
                         new UsingStatementNode
@@ -130,7 +130,7 @@ public void MyMethod()
                     Name = new IdentifierNode("MyMethod"),
                     AccessModifier = new KeywordNode("public"),
                     ReturnType = new TypeNode("void"),
-                    Parameters = new List<AstNode>(),
+                    Parameters = new List<ParameterNode>(),
                     Statements = new List<AstNode>
                     {
                         new UsingStatementNode
@@ -172,7 +172,7 @@ public void TestMethod(int a, double b, string c)
                     {
                         Name = new IdentifierNode("void")
                     },
-                    Parameters = new List<AstNode>
+                    Parameters = new List<ParameterNode>
                     {
                         new ParameterNode
                         {
@@ -221,7 +221,7 @@ public void TestMethod(int a = 5)
                     {
                         Name = new IdentifierNode("void")
                     },
-                    Parameters = new List<AstNode>
+                    Parameters = new List<ParameterNode>
                     {
                         new ParameterNode
                         {
@@ -257,7 +257,7 @@ public async Task TestMethod(Task t)
                         new KeywordNode("async")
                     },
                     ReturnType = new TypeNode("Task"),
-                    Parameters = new List<AstNode>
+                    Parameters = new List<ParameterNode>
                     {
                         new ParameterNode
                         {
@@ -293,7 +293,7 @@ public int TestMethod()
                     AccessModifier = new KeywordNode("public"),
                     ReturnType = new TypeNode("int"),
                     Name = new IdentifierNode("TestMethod"),
-                    Parameters = new List<AstNode>(),
+                    Parameters = new List<ParameterNode>(),
                     Statements = new List<AstNode>
                     {
                         new ConstNode

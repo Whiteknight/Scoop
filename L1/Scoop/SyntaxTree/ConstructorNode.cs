@@ -9,7 +9,8 @@ namespace Scoop.SyntaxTree
 
         public IdentifierNode ClassName { get; set; }
         public KeywordNode AccessModifier { get; set; }
-        public List<AstNode> Parameters { get; set; }
+        public List<ParameterNode> Parameters { get; set; }
+        public List<AstNode> ThisArgs { get; set; }
         public List<AstNode> Statements { get; set; }
 
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitConstructor(this);

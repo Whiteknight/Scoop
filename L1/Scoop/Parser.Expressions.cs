@@ -428,8 +428,6 @@ namespace Scoop
 
         private List<AstNode> ParseArgumentList(Tokenizer t)
         {
-            if (!t.NextIs(TokenType.Operator, "("))
-                return new List<AstNode>();
             t.Expect(TokenType.Operator, "(");
             var args = new List<AstNode>();
             while (true)
@@ -539,7 +537,7 @@ namespace Scoop
             if (!t.NextIs(TokenType.Operator, "{"))
             {
                 newNode.Type = ParseType(t);
-                newNode.Arguments = ParseArgumentList(t);
+                newNode.Arguments = t.NextIs(TokenType.Operator, "(") ? ParseArgumentList(t) : new List<AstNode>();
             }
             newNode.Initializers = ParseInitializers(t);
             return newNode;

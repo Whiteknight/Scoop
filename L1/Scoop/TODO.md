@@ -4,7 +4,6 @@
 
 These items are required in L1 before we call it "complete" and cutover to L2.
 
-1. ":" "this" "(" args ")" syntax for constructors
 1. Comments and cleanups for parser rules
 1. Improve test coverage of transpiler
 1. enums

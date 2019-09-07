@@ -43,7 +43,7 @@ public interface MyInterface
                         new MethodDeclareNode
                         {
                             Name = new IdentifierNode("Method1"),
-                            Parameters = new List<AstNode>(),
+                            Parameters = new List<ParameterNode>(),
                             ReturnType = new TypeNode
                             {
                                 Name = new IdentifierNode("int")
@@ -56,7 +56,7 @@ public interface MyInterface
                             {
                                 Name = new IdentifierNode("string")
                             },
-                            Parameters = new List<AstNode>()
+                            Parameters = new List<ParameterNode>()
                         }
                     }
                 }
@@ -86,7 +86,7 @@ public interface MyInterface
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<AstNode>
+                            Parameters = new List<ParameterNode>
                             {
                                 new ParameterNode
                                 {
@@ -156,7 +156,7 @@ public interface MyInterface<TA>
                                     Name = new IdentifierNode("TB")
                                 }
                             },
-                            Parameters = new List<AstNode>()
+                            Parameters = new List<ParameterNode>()
                         }
                     }
                 }
@@ -233,7 +233,7 @@ public interface MyInterface<TA>
                                 new TypeNode("TB"),
                                 new TypeNode("TC")
                             },
-                            Parameters = new List<AstNode>(),
+                            Parameters = new List<ParameterNode>(),
                             TypeConstraints = new List<TypeConstraintNode>
                             {
                                 new TypeConstraintNode

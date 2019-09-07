@@ -193,8 +193,23 @@ namespace Scoop.Transpiler
                 }
             }
 
-            AppendLineAndIndent(")");
-            // TODO: ": this(...)"
+            Append(")");
+            if (!n.ThisArgs.IsNullOrEmpty())
+            {
+                IncreaseIndent();
+                AppendLineAndIndent();
+                Append(": this(");
+                Visit(n.ThisArgs.First());
+                foreach (var a in n.ThisArgs.Skip(1))
+                {
+                    Append(", ");
+                    Visit(a);
+                }
+                Append(")");
+                DecreaseIndent();
+            }
+
+            AppendLineAndIndent();
             Append("{");
             IncreaseIndent();
             AppendLineAndIndent();

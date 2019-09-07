@@ -49,7 +49,7 @@ public class MyClass
                         {
                             ClassName = new IdentifierNode("MyClass"),
                             AccessModifier = new KeywordNode("public"),
-                            Parameters = new List<AstNode>(),
+                            Parameters = new List<ParameterNode>(),
                             Statements = new List<AstNode>()
                         },
                         new MethodNode
@@ -60,9 +60,85 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("void")
                             },
-                            Parameters = new List<AstNode>(),
+                            Parameters = new List<ParameterNode>(),
                             Statements = new List<AstNode>()
                         }
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void ParseClass_CtorThis()
+        {
+            var target = new Parser();
+            var result = target.ParseClass(@"
+public class MyClass 
+{
+    public MyClass() : this(1) { }
+
+    public MyClass(int a) : this(a, ""test"") { }
+
+    public MyClass(int a, string b) { }
+}");
+            result.Should().MatchAst(
+                new ClassNode
+                {
+                    AccessModifier = new KeywordNode("public"),
+                    Type = new KeywordNode("class"),
+                    Name = new IdentifierNode("MyClass"),
+                    Members = new List<AstNode>
+                    {
+                        new ConstructorNode
+                        {
+                            ClassName = new IdentifierNode("MyClass"),
+                            AccessModifier = new KeywordNode("public"),
+                            Parameters = new List<ParameterNode>(),
+                            ThisArgs = new List<AstNode>
+                            {
+                                new IntegerNode(1)
+                            },
+                            Statements = new List<AstNode>()
+                        },
+                        new ConstructorNode
+                        {
+                            ClassName = new IdentifierNode("MyClass"),
+                            AccessModifier = new KeywordNode("public"),
+                            Parameters = new List<ParameterNode>
+                            {
+                                new ParameterNode
+                                {
+                                    Type = new TypeNode("int"),
+                                    Name = new IdentifierNode("a")
+                                }
+                            },
+                            ThisArgs = new List<AstNode>
+                            {
+                                new IdentifierNode("a"),
+                                new StringNode("\"test\"")
+                            },
+                            Statements = new List<AstNode>()
+                        },
+                        new ConstructorNode
+                        {
+                            ClassName = new IdentifierNode("MyClass"),
+                            AccessModifier = new KeywordNode("public"),
+                            Parameters = new List<ParameterNode>
+                            {
+                                new ParameterNode
+                                {
+                                    Type = new TypeNode("int"),
+                                    Name = new IdentifierNode("a")
+                                },
+                                new ParameterNode
+                                {
+                                    Type = new TypeNode("string"),
+                                    Name = new IdentifierNode("b")
+                                }
+                            },
+                            Statements = new List<AstNode>()
+                        }
+
                     }
                 }
             );
@@ -96,7 +172,7 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<AstNode>(),
+                            Parameters = new List<ParameterNode>(),
                             Statements = new List<AstNode>
                             {
                                 new ReturnNode
@@ -135,7 +211,7 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<AstNode>(),
+                            Parameters = new List<ParameterNode>(),
                             Statements = new List<AstNode>
                             {
                                 new ReturnNode
@@ -177,7 +253,7 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<AstNode>(),
+                            Parameters = new List<ParameterNode>(),
                             Statements = new List<AstNode>
                             {
                                 new ReturnNode
@@ -226,7 +302,7 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<AstNode>(),
+                            Parameters = new List<ParameterNode>(),
                             Statements = new List<AstNode>
                             {
                                 new VariableDeclareNode {
@@ -277,7 +353,7 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<AstNode>(),
+                            Parameters = new List<ParameterNode>(),
                             Statements = new List<AstNode>
                             {
                                 new InfixOperationNode {
@@ -326,7 +402,7 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<AstNode>(),
+                            Parameters = new List<ParameterNode>(),
                             Statements = new List<AstNode>
                             {
                                 new ReturnNode
@@ -372,7 +448,7 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("string")
                             },
-                            Parameters = new List<AstNode>(),
+                            Parameters = new List<ParameterNode>(),
                             Statements = new List<AstNode>
                             {
                                 new ReturnNode
@@ -428,7 +504,7 @@ public class MyClass<TA>
                                 new TypeNode("TB"),
                                 new TypeNode("TC")
                             },
-                            Parameters = new List<AstNode>(),
+                            Parameters = new List<ParameterNode>(),
                             Statements = new List<AstNode>
                             {
                                 new ReturnNode
@@ -498,7 +574,7 @@ public class MyClass<TA>
                                 new TypeNode("TB"),
                                 new TypeNode("TC")
                             },
-                            Parameters = new List<AstNode>(),
+                            Parameters = new List<ParameterNode>(),
                             TypeConstraints = new List<TypeConstraintNode>
                             {
                                 new TypeConstraintNode

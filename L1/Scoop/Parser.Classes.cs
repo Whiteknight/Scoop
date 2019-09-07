@@ -110,6 +110,7 @@ namespace Scoop
                     Location = returnType.Location,
                     AccessModifier = accessModifier,
                     Parameters = ParseParameterList(t),
+                    ThisArgs = ParseConstructorThisArgs(t),
                     Statements = ParseMethodBody(t)
                 };
                 if (!(returnType is TypeNode returnTypeNode) || !returnTypeNode.GenericArguments.IsNullOrEmpty())
@@ -156,6 +157,14 @@ namespace Scoop
             throw ParsingException.CouldNotParseRule(nameof(ParseClassMember), t.Peek());
         }
 
+        private List<AstNode> ParseConstructorThisArgs(Tokenizer t)
+        {
+            if (!t.NextIs(TokenType.Operator, ":", true))
+                return null;
+            t.Expect(TokenType.Identifier, "this");
+            return ParseArgumentList(t);
+        }
+
         private List<AstNode> ParseGenericTypeParametersList(Tokenizer t)
         {
             if (!t.NextIs(TokenType.Operator, "<"))
@@ -173,10 +182,10 @@ namespace Scoop
             return types;
         }
 
-        private List<AstNode> ParseParameterList(Tokenizer t)
+        private List<ParameterNode> ParseParameterList(Tokenizer t)
         {
             t.Expect(TokenType.Operator, "(");
-            var parameterList = new List<AstNode>();
+            var parameterList = new List<ParameterNode>();
             var lookahead = t.Peek();
             if (!lookahead.IsOperator(")"))
             {
