@@ -6,6 +6,7 @@ namespace Scoop
 {
     public partial class Parser
     {
+        public List<AttributeNode> ParseAttributes(string s) => ParseAttributes(new Tokenizer(s));
         private List<AttributeNode> ParseAttributes(Tokenizer t)
         {
             if (!t.Peek().IsOperator("["))
@@ -48,18 +49,29 @@ namespace Scoop
             var args = new List<AstNode>();
             while (true)
             {
-                var lookahead = t.Peek();
-                if (lookahead.IsOperator(")"))
+                var lookaheads = t.Peek(2);
+                if (lookaheads[0].IsOperator(")"))
                     break;
-                // TODO: <property> "=" <expr>
-                // TODO: I think these expressions can only be terminals or member accesses (consts or enums, etc)
-                var arg = ParseExpressionLambda(t);
-                args.Add(arg);
-                if (t.Peek().IsOperator(","))
+                if (lookaheads[0].IsType(TokenType.Identifier) && lookaheads[1].IsOperator("="))
                 {
-                    t.Advance();
-                    continue;
+                    var arg = new NamedArgumentNode
+                    {
+                        Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
+                        Separator = new OperatorNode(t.Expect(TokenType.Operator, "=")),
+                        // TODO: I think these expressions can only be terminals or member accesses (consts or enums, etc)
+                        Value = ParseExpression(t)
+                    };
+                    arg.Location = arg.Name.Location;
+                    args.Add(arg);
                 }
+                else
+                {
+                    // TODO: I think these expressions can only be terminals or member accesses (consts or enums, etc)
+                    var arg = ParseExpression(t);
+                    args.Add(arg);
+                }
+                if (t.NextIs(TokenType.Operator, ",", true))
+                    continue;
 
                 break;
             }

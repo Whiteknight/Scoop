@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
@@ -10,6 +9,74 @@ namespace Scoop.Tests.Parsing
     [TestFixture]
     public class ParseAttributesTests
     {
+        [Test]
+        public void Attribute_NoArgs()
+        {
+            var target = new Parser();
+            var result = target.ParseAttributes(@"[MyAttr]").First();
+            result.Should().MatchAst(
+                new AttributeNode
+                {
+                    Type = new TypeNode("MyAttr")
+                }
+            );
+        }
+
+        [Test]
+        public void Attribute_NoArgsParens()
+        {
+            var target = new Parser();
+            var result = target.ParseAttributes(@"[MyAttr()]").First();
+            result.Should().MatchAst(
+                new AttributeNode
+                {
+                    Type = new TypeNode("MyAttr"),
+                    Arguments = new List<AstNode>()
+                }
+            );
+        }
+
+        [Test]
+        public void Attribute_PositionalArgs()
+        {
+            var target = new Parser();
+            var result = target.ParseAttributes(@"[MyAttr(1, 2, 3)]").First();
+            result.Should().MatchAst(
+                new AttributeNode
+                {
+                    Type = new TypeNode("MyAttr"),
+                    Arguments = new List<AstNode>
+                    {
+                        new IntegerNode(1),
+                        new IntegerNode(2),
+                        new IntegerNode(3)
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void Attribute_NamedArgs()
+        {
+            var target = new Parser();
+            var result = target.ParseAttributes(@"[MyAttr(test = 1)]").First();
+            result.Should().MatchAst(
+                new AttributeNode
+                {
+                    Type = new TypeNode("MyAttr"),
+                    Arguments = new List<AstNode>
+                    {
+                        new NamedArgumentNode
+                        {
+                            Name = new IdentifierNode("test"),
+                            Separator = new OperatorNode("="),
+                            Value = new IntegerNode(1)
+                        }
+                    }
+                }
+            );
+        }
+
         [Test]
         public void Attribute_OnClass()
         {

@@ -442,9 +442,10 @@ namespace Scoop
                     var arg = new NamedArgumentNode
                     {
                         Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
-                        Location = t.Expect(TokenType.Operator, ":").Location,
+                        Separator = new OperatorNode(t.Expect(TokenType.Operator, ":")),
                         Value = ParseExpression(t)
                     };
+                    arg.Location = arg.Name.Location;
                     args.Add(arg);
                 }
                 else

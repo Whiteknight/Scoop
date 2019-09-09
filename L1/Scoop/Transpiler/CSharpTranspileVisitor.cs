@@ -741,7 +741,9 @@ namespace Scoop.Transpiler
         public AstNode VisitNamedArgument(NamedArgumentNode n)
         {
             Visit(n.Name);
-            Append(": ");
+            Append(" ");
+            Visit(n.Separator);
+            Append(" ");
             Visit(n.Value);
             return n;
         }

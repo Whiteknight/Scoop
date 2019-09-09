@@ -63,6 +63,7 @@ namespace Scoop.Tests.Parsing
                         new NamedArgumentNode
                         {
                             Name = new IdentifierNode("test"),
+                            Separator = new OperatorNode(":"),
                             Value = new IntegerNode(1)
                         }
                     }
