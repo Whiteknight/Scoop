@@ -48,5 +48,26 @@ namespace Scoop.Tests.Parsing
                 }
             );
         }
+
+        [Test]
+        public void InvokeMethod_NamedArgs()
+        {
+            var target = new Parser();
+            var result = target.ParseStatement(@"func(test: 1);");
+            result.Should().MatchAst(
+                new InvokeNode
+                {
+                    Instance = new IdentifierNode("func"),
+                    Arguments = new List<AstNode>
+                    {
+                        new NamedArgumentNode
+                        {
+                            Name = new IdentifierNode("test"),
+                            Value = new IntegerNode(1)
+                        }
+                    }
+                }
+            );
+        }
     }
 }

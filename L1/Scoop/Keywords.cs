@@ -26,6 +26,7 @@ namespace Scoop
             "namespace",
             "new",
             "null",
+            "params",
             "partial",
             "private",
             "public",

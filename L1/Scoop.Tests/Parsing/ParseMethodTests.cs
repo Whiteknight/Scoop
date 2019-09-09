@@ -239,6 +239,36 @@ public void TestMethod(int a = 5)
         }
 
         [Test]
+        public void ParseMethod_Params()
+        {
+            var target = new Parser();
+            var result = target.ParseClassMember(@"
+public void TestMethod(params int[] a)
+{
+}");
+            result.Should().MatchAst(
+                new MethodNode
+                {
+                    Name = new IdentifierNode("TestMethod"),
+                    AccessModifier = new KeywordNode("public"),
+                    ReturnType = new TypeNode("void"),
+                    Parameters = new List<ParameterNode>
+                    {
+                        new ParameterNode
+                        {
+                            IsParams = true,
+                            Type = new ArrayTypeNode {
+                                ElementType = new TypeNode("int")
+                            },
+                            Name = new IdentifierNode("a")
+                        }
+                    },
+                    Statements = new List<AstNode>()
+                }
+            );
+        }
+
+        [Test]
         public void ParseMethod_AsyncAwait()
         {
             var target = new Parser();

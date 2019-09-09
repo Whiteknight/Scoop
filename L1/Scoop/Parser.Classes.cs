@@ -199,6 +199,7 @@ namespace Scoop
                 var parameter = new ParameterNode
                 {
                     Attributes = ParseAttributes(t),
+                    IsParams = t.NextIs(TokenType.Keyword, "params", true),
                     Type = ParseType(t),
                     Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
                     DefaultValue = t.NextIs(TokenType.Operator, "=", true) ? ParseExpression(t) : null

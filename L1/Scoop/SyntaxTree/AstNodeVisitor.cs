@@ -41,6 +41,7 @@
         AstNode VisitMemberAccess(MemberAccessNode n);
         AstNode VisitMethod(MethodNode n);
         AstNode VisitMethodDeclare(MethodDeclareNode n);
+        AstNode VisitNamedArgument(NamedArgumentNode n);
         AstNode VisitNamespace(NamespaceNode n);
         AstNode VisitNew(NewNode n);
         AstNode VisitOperator(OperatorNode n);

@@ -738,6 +738,14 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public AstNode VisitNamedArgument(NamedArgumentNode n)
+        {
+            Visit(n.Name);
+            Append(": ");
+            Visit(n.Value);
+            return n;
+        }
+
         public AstNode VisitNamespace(NamespaceNode n)
         {
             Append("namespace ");
@@ -826,6 +834,9 @@ namespace Scoop.Transpiler
                 foreach (var a in n.Attributes)
                     Visit(a);
             }
+
+            if (n.IsParams)
+                Append("params ");
             Visit(n.Type);
             Append(" ");
             Visit(n.Name);

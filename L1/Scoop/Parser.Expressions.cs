@@ -434,17 +434,27 @@ namespace Scoop
             var args = new List<AstNode>();
             while (true)
             {
-                var lookahead = t.Peek();
-                if (lookahead.IsOperator(")"))
+                var lookaheads = t.Peek(2);
+                if (lookaheads[0].IsOperator(")"))
                     break;
-                // TODO: <namedArgument> ":" <expression>
-                var arg = ParseExpressionLambda(t);
-                args.Add(arg);
-                if (t.Peek().IsOperator(","))
+                if (lookaheads[0].IsType(TokenType.Identifier) && lookaheads[1].IsOperator(":"))
                 {
-                    t.Advance();
-                    continue;
+                    var arg = new NamedArgumentNode
+                    {
+                        Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
+                        Location = t.Expect(TokenType.Operator, ":").Location,
+                        Value = ParseExpression(t)
+                    };
+                    args.Add(arg);
                 }
+                else
+                {
+                    var arg = ParseExpressionLambda(t);
+                    args.Add(arg);
+                }
+
+                if (t.NextIs(TokenType.Operator, ",", true))
+                    continue;
 
                 break;
             }
