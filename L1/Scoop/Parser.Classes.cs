@@ -73,42 +73,6 @@ namespace Scoop
             return members;
         }
 
-        public EnumNode ParseEnum(string s) => ParseEnum(new Tokenizer(s), null);
-        private EnumNode ParseEnum(Tokenizer t, List<AttributeNode> attributes)
-        {
-            var enumNode = new EnumNode
-            {
-                Attributes = attributes ?? ParseAttributes(t),
-                AccessModifier = t.Peek().IsKeyword("public", "private") ? new KeywordNode(t.GetNext()) : null,
-                Location = t.Expect(TokenType.Keyword, "enum").Location,
-                Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
-                Members = new List<EnumMemberNode>()
-            };
-            t.Expect(TokenType.Operator, "{");
-            if (t.NextIs(TokenType.Operator, "}", true))
-                return enumNode;
-
-            while (true)
-            {
-                var member = new EnumMemberNode
-                {
-                    Attributes = ParseAttributes(t),
-                    Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
-                    Value = t.NextIs(TokenType.Operator, "=", true) ? new IntegerNode(t.Expect(TokenType.Integer)) : null
-                };
-                member.Location = member.Name.Location;
-                enumNode.Members.Add(member);
-                if (t.Peek().IsOperator("}"))
-                    break;
-                if (t.NextIs(TokenType.Operator, ",", true))
-                    continue;
-                throw ParsingException.CouldNotParseRule(nameof(ParseEnum), t.Peek());
-            }
-            t.Expect(TokenType.Operator, "}");
-
-            return enumNode;
-        }
-
         public AstNode ParseClassMember(string s) => ParseClassMember(new Tokenizer(s), null);
         private AstNode ParseClassMember(Tokenizer t, List<AttributeNode> attributes)
         {
@@ -295,52 +259,6 @@ namespace Scoop
 
             t.Expect(TokenType.Operator, "}");
             return statements;
-        }
-
-        private List<TypeConstraintNode> ParseTypeConstraints(Tokenizer t)
-        {
-            if (!t.Peek().IsKeyword("where"))
-                return null;
-            var constraints = new List<TypeConstraintNode>();
-            while (t.Peek().IsKeyword("where"))
-            {
-                var constraint = new TypeConstraintNode
-                {
-                    Location = t.GetNext().Location,
-                    Type = new IdentifierNode(t.Expect(TokenType.Identifier)),
-                    Constraints = new List<AstNode>()
-                };
-                t.Expect(TokenType.Operator, ":");
-                while (true)
-                {
-                    var next = t.Peek(3);
-                    if (next[0].IsKeyword("new") && next[1].IsOperator("(") && next[2].IsOperator(")"))
-                    {
-                        t.Advance(3);
-                        constraint.Constraints.Add(new KeywordNode
-                        {
-                            Location = next[0].Location,
-                            Keyword = "new()"
-                        });
-                    }
-
-                    else if (next[0].IsKeyword("class"))
-                        constraint.Constraints.Add(new KeywordNode(t.GetNext()));
-                    else
-                    {
-                        var type = ParseType(t);
-                        constraint.Constraints.Add(type);
-                    }
-
-                    if (t.NextIs(TokenType.Operator, ",", true))
-                        continue;
-                    break;
-                }
-
-                constraints.Add(constraint);
-            }
-
-            return constraints;
         }
     }
 }
