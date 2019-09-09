@@ -26,8 +26,10 @@ namespace Scoop
             var left = ParseExpressionLambda(t);
             if (t.Peek().IsOperator(","))
             {
-                var items = new List<AstNode>();
-                items.Add(left);
+                var items = new List<AstNode>
+                {
+                    left
+                };
                 while(t.Peek().IsOperator(","))
                 {
                     t.Advance();

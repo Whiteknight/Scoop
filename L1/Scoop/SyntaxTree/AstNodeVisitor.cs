@@ -20,6 +20,7 @@
         AstNode VisitConstructor(ConstructorNode n);
         AstNode VisitCSharp(CSharpNode n);
         AstNode VisitDecimal(DecimalNode n);
+        AstNode VisitDelegate(DelegateNode n);
         AstNode VisitDottedIdentifier(DottedIdentifierNode n);
         AstNode VisitDouble(DoubleNode n);
         AstNode VisitEnum(EnumNode n);

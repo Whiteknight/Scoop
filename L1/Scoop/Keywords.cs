@@ -19,6 +19,7 @@ namespace Scoop
             "await",
             "class",
             "const",
+            "delegate",
             "enum",
             "false",
             "interface",

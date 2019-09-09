@@ -6,7 +6,6 @@ These items are required in L1 before we call it "complete" and cutover to L2.
 
 1. Comments and cleanups for parser rules
 1. Improve test coverage of transpiler
-1. "delegate"
 
 ## Items we might want in L1
 

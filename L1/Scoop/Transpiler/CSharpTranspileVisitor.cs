@@ -277,6 +277,61 @@ namespace Scoop.Transpiler
             return n;
         }
 
+        public AstNode VisitDelegate(DelegateNode n)
+        {
+            if (!n.Attributes.IsNullOrEmpty())
+            {
+                foreach (var a in n.Attributes)
+                    Visit(a);
+            }
+
+            Visit(n.AccessModifier);
+            Append(" delegate ");
+            Visit(n.ReturnType);
+            Append(" ");
+            Visit(n.Name);
+            if (!n.GenericTypeParameters.IsNullOrEmpty())
+            {
+                Append("<");
+                Visit(n.GenericTypeParameters[0]);
+                for (int i = 1; i < n.GenericTypeParameters.Count; i++)
+                {
+                    Append(", ");
+                    Visit(n.GenericTypeParameters[i]);
+                }
+
+                Append(">");
+            }
+            Append("(");
+            if (!n.Parameters.IsNullOrEmpty())
+            {
+                Visit(n.Parameters[0]);
+                for (int i = 1; i < n.Parameters.Count; i++)
+                {
+                    Append(", ");
+                    Visit(n.Parameters[i]);
+                }
+            }
+
+            Append(")");
+            if (!n.GenericTypeParameters.IsNullOrEmpty() && !n.TypeConstraints.IsNullOrEmpty())
+            {
+                IncreaseIndent();
+                AppendLineAndIndent();
+                Visit(n.TypeConstraints.First());
+                foreach (var tc in n.TypeConstraints.Skip(1))
+                {
+                    AppendLineAndIndent();
+                    Visit(tc);
+                }
+
+                DecreaseIndent();
+            }
+
+            Append(";");
+            return n;
+        }
+
         public AstNode VisitDottedIdentifier(DottedIdentifierNode n)
         {
             Append(n.Id);
@@ -637,6 +692,7 @@ namespace Scoop.Transpiler
 
         public AstNode VisitMethodDeclare(MethodDeclareNode n)
         {
+            // TODO: Can we have attributes here?
             Visit(n.ReturnType);
             Append(" ");
             Visit(n.Name);

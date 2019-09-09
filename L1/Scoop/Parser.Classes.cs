@@ -65,6 +65,12 @@ namespace Scoop
                     members.Add(enumMember);
                     continue;
                 }
+                if (lookaheads[0].IsKeyword("public", "private") && lookaheads[1].IsKeyword("delegate"))
+                {
+                    var delegateMember = ParseDelegate(t, attributes);
+                    members.Add(delegateMember);
+                    continue;
+                }
 
                 var member = ParseClassMember(t, attributes);
                 members.Add(member);

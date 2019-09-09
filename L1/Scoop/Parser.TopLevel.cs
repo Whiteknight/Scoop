@@ -76,6 +76,13 @@ namespace Scoop
                     continue;
                 }
 
+                if (lookahead.IsKeyword("delegate"))
+                {
+                    var delegateNode = ParseDelegate(t, attributes);
+                    namespaceNode.AddDeclaration(delegateNode);
+                    continue;
+                }
+
                 throw ParsingException.CouldNotParseRule(nameof(ParseNamespace), lookahead);
             }
             t.Expect(TokenType.Operator, "}");
