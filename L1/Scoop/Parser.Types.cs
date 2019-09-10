@@ -6,14 +6,12 @@ namespace Scoop
 {
     public partial class Parser
     {
-
-        private AstNode ParseType(Tokenizer t)
-        {
-            return ParseTypeArray(t);
-        }
+        // top-level type parsing method, redirects to appropriate precedence parsing method
+        private AstNode ParseType(Tokenizer t) => ParseTypeArray(t);
 
         private AstNode ParseTypeArray(Tokenizer t)
         {
+            // <subtype> ("[" "]")*
             var type = ParseTypeSubtype(t);
             while (true)
             {
@@ -40,8 +38,7 @@ namespace Scoop
 
         private AstNode ParseTypeSubtype(Tokenizer t)
         {
-            // <generic>
-            // <generic> "." <generic>
+            // <generic> ("." <generic>)*
             AstNode type = ParseTypeGeneric(t);
             while (t.NextIs(TokenType.Operator, ".", true))
             {
@@ -59,34 +56,32 @@ namespace Scoop
 
         private TypeNode ParseTypeGeneric(Tokenizer t)
         {
-            // <identifier>
-            // <identifier> "<" <typeName> ">"
+            // <typeName> ("<" <typeArray> ("," <typeArray>)* ">")?
             var typeNode = ParseTypeName(t);
             if (typeNode == null)
                 return null;
 
-            if (t.Peek().IsOperator("<"))
-            {
-                t.Advance();
-                typeNode.GenericArguments = new List<AstNode>();
-                while (true)
-                {
-                    var elementType = ParseTypeArray(t);
-                    if (elementType == null)
-                        return null;
-                    typeNode.GenericArguments.Add(elementType);
-                    if (!t.NextIs(TokenType.Operator, ",", true))
-                        break;
-                }
+            if (!t.NextIs(TokenType.Operator, "<", true))
+                return typeNode;
 
-                t.Expect(TokenType.Operator, ">");
+            typeNode.GenericArguments = new List<AstNode>();
+            while (true)
+            {
+                var elementType = ParseTypeArray(t);
+                if (elementType == null)
+                    return null;
+                typeNode.GenericArguments.Add(elementType);
+                if (!t.NextIs(TokenType.Operator, ",", true))
+                    break;
             }
+            t.Expect(TokenType.Operator, ">");
 
             return typeNode;
         }
 
         private TypeNode ParseTypeName(Tokenizer t)
         {
+            // <identifier>
             var id = t.Peek();
             if (!id.IsType(TokenType.Identifier))
                 return null;

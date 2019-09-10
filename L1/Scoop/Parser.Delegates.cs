@@ -8,6 +8,7 @@ namespace Scoop
     {
         private AstNode ParseDelegate(Tokenizer t, List<AttributeNode> attributes = null)
         {
+            // <attributes> <accessModifier>? "delegate" <type> <identifier> <genericParameters>? <parameters> <typeConstraints> ";"
             var node = new DelegateNode
             {
                 Attributes = attributes ?? ParseAttributes(t),

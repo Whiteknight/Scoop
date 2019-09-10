@@ -9,6 +9,7 @@ namespace Scoop
     {
         private DottedIdentifierNode ParseDottedIdentifier(Tokenizer t)
         {
+            // <identifier> ("." <identifier>)*
             var tokens = new List<Token>();
             var id = t.Expect(TokenType.Identifier);
             tokens.Add(id);

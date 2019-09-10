@@ -258,9 +258,9 @@ namespace Scoop
                 return statements;
             while (true)
             {
-                var stmt = ParseStatement(t);
-                if (stmt == null)
+                if (t.Peek().IsOperator("}"))
                     break;
+                var stmt = ParseStatement(t);
                 statements.Add(stmt);
             }
 

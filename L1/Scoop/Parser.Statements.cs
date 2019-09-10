@@ -10,31 +10,27 @@ namespace Scoop
 
         private AstNode ParseStatement(Tokenizer t)
         {
-            // <csharpLiteral> | <usingStatement> | (<unterminatedStatement> ";") | null
+            // <csharpLiteral> | <usingStatement> | <unterminatedStatement> ";" | null
             // Skip over any bare semicolons, which indicate an empty statement.
             while (t.Peek().IsOperator(";"))
                 t.Advance();
 
-            var lookahead = t.Peek();
-            if (lookahead.IsType(TokenType.CSharpLiteral))
+            if (t.Peek().IsType(TokenType.CSharpLiteral))
                 return new CSharpNode(t.GetNext());
 
             // Parse using-statement. This already includes it's own ";"
-            if (lookahead.IsKeyword("using"))
+            if (t.Peek().IsKeyword("using"))
                 return ParseUsingStatement(t);
 
             var stmt = ParseStatementUnterminated(t);
-            if (stmt == null)
-                return null;
             t.Expect(TokenType.Operator, ";");
             return stmt;
         }
 
         private AstNode ParseStatementUnterminated(Tokenizer t)
         {
+            // <returnStatement | <declaration> | <constDeclaration> | <expression>
             var lookahead = t.Peek();
-            if (lookahead.Is(TokenType.Operator, "}"))
-                return null;
             if (lookahead.IsKeyword("return"))
                 return ParseReturn(t);
             if (lookahead.IsKeyword("var"))
@@ -49,46 +45,47 @@ namespace Scoop
         {
             // "using" "(" "var" <ident> "=" <expression> ")" <statement>
             // "using" "(" <expression> ")" <statement>
-            var usingToken = t.Expect(TokenType.Keyword, "using");
-            t.Expect(TokenType.Operator, "(");
-            var lookaheads = t.Peek(2);
-            var usingNode = new UsingStatementNode
+            return new UsingStatementNode
             {
-                Location = usingToken.Location
+                Location = t.Expect(TokenType.Keyword, "using").Location,
+                Disposable = ParseUsingDisposable(t),
+                Statement = ParseStatement(t)
             };
+        }
+
+        private AstNode ParseUsingDisposable(Tokenizer t)
+        {
+            t.Expect(TokenType.Operator, "(");
+            AstNode disposable;
+            var lookaheads = t.Peek(2);
             if (lookaheads[0].IsKeyword("var") && lookaheads[1].IsType(TokenType.Identifier))
             {
                 var declareToken = t.Expect(TokenType.Keyword, "var");
-                var variable = t.Expect(TokenType.Identifier);
-                var assign = t.Expect(TokenType.Operator, "=");
-                var source = ParseExpressionConditional(t);
-                usingNode.Disposable = new InfixOperationNode
+                disposable = new InfixOperationNode
                 {
                     Location = declareToken.Location,
                     Left = new VariableDeclareNode
                     {
                         Location = declareToken.Location,
-                        Name = new IdentifierNode(variable)
+                        Name = new IdentifierNode(t.Expect(TokenType.Identifier))
                     },
-                    Operator = new OperatorNode(assign),
-                    Right = source
+                    Operator = new OperatorNode(t.Expect(TokenType.Operator, "=")),
+                    Right = ParseExpressionConditional(t)
                 };
             }
             else
-                usingNode.Disposable = ParseExpression(t);
+                disposable = ParseExpression(t);
+
             t.Expect(TokenType.Operator, ")");
-            var statement = ParseStatement(t);
-            usingNode.Statement = statement;
-            return usingNode;
+            return disposable;
         }
 
         private ReturnNode ParseReturn(Tokenizer t)
         {
             // "return" <expression>
-            var returnToken = t.Expect(TokenType.Keyword, "return");
             return new ReturnNode
             {
-                Location = returnToken.Location,
+                Location = t.Expect(TokenType.Keyword, "return").Location,
                 // Parse expression. It may be a tuple literal, but those will be surrounded with parens
                 Expression = ParseExpression(t)
             };

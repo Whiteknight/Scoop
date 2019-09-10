@@ -92,10 +92,9 @@ namespace Scoop
         private UsingDirectiveNode ParseUsingDirective(Tokenizer t)
         {
             // "using" <namespaceName> ";"
-            var usingToken = t.Expect(TokenType.Keyword, "using");
             var directive = new UsingDirectiveNode
             {
-                Location = usingToken.Location,
+                Location = t.Expect(TokenType.Keyword, "using").Location,
                 Namespace = ParseDottedIdentifier(t)
             };
             t.Expect(TokenType.Operator, ";");
