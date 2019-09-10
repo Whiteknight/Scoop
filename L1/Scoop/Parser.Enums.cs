@@ -7,7 +7,7 @@ namespace Scoop
     public partial class Parser
     {
         public EnumNode ParseEnum(string s) => ParseEnum(new Tokenizer(s), null);
-        private EnumNode ParseEnum(Tokenizer t, List<AttributeNode> attributes)
+        private EnumNode ParseEnum(ITokenizer t, List<AttributeNode> attributes)
         {
             var enumNode = new EnumNode
             {

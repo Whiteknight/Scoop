@@ -6,7 +6,7 @@ namespace Scoop
 {
     public partial class Parser
     {
-        private AstNode ParseExpressionList(Tokenizer t)
+        private AstNode ParseExpressionList(ITokenizer t)
         {
             // Top-level general-purpose expression parsing method, allowing the comma operator
             // This is a relatively rare case.
@@ -14,14 +14,14 @@ namespace Scoop
         }
 
         public AstNode ParseExpression(string s) => ParseExpression(new Tokenizer(s));
-        private AstNode ParseExpression(Tokenizer t)
+        private AstNode ParseExpression(ITokenizer t)
         {
             // Top-level expression parsing method for situations where the comma operator is not
             // allowed. This is the most common case
             return ParseExpressionLambda(t);
         }
 
-        private AstNode ParseExpressionComma(Tokenizer t)
+        private AstNode ParseExpressionComma(ITokenizer t)
         {
             var left = ParseExpressionLambda(t);
             if (t.Peek().IsOperator(","))
@@ -47,7 +47,7 @@ namespace Scoop
             return left;
         }
 
-        private AstNode ParseExpressionLambda(Tokenizer t)
+        private AstNode ParseExpressionLambda(ITokenizer t)
         {
             // "(" ")" "=>" ( <expression> | "{" <methodBody> "}" )
             var lookaheads = t.Peek(3);
@@ -104,7 +104,7 @@ namespace Scoop
             return expr;
         }
 
-        private AstNode ParseExpressionAssignment(Tokenizer t)
+        private AstNode ParseExpressionAssignment(ITokenizer t)
         {
             // Operators with Assignment precidence
             // <Conditional> (<op> <Conditional>)+
@@ -125,7 +125,7 @@ namespace Scoop
             return left;
         }
 
-        private AstNode ParseExpressionConditional(Tokenizer t)
+        private AstNode ParseExpressionConditional(ITokenizer t)
         {
             // <coalesceExpression>
             // <coalesceExpression> "?" <coalesceExpression> ":" <coalesceExpression>
@@ -148,7 +148,7 @@ namespace Scoop
             return left;
         }
 
-        private AstNode ParseExpressionCoalesce(Tokenizer t)
+        private AstNode ParseExpressionCoalesce(ITokenizer t)
         {
             // <logicalExpression>
             // <logicalExpression> "??" <logicalExpression>
@@ -169,7 +169,7 @@ namespace Scoop
             return left;
         }
 
-        private AstNode ParseExpressionLogical(Tokenizer t)
+        private AstNode ParseExpressionLogical(ITokenizer t)
         {
             // Operators with + - precidence
             // <Bitwise> (<op> <Bitwise>)+
@@ -190,7 +190,7 @@ namespace Scoop
             return left;
         }
 
-        private AstNode ParseExpressionBitwise(Tokenizer t)
+        private AstNode ParseExpressionBitwise(ITokenizer t)
         {
             // Operators with + - precidence
             // <Equality> (<op> <Equality>)+
@@ -211,7 +211,7 @@ namespace Scoop
             return left;
         }
 
-        private AstNode ParseExpressionEquality(Tokenizer t)
+        private AstNode ParseExpressionEquality(ITokenizer t)
         {
             // Operators with + - precidence
             // <Additive> (<op> <Additive>)+
@@ -232,7 +232,7 @@ namespace Scoop
             return left;
         }
 
-        private AstNode ParseExpressionTypeCoerce(Tokenizer t)
+        private AstNode ParseExpressionTypeCoerce(ITokenizer t)
         {
             var left = ParseExpressionAdditive(t);
             var lookahead = t.Peek();
@@ -252,7 +252,7 @@ namespace Scoop
             return left;
         }
 
-        private AstNode ParseExpressionAdditive(Tokenizer t)
+        private AstNode ParseExpressionAdditive(ITokenizer t)
         {
             // Operators with + - precidence
             // <Multiplicative> (<op> <Multiplicative>)+
@@ -273,7 +273,7 @@ namespace Scoop
             return left;
         }
 
-        private AstNode ParseExpressionMultiplicative(Tokenizer t)
+        private AstNode ParseExpressionMultiplicative(ITokenizer t)
         {
             // Operators with * / % precidence
             // <Unary> (<op> <Unary>)+
@@ -294,7 +294,7 @@ namespace Scoop
             return left;
         }
 
-        private AstNode ParseExpressionUnary(Tokenizer t)
+        private AstNode ParseExpressionUnary(ITokenizer t)
         {
             // ("-" | "+" | "~") <Postfix> | <Postfix>
             var next = t.Peek();
@@ -316,7 +316,7 @@ namespace Scoop
             return ParseExpressionPostfix(t);
         }
 
-        private bool IsGenericTypeArgument(Tokenizer t)
+        private bool IsGenericTypeArgument(ITokenizer t)
         {
             // TODO: Needs improvement to be more robust and correct
             var putbacks = new Stack<Token>();
@@ -356,7 +356,7 @@ namespace Scoop
             return success && angleBracketDepth == 0;
         }
 
-        private AstNode ParseExpressionPostfix(Tokenizer t)
+        private AstNode ParseExpressionPostfix(ITokenizer t)
         {
             var current = ParseExpressionTerminal(t);
             while (true)
@@ -428,7 +428,7 @@ namespace Scoop
             }
         }
 
-        private List<AstNode> ParseArgumentList(Tokenizer t)
+        private List<AstNode> ParseArgumentList(ITokenizer t)
         {
             t.Expect(TokenType.Operator, "(");
             var args = new List<AstNode>();
@@ -464,7 +464,7 @@ namespace Scoop
             return args;
         }
 
-        private List<AstNode> ParseIndexArgumentList(Tokenizer t)
+        private List<AstNode> ParseIndexArgumentList(ITokenizer t)
         {
             t.Expect(TokenType.Operator, "[");
             var args = new List<AstNode>();
@@ -488,7 +488,7 @@ namespace Scoop
             return args;
         }
 
-        private AstNode ParseExpressionTerminal(Tokenizer t)
+        private AstNode ParseExpressionTerminal(ITokenizer t)
         {
             // Terminal expression
             // Some of these "terminal" values may themselves be productions, but
@@ -541,7 +541,7 @@ namespace Scoop
             throw ParsingException.CouldNotParseRule(nameof(ParseExpressionTerminal), lookahead);
         }
 
-        private AstNode ParseNew(Tokenizer t)
+        private AstNode ParseNew(ITokenizer t)
         {
             var newToken = t.GetNext();
             var newNode = new NewNode
@@ -557,7 +557,7 @@ namespace Scoop
             return newNode;
         }
 
-        private List<AstNode> ParseInitializers(Tokenizer t)
+        private List<AstNode> ParseInitializers(ITokenizer t)
         {
             if (!t.NextIs(TokenType.Operator, "{", true))
                 return null;
@@ -598,7 +598,7 @@ namespace Scoop
             return inits;
         }
 
-        private AstNode ParseKeyValueInitializer(Tokenizer t)
+        private AstNode ParseKeyValueInitializer(ITokenizer t)
         {
             var startToken = t.Expect(TokenType.Operator, "{");
             var key = ParseExpression(t);
@@ -613,7 +613,7 @@ namespace Scoop
             };
         }
 
-        private AstNode ParseArrayInitializer(Tokenizer t)
+        private AstNode ParseArrayInitializer(ITokenizer t)
         {
             var startToken = t.Expect(TokenType.Operator, "[");
             // TODO: multi-dimentional arrays "[" 0, 1 "]" "=" ...
@@ -629,7 +629,7 @@ namespace Scoop
             };
         }
 
-        private AstNode ParsePropertyInitializer(Tokenizer t)
+        private AstNode ParsePropertyInitializer(ITokenizer t)
         {
             var propertyToken = t.Expect(TokenType.Identifier);
             t.Expect(TokenType.Operator, "=");

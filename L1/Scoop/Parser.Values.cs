@@ -7,7 +7,7 @@ namespace Scoop
 {
     public partial class Parser
     {
-        private DottedIdentifierNode ParseDottedIdentifier(Tokenizer t)
+        private DottedIdentifierNode ParseDottedIdentifier(ITokenizer t)
         {
             // <identifier> ("." <identifier>)*
             var tokens = new List<Token>();

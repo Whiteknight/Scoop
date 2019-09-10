@@ -7,7 +7,7 @@ namespace Scoop
     {
         public CompilationUnitNode ParseUnit(string s) => ParseUnit(new Tokenizer(new StringCharacterSequence(s)));
 
-        public CompilationUnitNode ParseUnit(Tokenizer t)
+        public CompilationUnitNode ParseUnit(ITokenizer t)
         {
             var unit = new CompilationUnitNode();
             while (true)
@@ -37,7 +37,7 @@ namespace Scoop
             return unit;
         }
 
-        private NamespaceNode ParseNamespace(Tokenizer t)
+        private NamespaceNode ParseNamespace(ITokenizer t)
         {
             var namespaceToken = t.Expect(TokenType.Keyword, "namespace");
             var namespaceNode = new NamespaceNode
@@ -89,7 +89,7 @@ namespace Scoop
             return namespaceNode;
         }
 
-        private UsingDirectiveNode ParseUsingDirective(Tokenizer t)
+        private UsingDirectiveNode ParseUsingDirective(ITokenizer t)
         {
             // "using" <namespaceName> ";"
             var directive = new UsingDirectiveNode

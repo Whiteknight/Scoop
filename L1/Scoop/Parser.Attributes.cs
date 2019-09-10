@@ -7,7 +7,7 @@ namespace Scoop
     public partial class Parser
     {
         public List<AttributeNode> ParseAttributes(string s) => ParseAttributes(new Tokenizer(s));
-        private List<AttributeNode> ParseAttributes(Tokenizer t)
+        private List<AttributeNode> ParseAttributes(ITokenizer t)
         {
             if (!t.Peek().IsOperator("["))
                 return null;
@@ -33,7 +33,8 @@ namespace Scoop
                     if (t.NextIs(TokenType.Operator, "]"))
                         break;
 
-                    throw ParsingException.CouldNotParseRule(nameof(ParseAttributes), t.Peek());
+                    Fail(t, nameof(ParseAttributes));
+                    return null;
                 }
 
                 t.Expect(TokenType.Operator, "]");
@@ -42,7 +43,7 @@ namespace Scoop
             return attributes;
         }
 
-        private List<AstNode> ParseAttributeArgumentList(Tokenizer t)
+        private List<AstNode> ParseAttributeArgumentList(ITokenizer t)
         {
             if (!t.NextIs(TokenType.Operator, "(", true))
                 return null;

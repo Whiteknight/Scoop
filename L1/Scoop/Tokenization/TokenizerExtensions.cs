@@ -4,7 +4,7 @@ namespace Scoop.Tokenization
 {
     public static class TokenizerExtensions
     {
-        public static Token GetNext(this Tokenizer tokenizer, bool skipComments = true)
+        public static Token GetNext(this ITokenizer tokenizer, bool skipComments = true)
         {
             while (true)
             {
@@ -19,7 +19,7 @@ namespace Scoop.Tokenization
             }
         }
 
-        public static IReadOnlyList<Token> GetNext(this Tokenizer tokenizer, int n, bool skipComments = true)
+        public static IReadOnlyList<Token> GetNext(this ITokenizer tokenizer, int n, bool skipComments = true)
         {
             // TODO: Can we use some kind of pre-existing buffer pool?
             var list = new Token[n];
@@ -43,15 +43,15 @@ namespace Scoop.Tokenization
             return list;
         }
 
-        public static void Advance(this Tokenizer tokenizer) => Advance(tokenizer, 1);
+        public static void Advance(this ITokenizer tokenizer) => Advance(tokenizer, 1);
 
-        public static void Advance(this Tokenizer tokenizer, int n)
+        public static void Advance(this ITokenizer tokenizer, int n)
         {
             for (int i = 0; i < n; i++)
                 GetNext(tokenizer);
         }
 
-        public static bool NextIs(this Tokenizer tokenizer, TokenType type, string value, bool consume = false)
+        public static bool NextIs(this ITokenizer tokenizer, TokenType type, string value, bool consume = false)
         {
             var t = tokenizer.GetNext();
             bool isSame = t.Type == type && t.Value == value;
@@ -66,7 +66,7 @@ namespace Scoop.Tokenization
             return true;
         }
 
-        public static Token Expect(this Tokenizer tokenizer, TokenType type)
+        public static Token Expect(this ITokenizer tokenizer, TokenType type)
         {
             var found = tokenizer.GetNext();
             if (found.Type != type)
@@ -74,7 +74,7 @@ namespace Scoop.Tokenization
             return found;
         }
 
-        public static Token Expect(this Tokenizer tokenizer, TokenType type, params string[] values)
+        public static Token Expect(this ITokenizer tokenizer, TokenType type, params string[] values)
         {
             var found = tokenizer.GetNext();
             if (found.Type == type)
@@ -89,14 +89,14 @@ namespace Scoop.Tokenization
             throw ParsingException.UnexpectedToken(type, values, found);
         }
 
-        public static Token Peek(this Tokenizer tokenizer)
+        public static Token Peek(this ITokenizer tokenizer)
         {
             var t = tokenizer.GetNext();
             tokenizer.PutBack(t);
             return t;
         }
 
-        public static IReadOnlyList<Token> Peek(this Tokenizer tokenizer, int n)
+        public static IReadOnlyList<Token> Peek(this ITokenizer tokenizer, int n)
         {
             // TODO: Can we use some kind of pre-existing buffer pool?
             var list = new Token[n];
@@ -107,7 +107,7 @@ namespace Scoop.Tokenization
             return list;
         }
 
-        public static Token ExpectPeek(this Tokenizer tokenizer, TokenType type)
+        public static Token ExpectPeek(this ITokenizer tokenizer, TokenType type)
         {
             var found = tokenizer.Peek();
             if (found.Type != type)
@@ -115,7 +115,7 @@ namespace Scoop.Tokenization
             return found;
         }
 
-        public static void Skip(this Tokenizer tokenizer, TokenType type)
+        public static void Skip(this ITokenizer tokenizer, TokenType type)
         {
             while (true)
             {
@@ -157,12 +157,14 @@ namespace Scoop.Tokenization
         //    return Token.Keyword(combined, keywords.First().Location);
         //}
 
-        public static Token GetIdentifierOrKeyword(this Tokenizer tokenizer)
+        public static Token GetIdentifierOrKeyword(this ITokenizer tokenizer)
         {
             var next = tokenizer.GetNext();
             if (next.IsType(TokenType.Identifier) || next.IsType(TokenType.Keyword))
                 return next;
             throw ParsingException.UnexpectedToken(TokenType.Identifier, next);
         }
+
+        public static ITokenizer Mark(this ITokenizer tokenizer) => new WindowTokenizer(tokenizer);
     }
 }

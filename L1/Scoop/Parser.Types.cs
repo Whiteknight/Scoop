@@ -7,9 +7,9 @@ namespace Scoop
     public partial class Parser
     {
         // top-level type parsing method, redirects to appropriate precedence parsing method
-        private AstNode ParseType(Tokenizer t) => ParseTypeArray(t);
+        private AstNode ParseType(ITokenizer t) => ParseTypeArray(t);
 
-        private AstNode ParseTypeArray(Tokenizer t)
+        private AstNode ParseTypeArray(ITokenizer t)
         {
             // <subtype> ("[" "]")*
             var type = ParseTypeSubtype(t);
@@ -36,7 +36,7 @@ namespace Scoop
             return type;
         }
 
-        private AstNode ParseTypeSubtype(Tokenizer t)
+        private AstNode ParseTypeSubtype(ITokenizer t)
         {
             // <generic> ("." <generic>)*
             AstNode type = ParseTypeGeneric(t);
@@ -54,7 +54,7 @@ namespace Scoop
             return type;
         }
 
-        private TypeNode ParseTypeGeneric(Tokenizer t)
+        private TypeNode ParseTypeGeneric(ITokenizer t)
         {
             // <typeName> ("<" <typeArray> ("," <typeArray>)* ">")?
             var typeNode = ParseTypeName(t);
@@ -79,7 +79,7 @@ namespace Scoop
             return typeNode;
         }
 
-        private TypeNode ParseTypeName(Tokenizer t)
+        private TypeNode ParseTypeName(ITokenizer t)
         {
             // <identifier>
             var id = t.Peek();
@@ -94,7 +94,7 @@ namespace Scoop
             };
         }
 
-        private List<TypeConstraintNode> ParseTypeConstraints(Tokenizer t)
+        private List<TypeConstraintNode> ParseTypeConstraints(ITokenizer t)
         {
             if (!t.Peek().IsKeyword("where"))
                 return null;

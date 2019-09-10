@@ -8,7 +8,7 @@ namespace Scoop
         // Helper for testing
         public AstNode ParseStatement(string s) => ParseStatement(new Tokenizer(new StringCharacterSequence(s)));
 
-        private AstNode ParseStatement(Tokenizer t)
+        private AstNode ParseStatement(ITokenizer t)
         {
             // <csharpLiteral> | <usingStatement> | <unterminatedStatement> ";" | null
             // Skip over any bare semicolons, which indicate an empty statement.
@@ -27,7 +27,7 @@ namespace Scoop
             return stmt;
         }
 
-        private AstNode ParseStatementUnterminated(Tokenizer t)
+        private AstNode ParseStatementUnterminated(ITokenizer t)
         {
             // <returnStatement | <declaration> | <constDeclaration> | <expression>
             var lookahead = t.Peek();
@@ -41,7 +41,7 @@ namespace Scoop
             return ParseExpression(t);
         }
 
-        private UsingStatementNode ParseUsingStatement(Tokenizer t)
+        private UsingStatementNode ParseUsingStatement(ITokenizer t)
         {
             // "using" "(" "var" <ident> "=" <expression> ")" <statement>
             // "using" "(" <expression> ")" <statement>
@@ -53,7 +53,7 @@ namespace Scoop
             };
         }
 
-        private AstNode ParseUsingDisposable(Tokenizer t)
+        private AstNode ParseUsingDisposable(ITokenizer t)
         {
             t.Expect(TokenType.Operator, "(");
             AstNode disposable;
@@ -80,7 +80,7 @@ namespace Scoop
             return disposable;
         }
 
-        private ReturnNode ParseReturn(Tokenizer t)
+        private ReturnNode ParseReturn(ITokenizer t)
         {
             // "return" <expression>
             return new ReturnNode
@@ -91,7 +91,7 @@ namespace Scoop
             };
         }
 
-        private AstNode ParseDeclaration(Tokenizer t)
+        private AstNode ParseDeclaration(ITokenizer t)
         {
             // "var" <ident> ("=" <expression>)?
             var varToken = t.Expect(TokenType.Keyword, "var");
@@ -116,7 +116,7 @@ namespace Scoop
             };
         }
 
-        private AstNode ParseConstDeclaration(Tokenizer t)
+        private AstNode ParseConstDeclaration(ITokenizer t)
         {
             // "const" ("var" | <type>) <ident> "=" <expression>
             var constNode = new ConstNode

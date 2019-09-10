@@ -6,7 +6,7 @@ namespace Scoop
 {
     public partial class Parser
     {
-        private AstNode ParseDelegate(Tokenizer t, List<AttributeNode> attributes = null)
+        private AstNode ParseDelegate(ITokenizer t, List<AttributeNode> attributes = null)
         {
             // <attributes> <accessModifier>? "delegate" <type> <identifier> <genericParameters>? <parameters> <typeConstraints> ";"
             var node = new DelegateNode

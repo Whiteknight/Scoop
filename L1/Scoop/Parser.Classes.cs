@@ -9,7 +9,7 @@ namespace Scoop
         // Helper method to start parsing at the class level, mostly to simplify unit tests
         public ClassNode ParseClass(string s) => ParseClass(new Tokenizer(s), null);
 
-        private ClassNode ParseClass(Tokenizer t, List<AttributeNode> attributes)
+        private ClassNode ParseClass(ITokenizer t, List<AttributeNode> attributes)
         {
             return new ClassNode
             {
@@ -25,7 +25,7 @@ namespace Scoop
             };
         }
 
-        private List<AstNode> ParseClassBody(Tokenizer t)
+        private List<AstNode> ParseClassBody(ITokenizer t)
         {
             t.Expect(TokenType.Operator, "{");
             var members = new List<AstNode>();
@@ -80,7 +80,7 @@ namespace Scoop
         }
 
         public AstNode ParseClassMember(string s) => ParseClassMember(new Tokenizer(s), null);
-        private AstNode ParseClassMember(Tokenizer t, List<AttributeNode> attributes)
+        private AstNode ParseClassMember(ITokenizer t, List<AttributeNode> attributes)
         {
             attributes = attributes ?? ParseAttributes(t);
             var accessModifier = t.Peek().IsKeyword("public", "private") ? new KeywordNode(t.GetNext()) : null;
@@ -162,7 +162,7 @@ namespace Scoop
             throw ParsingException.CouldNotParseRule(nameof(ParseClassMember), t.Peek());
         }
 
-        private List<AstNode> ParseConstructorThisArgs(Tokenizer t)
+        private List<AstNode> ParseConstructorThisArgs(ITokenizer t)
         {
             if (!t.NextIs(TokenType.Operator, ":", true))
                 return null;
@@ -170,7 +170,7 @@ namespace Scoop
             return ParseArgumentList(t);
         }
 
-        private List<AstNode> ParseGenericTypeParametersList(Tokenizer t)
+        private List<AstNode> ParseGenericTypeParametersList(ITokenizer t)
         {
             if (!t.NextIs(TokenType.Operator, "<"))
                 return null;
@@ -187,7 +187,7 @@ namespace Scoop
             return types;
         }
 
-        private List<ParameterNode> ParseParameterList(Tokenizer t)
+        private List<ParameterNode> ParseParameterList(ITokenizer t)
         {
             t.Expect(TokenType.Operator, "(");
             var parameterList = new List<ParameterNode>();
@@ -223,7 +223,7 @@ namespace Scoop
             return parameterList;
         }
 
-        private List<AstNode> ParseMethodBody(Tokenizer t)
+        private List<AstNode> ParseMethodBody(ITokenizer t)
         {
             var lookahead = t.Peek();
             if (lookahead.IsOperator("=>"))
@@ -234,7 +234,7 @@ namespace Scoop
             throw ParsingException.CouldNotParseRule(nameof(ParseMethodBody), lookahead);
         }
 
-        private List<AstNode> ParseExpressionBodiedMethodBody(Tokenizer t)
+        private List<AstNode> ParseExpressionBodiedMethodBody(ITokenizer t)
         {
             var lambdaToken = t.Expect(TokenType.Operator, "=>");
             var expr = ParseExpression(t);
@@ -249,7 +249,7 @@ namespace Scoop
             };
         }
 
-        private List<AstNode> ParseNormalMethodBody(Tokenizer t)
+        private List<AstNode> ParseNormalMethodBody(ITokenizer t)
         {
             // TODO: Method-level const values
             t.Expect(TokenType.Operator, "{");

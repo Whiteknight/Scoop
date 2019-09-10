@@ -9,7 +9,7 @@ namespace Scoop
         // Helper method to start parsing at the interface level, mostly to simplify unit tests
         public InterfaceNode ParseInterface(string s) => ParseInterface(new Tokenizer(s), null);
 
-        private InterfaceNode ParseInterface(Tokenizer t, List<AttributeNode> attributes)
+        private InterfaceNode ParseInterface(ITokenizer t, List<AttributeNode> attributes)
         {
             return new InterfaceNode
             {
@@ -24,7 +24,7 @@ namespace Scoop
             };
         }
 
-        private List<AstNode> ParseInheritanceList(Tokenizer t)
+        private List<AstNode> ParseInheritanceList(ITokenizer t)
         {
             var interfaces = new List<AstNode>();
             var contractType = ParseType(t);
@@ -38,7 +38,7 @@ namespace Scoop
             return interfaces;
         }
 
-        private List<AstNode> ParseInterfaceBody(Tokenizer t)
+        private List<AstNode> ParseInterfaceBody(ITokenizer t)
         {
             // <methodSignature>*
             t.Expect(TokenType.Operator, "{");

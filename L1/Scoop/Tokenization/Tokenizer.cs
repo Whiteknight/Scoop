@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Scoop.Tokenization
 {
-    public class Tokenizer : IEnumerable<Token>
+    public class Tokenizer : IEnumerable<Token>, ITokenizer
     {
         private readonly Stack<Token> _putbacks;
         private readonly TokenScanner _scanner;
