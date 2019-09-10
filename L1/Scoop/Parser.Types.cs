@@ -1,143 +1,152 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
+using Scoop.Parsers;
 using Scoop.SyntaxTree;
-using Scoop.Tokenization;
 
 namespace Scoop
 {
     public partial class Parser
     {
-        // top-level type parsing method, redirects to appropriate precedence parsing method
-        private AstNode ParseType(ITokenizer t) => ParseTypeArray(t);
-
-        private AstNode ParseTypeArray(ITokenizer t)
-        {
-            // <subtype> ("[" "]")*
-            var type = ParseTypeSubtype(t);
-            while (true)
-            {
-                var lookahead = t.Peek();
-                if (lookahead.IsOperator("["))
-                {
-                    t.Advance();
-                    // TODO: Size
-                    // TODO: "[" a, b, c "]" multi-dimensional array syntax
-                    t.Expect(TokenType.Operator, "]");
-                    type = new ArrayTypeNode
-                    {
-                        ElementType = type,
-                        Location = lookahead.Location
-                    };
-                    continue;
-                }
-
-                break;
-            }
-
-            return type;
-        }
-
-        private AstNode ParseTypeSubtype(ITokenizer t)
-        {
-            // <generic> ("." <generic>)*
-            AstNode type = ParseTypeGeneric(t);
-            while (t.NextIs(TokenType.Operator, ".", true))
-            {
-                var child = ParseTypeGeneric(t);
-                type = new ChildTypeNode
-                {
-                    Location = type.Location,
-                    Parent = type,
-                    Child = child
-                };
-            }
-
-            return type;
-        }
-
-        private TypeNode ParseTypeGeneric(ITokenizer t)
+        private void InitializeTypes()
         {
             // <typeName> ("<" <typeArray> ("," <typeArray>)* ">")?
-            var typeNode = ParseTypeName(t);
-            if (typeNode == null)
-                return null;
+            var typeName = ScoopParsers.Transform(
+                new IdentifierParser(),
+                id => new TypeNode(id)
+            );
 
-            if (!t.NextIs(TokenType.Operator, "<", true))
-                return typeNode;
+            var genericType = ScoopParsers.First(
+                ScoopParsers.Sequence(
+                    typeName,
+                    new OperatorParser("<"),
+                    ScoopParsers.SeparatedList(
+                        ScoopParsers.Deferred(() => Types),
+                        new OperatorParser(","),
+                        list => new ListNode<TypeNode> { Items = list.ToList(), Separator = new OperatorNode(",") }
+                    ),
+                    new OperatorParser(">"),
+                    ProduceTypeNodeGenericArguments
+                ),
+                typeName
+            );
 
-            typeNode.GenericArguments = new List<AstNode>();
-            while (true)
-            {
-                var elementType = ParseTypeArray(t);
-                if (elementType == null)
-                    return null;
-                typeNode.GenericArguments.Add(elementType);
-                if (!t.NextIs(TokenType.Operator, ",", true))
-                    break;
-            }
-            t.Expect(TokenType.Operator, ">");
+            var subtype = ScoopParsers.SeparatedList(
+                genericType,
+                new OperatorParser("."),
+                types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(".") }
+            );
 
-            return typeNode;
+            // <subtype> ("[" "]")*
+            Types = ScoopParsers.Sequence(
+                subtype,
+                ScoopParsers.List(
+                    ScoopParsers.Sequence(
+                        new OperatorParser("["),
+                        new OperatorParser("]"),
+                        (a, b) => new ArrayTypeNode { Location = a.Location }
+                    ),
+                    items => new ListNode<ArrayTypeNode> { Items = items.ToList() }
+                ),
+                ProduceTypeNodeArrayTypes
+            );
+
+            DeclareTypes = ScoopParsers.First(
+                ScoopParsers.Transform(
+                    new KeywordParser("var"),
+                    k => new TypeNode { Name = new IdentifierNode(k.Keyword), Location = k.Location }
+                ),
+                ScoopParsers.Transform(
+                    new KeywordParser("dynamic"),
+                    k => new TypeNode { Name = new IdentifierNode(k.Keyword), Location = k.Location }
+                ),
+                Types
+            );
+
+            GenericTypeArguments = ScoopParsers.Sequence(
+                new OperatorParser("<"),
+                ScoopParsers.SeparatedList(
+                    Types,
+                    new OperatorParser(","),
+                    types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") }
+                ),
+                new OperatorParser(">"),
+                (a, types, b) => types
+            );
+
+            GenericTypeParameters = ScoopParsers.Transform(
+                ScoopParsers.Optional(
+                    ScoopParsers.Sequence(
+                        new OperatorParser("<"),
+                        ScoopParsers.SeparatedList(
+                            new IdentifierParser(),
+                            new OperatorParser(","),
+                            types => new ListNode<IdentifierNode> { Items = types.ToList(), Separator = new OperatorNode(",") }
+                        ),
+                        new OperatorParser(">"),
+                        (a, types, b) => types
+                    )
+                ),
+                n => n is EmptyNode ? ListNode<IdentifierNode>.Default() : n as ListNode<IdentifierNode>
+            );
+
+            var constraintList = ScoopParsers.SeparatedList(
+                ScoopParsers.First<AstNode>(
+                    new KeywordParser("class"),
+                    ScoopParsers.Sequence(
+                        new KeywordParser("new"),
+                        new OperatorParser("("),
+                        new OperatorParser(")"),
+                        (n, a, b) => new KeywordNode { Keyword = "new()", Location = n.Location }
+                    ),
+                    Types
+                ),
+                new OperatorParser(","),
+                constraints => new ListNode<AstNode> { Items = constraints.ToList(), Separator = new OperatorNode(",") }
+            );
+            TypeConstraints = ScoopParsers.List(
+                ScoopParsers.Sequence(
+                    new KeywordParser("where"),
+                    new IdentifierParser(),
+                    new OperatorParser(":"),
+                    constraintList,
+                    (w, type, o, constraints) => new TypeConstraintNode
+                    {
+                        Location = w.Location,
+                        Type = type,
+                        Constraints = constraints
+                    }
+                ),
+                allConstraints => new ListNode<TypeConstraintNode> { Items = allConstraints.ToList() }
+            );
         }
 
-        private TypeNode ParseTypeName(ITokenizer t)
+        private TypeNode ProduceTypeNodeArrayTypes(ListNode<TypeNode> a, ListNode<ArrayTypeNode> b)
         {
-            // <identifier>
-            var id = t.Peek();
-            if (!id.IsType(TokenType.Identifier))
+            if (a.Count == 0)
                 return null;
-            t.Advance();
-
-            return new TypeNode
+            if (a.Count == 1)
             {
-                Location = id.Location,
-                Name = new IdentifierNode(id)
+                a[0].ArrayTypes = b.Count == 0 ? null : b;
+                return a[0];
+            }
+
+            var current = a[a.Count - 1];
+            for (int i = a.Count - 2; i >= 0; i--)
+            {
+                a[i].Child = current;
+                current = a[i];
+            }
+
+            a[0].ArrayTypes = b.Count == 0 ? null : b;
+            return a[0];
+        }
+
+        private TypeNode ProduceTypeNodeGenericArguments(TypeNode a, OperatorNode b, ListNode<TypeNode> c, OperatorNode d)
+        {
+            a.GenericArguments = new ListNode<TypeNode>
+            {
+                Items = c.Items.ToList(), Separator = c.Separator
             };
-        }
-
-        private List<TypeConstraintNode> ParseTypeConstraints(ITokenizer t)
-        {
-            if (!t.Peek().IsKeyword("where"))
-                return null;
-            var constraints = new List<TypeConstraintNode>();
-            while (t.Peek().IsKeyword("where"))
-            {
-                var constraint = new TypeConstraintNode
-                {
-                    Location = t.GetNext().Location,
-                    Type = new IdentifierNode(t.Expect(TokenType.Identifier)),
-                    Constraints = new List<AstNode>()
-                };
-                t.Expect(TokenType.Operator, ":");
-                while (true)
-                {
-                    var next = t.Peek(3);
-                    if (next[0].IsKeyword("new") && next[1].IsOperator("(") && next[2].IsOperator(")"))
-                    {
-                        t.Advance(3);
-                        constraint.Constraints.Add(new KeywordNode
-                        {
-                            Location = next[0].Location,
-                            Keyword = "new()"
-                        });
-                    }
-
-                    else if (next[0].IsKeyword("class"))
-                        constraint.Constraints.Add(new KeywordNode(t.GetNext()));
-                    else
-                    {
-                        var type = ParseType(t);
-                        constraint.Constraints.Add(type);
-                    }
-
-                    if (t.NextIs(TokenType.Operator, ",", true))
-                        continue;
-                    break;
-                }
-
-                constraints.Add(constraint);
-            }
-
-            return constraints;
+            return a;
         }
     }
 }

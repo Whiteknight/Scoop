@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -19,7 +18,7 @@ namespace Scoop.Tests.Parsing
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>()
+                    Members = new ListNode<AstNode>()
                 }
             );
         }
@@ -43,14 +42,14 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new ConstructorNode
                         {
                             ClassName = new IdentifierNode("MyClass"),
                             AccessModifier = new KeywordNode("public"),
-                            Parameters = new List<ParameterNode>(),
-                            Statements = new List<AstNode>()
+                            Parameters = ListNode<ParameterNode>.Default(),
+                            Statements = new ListNode<AstNode>()
                         },
                         new MethodNode
                         {
@@ -60,8 +59,8 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("void")
                             },
-                            Parameters = new List<ParameterNode>(),
-                            Statements = new List<AstNode>()
+                            Parameters = ListNode<ParameterNode>.Default(),
+                            Statements = new ListNode<AstNode>()
                         }
                     }
                 }
@@ -87,58 +86,61 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new ConstructorNode
                         {
                             ClassName = new IdentifierNode("MyClass"),
                             AccessModifier = new KeywordNode("public"),
-                            Parameters = new List<ParameterNode>(),
-                            ThisArgs = new List<AstNode>
+                            Parameters = ListNode<ParameterNode>.Default(),
+                            ThisArgs = new ListNode<AstNode>
                             {
-                                new IntegerNode(1)
+                                Separator = new OperatorNode(","),
+                                [0] = new IntegerNode(1)
                             },
-                            Statements = new List<AstNode>()
+                            Statements = new ListNode<AstNode>()
                         },
                         new ConstructorNode
                         {
                             ClassName = new IdentifierNode("MyClass"),
                             AccessModifier = new KeywordNode("public"),
-                            Parameters = new List<ParameterNode>
+                            Parameters = new ListNode<ParameterNode>
                             {
-                                new ParameterNode
+                                Separator = new OperatorNode(","),
+                                [0] = new ParameterNode
                                 {
                                     Type = new TypeNode("int"),
                                     Name = new IdentifierNode("a")
                                 }
                             },
-                            ThisArgs = new List<AstNode>
+                            ThisArgs = new ListNode<AstNode>
                             {
-                                new IdentifierNode("a"),
-                                new StringNode("\"test\"")
+                                Separator = new OperatorNode(","),
+                                [0] = new IdentifierNode("a"),
+                                [1] = new StringNode("\"test\"")
                             },
-                            Statements = new List<AstNode>()
+                            Statements = new ListNode<AstNode>()
                         },
                         new ConstructorNode
                         {
                             ClassName = new IdentifierNode("MyClass"),
                             AccessModifier = new KeywordNode("public"),
-                            Parameters = new List<ParameterNode>
+                            Parameters = new ListNode<ParameterNode>
                             {
-                                new ParameterNode
+                                Separator = new OperatorNode(","),
+                                [0] = new ParameterNode
                                 {
                                     Type = new TypeNode("int"),
                                     Name = new IdentifierNode("a")
                                 },
-                                new ParameterNode
+                                [1] = new ParameterNode
                                 {
                                     Type = new TypeNode("string"),
                                     Name = new IdentifierNode("b")
                                 }
                             },
-                            Statements = new List<AstNode>()
+                            Statements = new ListNode<AstNode>()
                         }
-
                     }
                 }
             );
@@ -162,7 +164,7 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new MethodNode
                         {
@@ -172,8 +174,8 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<ParameterNode>(),
-                            Statements = new List<AstNode>
+                            Parameters = ListNode<ParameterNode>.Default(),
+                            Statements = new ListNode<AstNode>
                             {
                                 new ReturnNode
                                 {
@@ -201,7 +203,7 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new MethodNode
                         {
@@ -211,8 +213,8 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<ParameterNode>(),
-                            Statements = new List<AstNode>
+                            Parameters = ListNode<ParameterNode>.Default(),
+                            Statements = new ListNode<AstNode>
                             {
                                 new ReturnNode
                                 {
@@ -243,7 +245,7 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new MethodNode
                         {
@@ -253,8 +255,8 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<ParameterNode>(),
-                            Statements = new List<AstNode>
+                            Parameters = ListNode<ParameterNode>.Default(),
+                            Statements = new ListNode<AstNode>
                             {
                                 new ReturnNode
                                 {
@@ -292,7 +294,7 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new MethodNode
                         {
@@ -302,10 +304,12 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<ParameterNode>(),
-                            Statements = new List<AstNode>
+                            Parameters = ListNode<ParameterNode>.Default(),
+                            Statements = new ListNode<AstNode>
                             {
-                                new VariableDeclareNode {
+                                new VariableDeclareNode
+                                {
+                                    Type = new TypeNode("var"),
                                     Name = new IdentifierNode("value")
                                 },
                                 new InfixOperationNode {
@@ -343,7 +347,7 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new MethodNode
                         {
@@ -353,15 +357,14 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<ParameterNode>(),
-                            Statements = new List<AstNode>
+                            Parameters = ListNode<ParameterNode>.Default(),
+                            Statements = new ListNode<AstNode>
                             {
-                                new InfixOperationNode {
-                                    Left = new VariableDeclareNode {
-                                        Name = new IdentifierNode("value")
-                                    },
-                                    Operator = new OperatorNode("="),
-                                    Right = new IntegerNode(4)
+                                new VariableDeclareNode
+                                {
+                                    Type = new TypeNode("var"),
+                                    Name = new IdentifierNode("value"),
+                                    Value = new IntegerNode(4)
                                 },
                                 new ReturnNode
                                 {
@@ -392,7 +395,7 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new MethodNode
                         {
@@ -402,8 +405,8 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<ParameterNode>(),
-                            Statements = new List<AstNode>
+                            Parameters = ListNode<ParameterNode>.Default(),
+                            Statements = new ListNode<AstNode>
                             {
                                 new ReturnNode
                                 {
@@ -438,7 +441,7 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new MethodNode
                         {
@@ -448,8 +451,8 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("string")
                             },
-                            Parameters = new List<ParameterNode>(),
-                            Statements = new List<AstNode>
+                            Parameters = ListNode<ParameterNode>.Default(),
+                            Statements = new ListNode<AstNode>
                             {
                                 new ReturnNode
                                 {
@@ -460,7 +463,7 @@ public class MyClass
                                             Instance = new IntegerNode(5),
                                             MemberName = new IdentifierNode("ToString")
                                         },
-                                        Arguments = new List<AstNode>()
+                                        Arguments = ListNode<AstNode>.Default()
                                     }
                                 }
                             }
@@ -488,33 +491,36 @@ public class MyClass<TA>
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    GenericTypeParameters = new List<AstNode>
+                    GenericTypeParameters = new ListNode<IdentifierNode>
                     {
-                        new TypeNode("TA")
+                        Separator = new OperatorNode(","),
+                        [0] = new IdentifierNode("TA")
                     },
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new MethodNode
                         {
                             AccessModifier = new KeywordNode("public"),
                             ReturnType = new TypeNode("TB"),
                             Name = new IdentifierNode("MyMethod"),
-                            GenericTypeParameters = new List<AstNode>
+                            GenericTypeParameters = new ListNode<IdentifierNode>
                             {
-                                new TypeNode("TB"),
-                                new TypeNode("TC")
+                                Separator = new OperatorNode(","),
+                                [0] = new IdentifierNode("TB"),
+                                [1] = new IdentifierNode("TC")
                             },
-                            Parameters = new List<ParameterNode>(),
-                            Statements = new List<AstNode>
+                            Parameters = ListNode<ParameterNode>.Default(),
+                            Statements = new ListNode<AstNode>
                             {
                                 new ReturnNode
                                 {
                                     Expression = new InvokeNode
                                     {
                                         Instance = new IdentifierNode("default"),
-                                        Arguments = new List<AstNode>
+                                        Arguments = new ListNode<AstNode>
                                         {
-                                            new IdentifierNode("TB")
+                                            Separator = new OperatorNode(","),
+                                            [0] = new IdentifierNode("TB")
                                         }
                                     }
                                 }
@@ -546,64 +552,69 @@ public class MyClass<TA>
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    GenericTypeParameters = new List<AstNode>
+                    GenericTypeParameters = new ListNode<IdentifierNode>
                     {
-                        new TypeNode("TA")
+                        Separator = new OperatorNode(","),
+                        [0] = new IdentifierNode("TA")
                     },
-                    TypeConstraints = new List<TypeConstraintNode>
+                    TypeConstraints = new ListNode<TypeConstraintNode>
                     {
                         new TypeConstraintNode
                         {
                             Type = new IdentifierNode("TA"),
-                            Constraints = new List<AstNode>
+                            Constraints = new ListNode<AstNode>
                             {
-                                new KeywordNode("class"),
-                                new KeywordNode("new()")
+                                Separator = new OperatorNode(","),
+                                [0] = new KeywordNode("class"),
+                                [1] = new KeywordNode("new()")
                             }
                         }
                     },
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new MethodNode
                         {
                             AccessModifier = new KeywordNode("public"),
                             ReturnType = new TypeNode("TB"),
                             Name = new IdentifierNode("MyMethod"),
-                            GenericTypeParameters = new List<AstNode>
+                            GenericTypeParameters = new ListNode<IdentifierNode>
                             {
-                                new TypeNode("TB"),
-                                new TypeNode("TC")
+                                Separator = new OperatorNode(","),
+                                [0] = new IdentifierNode("TB"),
+                                [1] = new IdentifierNode("TC")
                             },
-                            Parameters = new List<ParameterNode>(),
-                            TypeConstraints = new List<TypeConstraintNode>
+                            Parameters = ListNode<ParameterNode>.Default(),
+                            TypeConstraints = new ListNode<TypeConstraintNode>
                             {
                                 new TypeConstraintNode
                                 {
                                     Type = new IdentifierNode("TB"),
-                                    Constraints = new List<AstNode>
+                                    Constraints = new ListNode<AstNode>
                                     {
-                                        new TypeNode("IMyInterface"),
-                                        new KeywordNode("new()")
+                                        Separator = new OperatorNode(","),
+                                        [0] = new TypeNode("IMyInterface"),
+                                        [1] = new KeywordNode("new()")
                                     }
                                 },
                                 new TypeConstraintNode
                                 {
                                     Type = new IdentifierNode("TC"),
-                                    Constraints = new List<AstNode>
+                                    Constraints = new ListNode<AstNode>
                                     {
-                                        new KeywordNode("class"),
-                                        new TypeNode("IMyInterface")
+                                        Separator = new OperatorNode(","),
+                                        [0] = new KeywordNode("class"),
+                                        [1] = new TypeNode("IMyInterface")
                                     }
                                 }
                             },
-                            Statements = new List<AstNode>
+                            Statements = new ListNode<AstNode>
                             {
                                 new ReturnNode
                                 {
                                     Expression = new NewNode
                                     {
                                         Type = new TypeNode("TB"),
-                                        Arguments = new List<AstNode>()
+                                        Arguments = ListNode<AstNode>.Default()
                                     }
                                 }
                             }
@@ -628,14 +639,14 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new ClassNode
                         {
                             AccessModifier = new KeywordNode("public"),
                             Type = new KeywordNode("class"),
                             Name = new IdentifierNode("ChildClass"),
-                            Members = new List<AstNode>()
+                            Members = new ListNode<AstNode>()
                         }
                     }
                 }
@@ -657,13 +668,13 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new InterfaceNode
                         {
                             AccessModifier = new KeywordNode("public"),
                             Name = new IdentifierNode("ChildIFace"),
-                            Members = new List<AstNode>()
+                            Members = new ListNode<MethodDeclareNode>()
                         }
                     }
                 }
@@ -681,18 +692,19 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Interfaces = new List<AstNode>
+                    Interfaces = new ListNode<TypeNode>
                     {
-                        new TypeNode
+                        Separator = new OperatorNode(","),
+                        [0] = new TypeNode
                         {
                             Name = new IdentifierNode("IFaceA")
                         },
-                        new TypeNode
+                        [1] = new TypeNode
                         {
                             Name = new IdentifierNode("IFaceB")
                         }
                     },
-                    Members = new List<AstNode>()
+                    Members = new ListNode<AstNode>()
                 }
             );
         }
@@ -708,7 +720,7 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("struct"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>()
+                    Members = new ListNode<AstNode>()
                 }
             );
         }
@@ -722,10 +734,10 @@ public class MyClass
                 new ClassNode
                 {
                     AccessModifier = new KeywordNode("public"),
-                    Modifiers = new List<KeywordNode> { new KeywordNode("partial") },
+                    Modifiers = new ListNode<KeywordNode> { new KeywordNode("partial") },
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>()
+                    Members = new ListNode<AstNode>()
                 }
             );
         }
@@ -745,7 +757,7 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new ConstNode
                         {
@@ -774,7 +786,7 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new FieldNode
                         {

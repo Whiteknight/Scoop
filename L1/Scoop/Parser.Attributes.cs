@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
+using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
@@ -6,79 +7,76 @@ namespace Scoop
 {
     public partial class Parser
     {
-        public List<AttributeNode> ParseAttributes(string s) => ParseAttributes(new Tokenizer(s));
-        private List<AttributeNode> ParseAttributes(ITokenizer t)
+        private void InitializeAttributes()
         {
-            if (!t.Peek().IsOperator("["))
-                return null;
-            var attributes = new List<AttributeNode>();
-            while (t.NextIs(TokenType.Operator, "[", true))
-            {
-                while (true)
-                {
-                    var attr = new AttributeNode();
-                    var lookaheads = t.Peek(2);
-                    if ((lookaheads[0].IsKeyword() || lookaheads[0].IsType(TokenType.Identifier)) && lookaheads[1].IsOperator(":"))
-                    {
-                        t.Advance(2);
-                        attr.Target = new KeywordNode(lookaheads[0]);
-                    }
-
-                    attr.Type = ParseType(t);
-                    attr.Location = attr.Type.Location;
-                    attr.Arguments = ParseAttributeArgumentList(t);
-                    attributes.Add(attr);
-                    if (t.NextIs(TokenType.Operator, ",", true))
-                        continue;
-                    if (t.NextIs(TokenType.Operator, "]"))
-                        break;
-
-                    Fail(t, nameof(ParseAttributes));
-                    return null;
-                }
-
-                t.Expect(TokenType.Operator, "]");
-            }
-
-            return attributes;
-        }
-
-        private List<AstNode> ParseAttributeArgumentList(ITokenizer t)
-        {
-            if (!t.NextIs(TokenType.Operator, "(", true))
-                return null;
-            var args = new List<AstNode>();
-            while (true)
-            {
-                var lookaheads = t.Peek(2);
-                if (lookaheads[0].IsOperator(")"))
-                    break;
-                if (lookaheads[0].IsType(TokenType.Identifier) && lookaheads[1].IsOperator("="))
-                {
-                    var arg = new NamedArgumentNode
-                    {
-                        Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
-                        Separator = new OperatorNode(t.Expect(TokenType.Operator, "=")),
-                        // TODO: I think these expressions can only be terminals or member accesses (consts or enums, etc)
-                        Value = ParseExpression(t)
-                    };
-                    arg.Location = arg.Name.Location;
-                    args.Add(arg);
-                }
-                else
-                {
+            var argumentParser = ScoopParsers.First(
+                ScoopParsers.Sequence(
+                    new IdentifierParser(),
+                    new OperatorParser("="),
                     // TODO: I think these expressions can only be terminals or member accesses (consts or enums, etc)
-                    var arg = ParseExpression(t);
-                    args.Add(arg);
-                }
-                if (t.NextIs(TokenType.Operator, ",", true))
-                    continue;
-
-                break;
-            }
-
-            t.Expect(TokenType.Operator, ")");
-            return args;
+                    ScoopParsers.Deferred(() => Expressions),
+                    (name, s, expr) => new NamedArgumentNode { Name = name, Separator = s, Value = expr }
+                ),
+                // TODO: I think these expressions can only be terminals or member accesses (consts or enums, etc)
+                ScoopParsers.Deferred(() => Expressions)
+            );
+            var argumentListParser = ScoopParsers.Optional(
+                ScoopParsers.First(
+                    ScoopParsers.Sequence(
+                        new OperatorParser("("),
+                        new OperatorParser(")"),
+                        (a, b) => ListNode<AstNode>.Default()
+                    ),
+                    ScoopParsers.Sequence(
+                        new OperatorParser("("),
+                        ScoopParsers.SeparatedList(
+                            argumentParser,
+                            new OperatorParser(","),
+                            items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") }
+                        ),
+                        new OperatorParser(")"),
+                        (a, items, c) => items
+                    )
+                )
+            );
+            var attrParser = ScoopParsers.SeparatedList(
+                ScoopParsers.Sequence(
+                    ScoopParsers.Optional(
+                        ScoopParsers.Sequence(
+                            new KeywordParser(),
+                            new OperatorParser(":"),
+                            (target, o) => target
+                        )
+                    ),
+                    ScoopParsers.Deferred(() => Types),
+                    argumentListParser,
+                    (target, type, args) => new AttributeNode
+                    {
+                        Location = type.Location,
+                        Target = target as KeywordNode,
+                        Type = type,
+                        Arguments = args as ListNode<AstNode>
+                    }
+                ),
+                new OperatorParser(","),
+                (list) => new ListNode<AttributeNode> { Items = list.ToList(), Separator = new OperatorNode(",") }
+            );
+            Attributes = ScoopParsers.Transform(
+                ScoopParsers.Optional(
+                    ScoopParsers.List(
+                        ScoopParsers.Sequence(
+                            new OperatorParser("["),
+                            attrParser,
+                            new OperatorParser("]"),
+                            (a, attrs, b) => attrs
+                        ),
+                        list => new ListNode<AttributeNode> { Items = list.SelectMany(l => l.Items).ToList() }
+                    )
+                ),
+                n => n is EmptyNode ? ListNode<AttributeNode>.Default() : n as ListNode<AttributeNode>
+            );
         }
+
+        public ListNode<AttributeNode> ParseAttributes(string s) => Attributes.Parse(new Tokenizer(s)).GetResult();
     }
 }

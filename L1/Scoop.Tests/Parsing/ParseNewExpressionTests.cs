@@ -20,7 +20,7 @@ namespace Scoop.Tests.Parsing
                     {
                         Name = new IdentifierNode("MyClass")
                     },
-                    Arguments = new List<AstNode>()
+                    Arguments = ListNode<AstNode>.Default()
                 }
             );
         }
@@ -37,10 +37,11 @@ namespace Scoop.Tests.Parsing
                     {
                         Name = new IdentifierNode("MyClass")
                     },
-                    Arguments = new List<AstNode>
+                    Arguments = new ListNode<AstNode>
                     {
-                        new IntegerNode(1),
-                        new StringNode("\"test\"")
+                        Separator = new OperatorNode(","),
+                        [0] = new IntegerNode(1),
+                        [1] = new StringNode("\"test\"")
                     }
                 }
             );
@@ -54,18 +55,15 @@ namespace Scoop.Tests.Parsing
             result.Should().MatchAst(
                 new NewNode
                 {
-                    Type = new ChildTypeNode
+                    Type = new TypeNode
                     {
-                        Parent = new TypeNode
-                        {
-                            Name = new IdentifierNode("MyClass")
-                        },
+                        Name = new IdentifierNode("MyClass"),
                         Child = new TypeNode
                         {
                             Name = new IdentifierNode("Child")
                         }
                     },
-                    Arguments = new List<AstNode>()
+                    Arguments = ListNode<AstNode>.Default()
                 }
             );
         }
@@ -81,15 +79,13 @@ namespace Scoop.Tests.Parsing
                     Type = new TypeNode
                     {
                         Name = new IdentifierNode("List"),
-                        GenericArguments = new List<AstNode>
+                        GenericArguments = new ListNode<TypeNode>
                         {
-                            new TypeNode
-                            {
-                                Name = new IdentifierNode("MyClass")
-                            }
+                            Separator = new OperatorNode(","),
+                            [0] = new TypeNode("MyClass")
                         }
                     },
-                    Arguments = new List<AstNode>()
+                    Arguments = ListNode<AstNode>.Default()
                 }
             );
         }
@@ -105,22 +101,17 @@ namespace Scoop.Tests.Parsing
                     Type = new TypeNode
                     {
                         Name = new IdentifierNode("List"),
-                        GenericArguments = new List<AstNode>
+                        GenericArguments = new ListNode<TypeNode>
                         {
-                            new ChildTypeNode
+                            Separator = new OperatorNode(","),
+                            [0] = new TypeNode
                             {
-                                Parent = new TypeNode
-                                {
-                                    Name = new IdentifierNode("MyClass")
-                                },
-                                Child = new TypeNode
-                                {
-                                    Name = new IdentifierNode("Child")
-                                }
+                                Name = new IdentifierNode("MyClass"),
+                                Child = new TypeNode("Child")
                             }
                         }
                     },
-                    Arguments = new List<AstNode>()
+                    Arguments = ListNode<AstNode>.Default()
                 }
             );
         }
@@ -133,40 +124,31 @@ namespace Scoop.Tests.Parsing
             result.Should().MatchAst(
                 new NewNode
                 {
-                    Arguments = new List<AstNode>(),
-                    Type = new ChildTypeNode
+                    Arguments = ListNode<AstNode>.Default(),
+                    Type = new TypeNode
                     {
-                        Parent = new TypeNode
+                        Name = new IdentifierNode("A"),
+                        GenericArguments = new ListNode<TypeNode>
                         {
-                            Name = new IdentifierNode("A"),
-                            GenericArguments = new List<AstNode>
-                            {
-                                new TypeNode
-                                {
-                                    Name = new IdentifierNode("B")
-                                }
-                            }
+                            Separator = new OperatorNode(","),
+                            [0] = new TypeNode("B")
                         },
                         Child = new TypeNode
                         {
                             Name = new IdentifierNode("C"),
-                            GenericArguments = new List<AstNode>
+                            GenericArguments = new ListNode<TypeNode>
                             {
-                                new ChildTypeNode
+                                Separator = new OperatorNode(","),
+                                [0] = new TypeNode
                                 {
-                                    Parent = new TypeNode
-                                    {
-                                        Name = new IdentifierNode("D")
-                                    },
+                                    Name = new IdentifierNode("D"),
                                     Child = new TypeNode
                                     {
                                         Name = new IdentifierNode("E"),
-                                        GenericArguments = new List<AstNode>
+                                        GenericArguments = new ListNode<TypeNode>
                                         {
-                                            new TypeNode
-                                            {
-                                                Name = new IdentifierNode("F")
-                                            }
+                                            Separator = new OperatorNode(","),
+                                            [0] = new TypeNode("F")
                                         }
                                     }
                                 }
@@ -185,7 +167,7 @@ namespace Scoop.Tests.Parsing
             result.Should().MatchAst(
                 new NewNode
                 {
-                    Initializers = new List<AstNode>
+                    Initializers = new ListNode<AstNode>
                     {
                         new PropertyInitializerNode
                         {
@@ -193,7 +175,6 @@ namespace Scoop.Tests.Parsing
                             Value = new StringNode("\"test\"")
                         }
                     }
-
                 }
             );
         }

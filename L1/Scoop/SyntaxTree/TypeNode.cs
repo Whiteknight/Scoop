@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using Scoop.Tokenization;
 
 namespace Scoop.SyntaxTree
 {
@@ -13,23 +13,23 @@ namespace Scoop.SyntaxTree
             Name = new IdentifierNode(typeName);
         }
 
+        public TypeNode(IdentifierNode id)
+        {
+            Name = id;
+            Location = id.Location;
+        }
+
         public IdentifierNode Name { get; set; }
-        public List<AstNode> GenericArguments { get; set; }
+        public ListNode<TypeNode> GenericArguments { get; set; }
+        public ListNode<ArrayTypeNode> ArrayTypes { get; set; }
+        public TypeNode Child { get; set; }
 
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitType(this);
     }
 
-    public class ChildTypeNode : AstNode
-    {
-        public AstNode Parent { get; set; }
-        public TypeNode Child { get; set; }
-
-        public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitChildType(this);
-    }
-
     public class ArrayTypeNode : AstNode
     {
-        public AstNode ElementType { get; set; }
+        // TODO: N-arity
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitArrayType(this);
     }
 }

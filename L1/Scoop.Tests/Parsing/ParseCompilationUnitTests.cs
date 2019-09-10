@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -16,7 +15,7 @@ namespace Scoop.Tests.Parsing
             result.Should().MatchAst(
                 new CompilationUnitNode
                 {
-                    UsingDirectives = new List<UsingDirectiveNode>
+                    Members = new ListNode<AstNode>
                     {
                         new UsingDirectiveNode
                         {
@@ -35,19 +34,19 @@ namespace Scoop.Tests.Parsing
             result.Should().MatchAst(
                 new CompilationUnitNode
                 {
-                    Namespaces = new List<NamespaceNode>
+                    Members = new ListNode<AstNode>
                     {
                         new NamespaceNode
                         {
                             Name = new DottedIdentifierNode("A"),
-                            Declarations = new List<AstNode>
+                            Declarations = new ListNode<AstNode>
                             {
                                 new ClassNode
                                 {
                                     AccessModifier = new KeywordNode("public"),
                                     Type = new KeywordNode("class"),
                                     Name = new IdentifierNode("MyClass"),
-                                    Members = new List<AstNode>()
+                                    Members = new ListNode<AstNode>()
                                 }
                             }
                         }
@@ -71,16 +70,16 @@ namespace A
             result.Should().MatchAst(
                 new CompilationUnitNode
                 {
-                    Namespaces = new List<NamespaceNode>
+                    Members = new ListNode<AstNode>
                     {
                         new NamespaceNode
                         {
                             Name = new DottedIdentifierNode("A"),
-                            Declarations = new List<AstNode>
+                            Declarations = new ListNode<AstNode>
                             {
                                 new ClassNode
                                 {
-                                    Attributes = new List<AttributeNode>
+                                    Attributes = new ListNode<AttributeNode>
                                     {
                                         new AttributeNode
                                         {
@@ -90,7 +89,7 @@ namespace A
                                     AccessModifier = new KeywordNode("public"),
                                     Type = new KeywordNode("class"),
                                     Name = new IdentifierNode("MyClass"),
-                                    Members = new List<AstNode>()
+                                    Members = new ListNode<AstNode>()
                                 }
                             }
                         }
@@ -109,18 +108,18 @@ namespace A
             result.Should().MatchAst(
                 new CompilationUnitNode
                 {
-                    Namespaces = new List<NamespaceNode>
+                    Members = new ListNode<AstNode>
                     {
                         new NamespaceNode
                         {
                             Name = new DottedIdentifierNode("A"),
-                            Declarations = new List<AstNode>
+                            Declarations = new ListNode<AstNode>
                             {
                                 new InterfaceNode
                                 {
                                     AccessModifier = new KeywordNode("public"),
                                     Name = new IdentifierNode("MyInterface"),
-                                    Members = new List<AstNode>()
+                                    Members = new ListNode<MethodDeclareNode>()
                                 }
                             }
                         }

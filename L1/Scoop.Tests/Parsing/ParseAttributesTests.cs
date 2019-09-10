@@ -17,7 +17,54 @@ namespace Scoop.Tests.Parsing
             result.Should().MatchAst(
                 new AttributeNode
                 {
-                    Type = new TypeNode("MyAttr")
+                    Type = new TypeNode("MyAttr"),
+                }
+            );
+        }
+
+        [Test]
+        public void Attribute_3NoArgs()
+        {
+            var target = new Parser();
+            var result = target.ParseAttributes(@"
+[MyAttrA]
+[MyAttrB,MyAttrC]
+[return:MyAttrD]");
+            result.Should().MatchAst(
+                new ListNode<AttributeNode>
+                {
+
+                    new AttributeNode
+                    {
+                        Type = new TypeNode("MyAttrA"),
+                    },
+                    new AttributeNode
+                    {
+                        Type = new TypeNode("MyAttrB"),
+                    },
+                    new AttributeNode
+                    {
+                        Type = new TypeNode("MyAttrC"),
+                    },
+                    new AttributeNode
+                    {
+                        Type = new TypeNode("MyAttrD"),
+                        Target = new KeywordNode("return")
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void Attribute_NoArgsTarget()
+        {
+            var target = new Parser();
+            var result = target.ParseAttributes(@"[return:MyAttr]").First();
+            result.Should().MatchAst(
+                new AttributeNode
+                {
+                    Type = new TypeNode("MyAttr"),
+                    Target = new KeywordNode("return")
                 }
             );
         }
@@ -31,7 +78,7 @@ namespace Scoop.Tests.Parsing
                 new AttributeNode
                 {
                     Type = new TypeNode("MyAttr"),
-                    Arguments = new List<AstNode>()
+                    Arguments = ListNode<AstNode>.Default()
                 }
             );
         }
@@ -45,11 +92,12 @@ namespace Scoop.Tests.Parsing
                 new AttributeNode
                 {
                     Type = new TypeNode("MyAttr"),
-                    Arguments = new List<AstNode>
+                    Arguments = new ListNode<AstNode>
                     {
-                        new IntegerNode(1),
-                        new IntegerNode(2),
-                        new IntegerNode(3)
+                        Separator = new OperatorNode(","),
+                        [0] = new IntegerNode(1),
+                        [1] = new IntegerNode(2),
+                        [2] = new IntegerNode(3)
                     }
                 }
             );
@@ -64,9 +112,10 @@ namespace Scoop.Tests.Parsing
                 new AttributeNode
                 {
                     Type = new TypeNode("MyAttr"),
-                    Arguments = new List<AstNode>
+                    Arguments = new ListNode<AstNode>
                     {
-                        new NamedArgumentNode
+                        Separator = new OperatorNode(","),
+                        [0] = new NamedArgumentNode
                         {
                             Name = new IdentifierNode("test"),
                             Separator = new OperatorNode("="),
@@ -89,7 +138,7 @@ public class MyClass
             result.Should().MatchAst(
                 new ClassNode
                 {
-                    Attributes = new List<AttributeNode>
+                    Attributes = new ListNode<AttributeNode>
                     {
                         new AttributeNode
                         {
@@ -99,7 +148,7 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>()
+                    Members = new ListNode<AstNode>()
                 }
             );
         }
@@ -124,11 +173,11 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new MethodNode
                         {
-                            Attributes = new List<AttributeNode>
+                            Attributes = new ListNode<AttributeNode>
                             {
                                 new AttributeNode
                                 {
@@ -146,8 +195,8 @@ public class MyClass
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<ParameterNode>(),
-                            Statements = new List<AstNode>
+                            Parameters = ListNode<ParameterNode>.Default(),
+                            Statements = new ListNode<AstNode>
                             {
                                 new ReturnNode
                                 {
@@ -172,7 +221,7 @@ public interface MyInterface
             result.Should().MatchAst(
                 new InterfaceNode
                 {
-                    Attributes = new List<AttributeNode>
+                    Attributes = new ListNode<AttributeNode>
                     {
                         new AttributeNode
                         {
@@ -181,7 +230,7 @@ public interface MyInterface
                     },
                     AccessModifier = new KeywordNode("public"),
                     Name = new IdentifierNode("MyInterface"),
-                    Members = new List<AstNode>()
+                    Members = new ListNode<MethodDeclareNode>()
                 }
             );
         }
@@ -200,11 +249,12 @@ public void MyMethod([MyAttr] int x)
                     Name = new IdentifierNode("MyMethod"),
                     AccessModifier = new KeywordNode("public"),
                     ReturnType = new TypeNode("void"),
-                    Parameters = new List<ParameterNode>
+                    Parameters = new ListNode<ParameterNode>
                     {
-                        new ParameterNode
+                        Separator = new OperatorNode(","),
+                        [0] = new ParameterNode
                         {
-                            Attributes = new List<AttributeNode>
+                            Attributes = new ListNode<AttributeNode>
                             {
                                 new AttributeNode
                                 {
@@ -213,10 +263,9 @@ public void MyMethod([MyAttr] int x)
                             },
                             Type = new TypeNode("int"),
                             Name = new IdentifierNode("x")
-
                         }
                     },
-                    Statements = new List<AstNode>()
+                    Statements = new ListNode<AstNode>()
                 }
             );
         }
@@ -229,7 +278,7 @@ public void MyMethod([MyAttr] int x)
             result.Should().MatchAst(
                 new EnumNode
                 {
-                    Attributes = new List<AttributeNode>
+                    Attributes = new ListNode<AttributeNode>
                     {
                         new AttributeNode
                         {
@@ -238,7 +287,7 @@ public void MyMethod([MyAttr] int x)
                     },
                     AccessModifier = new KeywordNode("public"),
                     Name = new IdentifierNode("MyEnum"),
-                    Members = new List<EnumMemberNode>()
+                    Members = ListNode<EnumMemberNode>.Default()
                 }
             );
         }
@@ -258,11 +307,12 @@ public enum MyEnum
                 {
                     AccessModifier = new KeywordNode("public"),
                     Name = new IdentifierNode("MyEnum"),
-                    Members = new List<EnumMemberNode>
+                    Members = new ListNode<EnumMemberNode>
                     {
-                        new EnumMemberNode
+                        Separator = new OperatorNode(","),
+                        [0] = new EnumMemberNode
                         {
-                            Attributes = new List<AttributeNode>
+                            Attributes = new ListNode<AttributeNode>
                             {
                                 new AttributeNode
                                 {

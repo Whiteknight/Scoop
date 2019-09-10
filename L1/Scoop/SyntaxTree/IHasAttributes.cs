@@ -4,6 +4,6 @@ namespace Scoop.SyntaxTree
 {
     public interface IHasAttributes
     {
-        List<AttributeNode> Attributes { get; set; }
+        ListNode<AttributeNode> Attributes { get; set; }
     }
 }

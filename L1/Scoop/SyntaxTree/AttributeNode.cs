@@ -6,7 +6,7 @@ namespace Scoop.SyntaxTree
     {
         public KeywordNode Target { get; set; }
         public AstNode Type { get; set; }
-        public List<AstNode> Arguments { get; set; }
+        public ListNode<AstNode> Arguments { get; set; }
 
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitAttribute(this);
     }

@@ -17,7 +17,7 @@ namespace Scoop.Transpiler
 
         public AstNode VisitArrayType(ArrayTypeNode n)
         {
-            Visit(n.ElementType);
+            // TODO: N-arity
             Append("[]");
             return n;
         }
@@ -81,14 +81,6 @@ namespace Scoop.Transpiler
             else
                 Append(n.Value.ToString());
             Append("'");
-            return n;
-        }
-
-        public AstNode VisitChildType(ChildTypeNode n)
-        {
-            Visit(n.Parent);
-            Append(".");
-            Visit(n.Child);
             return n;
         }
 
@@ -183,13 +175,13 @@ namespace Scoop.Transpiler
         {
             if (!string.IsNullOrEmpty(n.FileName))
                 AppendLineAndIndent($"// Source File: {n.FileName}");
-            foreach (var ud in n.UsingDirectives.OrEmptyIfNull())
+            foreach (var ud in n.Members.OfType<UsingDirectiveNode>())
             {
                 Visit(ud);
                 AppendLine();
             }
 
-            foreach (var ns in n.Namespaces.OrEmptyIfNull())
+            foreach (var ns in n.Members.OfType<NamespaceNode>())
             {
                 Visit(ns);
                 AppendLine();
@@ -343,6 +335,8 @@ namespace Scoop.Transpiler
             Append(n.Value.ToString(CultureInfo.InvariantCulture));
             return n;
         }
+
+        public AstNode VisitEmpty(EmptyNode n) => n;
 
         public AstNode VisitEnum(EnumNode n)
         {
@@ -581,14 +575,15 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public AstNode VisitList(ListNode n)
+        public AstNode VisitList<TNode>(ListNode<TNode> n)
+            where TNode : AstNode
         {
             if (n.Any())
             {
                 Visit(n[0]);
                 for (int i = 1; i < n.Count; i++)
                 {
-                    Append(", ");
+                    Visit(n.Separator);
                     Visit(n[i]);
                 }
             }
@@ -761,6 +756,7 @@ namespace Scoop.Transpiler
                 Visit(n.Declarations[0]);
                 for (int i = 1; i < n.Declarations.Count; i++)
                 {
+                    AppendLine();
                     AppendLineAndIndent();
                     Visit(n.Declarations[i]);
                 }
@@ -910,6 +906,15 @@ namespace Scoop.Transpiler
                 Append(">");
             }
 
+            if (n.Child != null)
+            {
+                Append(".");
+                Visit(n.Child);
+            }
+
+            foreach (var a in n.ArrayTypes.OrEmptyIfNull())
+                Visit(a);
+
             return n;
         }
 
@@ -972,7 +977,13 @@ namespace Scoop.Transpiler
         {
             Append("var ");
             Visit(n.Name);
+            if (n.Value != null)
+            {
+                Append(" = ");
+                Visit(n.Value);
+            }
+
             return n;
-        }   
+        }
     }
 }

@@ -25,19 +25,20 @@ public List<int[]> GetListOfIntArrays()
                     ReturnType = new TypeNode
                     {
                         Name = new IdentifierNode("List"),
-                        GenericArguments = new List<AstNode>
+                        GenericArguments = new ListNode<TypeNode>
                         {
-                            new ArrayTypeNode
+                            Separator = new OperatorNode(","),
+                            [0] = new TypeNode
                             {
-                                ElementType = new TypeNode
-                                {
-                                    Name = new IdentifierNode("int")
+                                Name = new IdentifierNode("int"),
+                                ArrayTypes = new ListNode<ArrayTypeNode> {
+                                    new ArrayTypeNode()
                                 }
                             }
                         }
                     },
-                    Parameters = new List<ParameterNode>(),
-                    Statements = new List<AstNode>
+                    Parameters = ListNode<ParameterNode>.Default(),
+                    Statements = new ListNode<AstNode>
                     {
                         new ReturnNode
                         {
@@ -46,18 +47,19 @@ public List<int[]> GetListOfIntArrays()
                                 Type = new TypeNode
                                 {
                                     Name = new IdentifierNode("List"),
-                                    GenericArguments = new List<AstNode>
+                                    GenericArguments = new ListNode<TypeNode>
                                     {
-                                        new ArrayTypeNode
+                                        Separator = new OperatorNode(","),
+                                        [0] = new TypeNode
                                         {
-                                            ElementType = new TypeNode
-                                            {
-                                                Name = new IdentifierNode("int")
+                                            Name = new IdentifierNode("int"),
+                                            ArrayTypes = new ListNode<ArrayTypeNode> {
+                                                new ArrayTypeNode()
                                             }
                                         }
                                     }
                                 },
-                                Arguments = new List<AstNode>()
+                                Arguments = ListNode<AstNode>.Default()
                             }
                         }
                     }
@@ -81,22 +83,19 @@ public void MyMethod()
                     Name = new IdentifierNode("MyMethod"),
                     AccessModifier = new KeywordNode("public"),
                     ReturnType = new TypeNode("void"),
-                    Parameters = new List<ParameterNode>(),
-                    Statements = new List<AstNode>
+                    Parameters = ListNode<ParameterNode>.Default(),
+                    Statements = new ListNode<AstNode>
                     {
                         new UsingStatementNode
                         {
-                            Disposable = new InfixOperationNode
+                            Disposable =new VariableDeclareNode
                             {
-                                Left = new VariableDeclareNode
-                                {
-                                    Name = new IdentifierNode("x"),
-                                },
-                                Operator = new OperatorNode("="),
-                                Right = new NewNode
+                                Type = new TypeNode("var"),
+                                Name = new IdentifierNode("x"),
+                                Value = new NewNode
                                 {
                                     Type = new TypeNode("Disposable"),
-                                    Arguments = new List<AstNode>()
+                                    Arguments = ListNode<AstNode>.Default()
                                 }
                             },
                             Statement = new InvokeNode
@@ -106,7 +105,7 @@ public void MyMethod()
                                     Instance = new IdentifierNode("x"),
                                     MemberName = new IdentifierNode("DoWork")
                                 },
-                                Arguments = new List<AstNode>()
+                                Arguments = ListNode<AstNode>.Default()
                             }
                         }
                     }
@@ -130,15 +129,15 @@ public void MyMethod()
                     Name = new IdentifierNode("MyMethod"),
                     AccessModifier = new KeywordNode("public"),
                     ReturnType = new TypeNode("void"),
-                    Parameters = new List<ParameterNode>(),
-                    Statements = new List<AstNode>
+                    Parameters = ListNode<ParameterNode>.Default(),
+                    Statements = new ListNode<AstNode>
                     {
                         new UsingStatementNode
                         {
                             Disposable = new NewNode
                             {
                                 Type = new TypeNode("Disposable"),
-                                Arguments = new List<AstNode>()
+                                Arguments = ListNode<AstNode>.Default()
                             },
                             Statement = new InvokeNode
                             {
@@ -147,7 +146,7 @@ public void MyMethod()
                                     Instance = new IdentifierNode("x"),
                                     MemberName = new IdentifierNode("DoWork")
                                 },
-                                Arguments = new List<AstNode>()
+                                Arguments = ListNode<AstNode>.Default()
                             }
                         }
                     }
@@ -172,9 +171,10 @@ public void TestMethod(int a, double b, string c)
                     {
                         Name = new IdentifierNode("void")
                     },
-                    Parameters = new List<ParameterNode>
+                    Parameters = new ListNode<ParameterNode>
                     {
-                        new ParameterNode
+                        Separator = new OperatorNode(","),
+                        [0] = new ParameterNode
                         {
                             Type = new TypeNode
                             {
@@ -182,7 +182,7 @@ public void TestMethod(int a, double b, string c)
                             },
                             Name = new IdentifierNode("a")
                         },
-                        new ParameterNode
+                        [1] = new ParameterNode
                         {
                             Type = new TypeNode
                             {
@@ -190,7 +190,7 @@ public void TestMethod(int a, double b, string c)
                             },
                             Name = new IdentifierNode("b")
                         },
-                        new ParameterNode
+                        [2] = new ParameterNode
                         {
                             Type = new TypeNode
                             {
@@ -199,7 +199,7 @@ public void TestMethod(int a, double b, string c)
                             Name = new IdentifierNode("c")
                         }
                     },
-                    Statements = new List<AstNode>()
+                    Statements = new ListNode<AstNode>()
                 }
             );
         }
@@ -221,9 +221,10 @@ public void TestMethod(int a = 5)
                     {
                         Name = new IdentifierNode("void")
                     },
-                    Parameters = new List<ParameterNode>
+                    Parameters = new ListNode<ParameterNode>
                     {
-                        new ParameterNode
+                        Separator = new OperatorNode(","),
+                        [0] = new ParameterNode
                         {
                             Type = new TypeNode
                             {
@@ -233,7 +234,7 @@ public void TestMethod(int a = 5)
                             DefaultValue = new IntegerNode(5)
                         }
                     },
-                    Statements = new List<AstNode>()
+                    Statements = new ListNode<AstNode>()
                 }
             );
         }
@@ -252,18 +253,23 @@ public void TestMethod(params int[] a)
                     Name = new IdentifierNode("TestMethod"),
                     AccessModifier = new KeywordNode("public"),
                     ReturnType = new TypeNode("void"),
-                    Parameters = new List<ParameterNode>
+                    Parameters = new ListNode<ParameterNode>
                     {
-                        new ParameterNode
+                        Separator = new OperatorNode(","),
+                        [0] = new ParameterNode
                         {
                             IsParams = true,
-                            Type = new ArrayTypeNode {
-                                ElementType = new TypeNode("int")
+                            Type = new TypeNode{
+                                Name = new IdentifierNode("int"),
+                                ArrayTypes = new ListNode<ArrayTypeNode>
+                                {
+                                    new ArrayTypeNode()
+                                }
                             },
                             Name = new IdentifierNode("a")
                         }
                     },
-                    Statements = new List<AstNode>()
+                    Statements = new ListNode<AstNode>()
                 }
             );
         }
@@ -282,20 +288,21 @@ public async Task TestMethod(Task t)
                 {
                     Name = new IdentifierNode("TestMethod"),
                     AccessModifier = new KeywordNode("public"),
-                    Modifiers = new List<KeywordNode>
+                    Modifiers = new ListNode<KeywordNode>
                     {
                         new KeywordNode("async")
                     },
                     ReturnType = new TypeNode("Task"),
-                    Parameters = new List<ParameterNode>
+                    Parameters = new ListNode<ParameterNode>
                     {
-                        new ParameterNode
+                        Separator = new OperatorNode(","),
+                        [0] = new ParameterNode
                         {
                             Type = new TypeNode("Task"),
                             Name = new IdentifierNode("t")
                         }
                     },
-                    Statements = new List<AstNode>
+                    Statements = new ListNode<AstNode>
                     {
                         new PrefixOperationNode
                         {
@@ -323,8 +330,8 @@ public int TestMethod()
                     AccessModifier = new KeywordNode("public"),
                     ReturnType = new TypeNode("int"),
                     Name = new IdentifierNode("TestMethod"),
-                    Parameters = new List<ParameterNode>(),
-                    Statements = new List<AstNode>
+                    Parameters = ListNode<ParameterNode>.Default(),
+                    Statements = new ListNode<AstNode>
                     {
                         new ConstNode
                         {

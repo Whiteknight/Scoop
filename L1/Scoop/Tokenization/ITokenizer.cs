@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Scoop.Tokenization
+﻿namespace Scoop.Tokenization
 {
     public interface ITokenizer
     {

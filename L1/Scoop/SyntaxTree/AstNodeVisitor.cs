@@ -14,7 +14,6 @@
         AstNode VisitCompilationUnit(CompilationUnitNode n);
         AstNode VisitConst(ConstNode n);
         AstNode VisitChar(CharNode n);
-        AstNode VisitChildType(ChildTypeNode n);
         AstNode VisitClass(ClassNode n);
         AstNode VisitConditional(ConditionalNode n);
         AstNode VisitConstructor(ConstructorNode n);
@@ -23,6 +22,7 @@
         AstNode VisitDelegate(DelegateNode n);
         AstNode VisitDottedIdentifier(DottedIdentifierNode n);
         AstNode VisitDouble(DoubleNode n);
+        AstNode VisitEmpty(EmptyNode n);
         AstNode VisitEnum(EnumNode n);
         AstNode VisitEnumMember(EnumMemberNode n);
         AstNode VisitField(FieldNode n);
@@ -36,7 +36,8 @@
         AstNode VisitKeyValueInitializer(KeyValueInitializerNode n);
         AstNode VisitKeyword(KeywordNode n);
         AstNode VisitLambda(LambdaNode n);
-        AstNode VisitList(ListNode n);
+        AstNode VisitList<TNode>(ListNode<TNode> n)
+            where TNode : AstNode;
         AstNode VisitLong(LongNode n);
         AstNode VisitMemberAccess(MemberAccessNode n);
         AstNode VisitMethod(MethodNode n);

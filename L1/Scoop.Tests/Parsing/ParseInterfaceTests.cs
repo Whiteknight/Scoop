@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -18,7 +17,7 @@ namespace Scoop.Tests.Parsing
                 {
                     AccessModifier = new KeywordNode("public"),
                     Name = new IdentifierNode("MyInterface"),
-                    Members = new List<AstNode>()
+                    Members = new ListNode<MethodDeclareNode>()
                 }
             );
         }
@@ -38,12 +37,12 @@ public interface MyInterface
                 {
                     AccessModifier = new KeywordNode("public"),
                     Name = new IdentifierNode("MyInterface"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<MethodDeclareNode>
                     {
                         new MethodDeclareNode
                         {
                             Name = new IdentifierNode("Method1"),
-                            Parameters = new List<ParameterNode>(),
+                            Parameters = ListNode<ParameterNode>.Default(),
                             ReturnType = new TypeNode
                             {
                                 Name = new IdentifierNode("int")
@@ -56,7 +55,7 @@ public interface MyInterface
                             {
                                 Name = new IdentifierNode("string")
                             },
-                            Parameters = new List<ParameterNode>()
+                            Parameters = ListNode<ParameterNode>.Default()
                         }
                     }
                 }
@@ -77,7 +76,7 @@ public interface MyInterface
                 {
                     AccessModifier = new KeywordNode("public"),
                     Name = new IdentifierNode("MyInterface"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<MethodDeclareNode>
                     {
                         new MethodDeclareNode
                         {
@@ -86,9 +85,10 @@ public interface MyInterface
                             {
                                 Name = new IdentifierNode("int")
                             },
-                            Parameters = new List<ParameterNode>
+                            Parameters = new ListNode<ParameterNode>
                             {
-                                new ParameterNode
+                                Separator = new OperatorNode(","),
+                                [0] = new ParameterNode
                                 {
                                     Type = new TypeNode
                                     {
@@ -96,7 +96,7 @@ public interface MyInterface
                                     },
                                     Name = new IdentifierNode("a")
                                 },
-                                new ParameterNode
+                                [1] = new ParameterNode
                                 {
                                     Type = new TypeNode
                                     {
@@ -104,7 +104,7 @@ public interface MyInterface
                                     },
                                     Name = new IdentifierNode("b")
                                 },
-                                new ParameterNode
+                                [2] = new ParameterNode
                                 {
                                     Type = new TypeNode
                                     {
@@ -133,14 +133,12 @@ public interface MyInterface<TA>
                 {
                     AccessModifier = new KeywordNode("public"),
                     Name = new IdentifierNode("MyInterface"),
-                    GenericTypeParameters = new List<AstNode>
+                    GenericTypeParameters = new ListNode<IdentifierNode>
                     {
-                        new TypeNode
-                        {
-                            Name = new IdentifierNode("TA")
-                        }
+                        Separator = new OperatorNode(","),
+                        [0] = new IdentifierNode("TA")
                     },
-                    Members = new List<AstNode>
+                    Members = new ListNode<MethodDeclareNode>
                     {
                         new MethodDeclareNode
                         {
@@ -149,14 +147,12 @@ public interface MyInterface<TA>
                                 Name = new IdentifierNode("TB")
                             },
                             Name = new IdentifierNode("MyMethod"),
-                            GenericTypeParameters = new List<AstNode>
+                            GenericTypeParameters = new ListNode<IdentifierNode>
                             {
-                                new TypeNode
-                                {
-                                    Name = new IdentifierNode("TB")
-                                }
+                                Separator = new OperatorNode(","),
+                                [0] = new IdentifierNode("TB")
                             },
-                            Parameters = new List<ParameterNode>()
+                            Parameters = ListNode<ParameterNode>.Default()
                         }
                     }
                 }
@@ -173,18 +169,19 @@ public interface MyInterface<TA>
                 {
                     AccessModifier = new KeywordNode("public"),
                     Name = new IdentifierNode("MyInterface"),
-                    Interfaces = new List<AstNode>
+                    Interfaces = new ListNode<TypeNode>
                     {
-                        new TypeNode
+                        Separator = new OperatorNode(","),
+                        [0] = new TypeNode
                         {
                             Name = new IdentifierNode("IFaceA")
                         },
-                        new TypeNode
+                        [1] = new TypeNode
                         {
                             Name = new IdentifierNode("IFaceB")
                         }
                     },
-                    Members = new List<AstNode>()
+                    Members = new ListNode<MethodDeclareNode>()
                 }
             );
         }
@@ -206,52 +203,57 @@ public interface MyInterface<TA>
                 {
                     AccessModifier = new KeywordNode("public"),
                     Name = new IdentifierNode("MyInterface"),
-                    GenericTypeParameters = new List<AstNode>
+                    GenericTypeParameters = new ListNode<IdentifierNode>
                     {
-                        new TypeNode("TA")
+                        Separator = new OperatorNode(","),
+                        [0] = new IdentifierNode("TA")
                     },
-                    TypeConstraints = new List<TypeConstraintNode>
+                    TypeConstraints = new ListNode<TypeConstraintNode>
                     {
                         new TypeConstraintNode
                         {
                             Type = new IdentifierNode("TA"),
-                            Constraints = new List<AstNode>
+                            Constraints = new ListNode<AstNode>
                             {
-                                new KeywordNode("class"),
-                                new KeywordNode("new()")
+                                Separator = new OperatorNode(","),
+                                [0] = new KeywordNode("class"),
+                                [1] = new KeywordNode("new()")
                             }
                         }
                     },
-                    Members = new List<AstNode>
+                    Members = new ListNode<MethodDeclareNode>
                     {
                         new MethodDeclareNode
                         {
                             ReturnType = new TypeNode("TB"),
                             Name = new IdentifierNode("MyMethod"),
-                            GenericTypeParameters = new List<AstNode>
+                            GenericTypeParameters = new ListNode<IdentifierNode>
                             {
-                                new TypeNode("TB"),
-                                new TypeNode("TC")
+                                Separator = new OperatorNode(","),
+                                [0] = new IdentifierNode("TB"),
+                                [1] = new IdentifierNode("TC")
                             },
-                            Parameters = new List<ParameterNode>(),
-                            TypeConstraints = new List<TypeConstraintNode>
+                            Parameters = ListNode<ParameterNode>.Default(),
+                            TypeConstraints = new ListNode<TypeConstraintNode>
                             {
                                 new TypeConstraintNode
                                 {
                                     Type = new IdentifierNode("TB"),
-                                    Constraints = new List<AstNode>
+                                    Constraints = new ListNode<AstNode>
                                     {
-                                        new TypeNode("IMyInterface"),
-                                        new KeywordNode("new()")
+                                        Separator = new OperatorNode(","),
+                                        [0] = new TypeNode("IMyInterface"),
+                                        [1] = new KeywordNode("new()")
                                     }
                                 },
                                 new TypeConstraintNode
                                 {
                                     Type = new IdentifierNode("TC"),
-                                    Constraints = new List<AstNode>
+                                    Constraints = new ListNode<AstNode>
                                     {
-                                        new KeywordNode("class"),
-                                        new TypeNode("IMyInterface")
+                                        Separator = new OperatorNode(","),
+                                        [0] = new KeywordNode("class"),
+                                        [1] = new TypeNode("IMyInterface")
                                     }
                                 }
                             }

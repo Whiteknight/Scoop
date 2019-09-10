@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -18,21 +15,22 @@ namespace Scoop.Tests.Parsing
             result.Should().MatchAst(
                 new CompilationUnitNode
                 {
-                    Namespaces = new List<NamespaceNode>
+                    Members = new ListNode<AstNode>
                     {
                         new NamespaceNode
                         {
                             Name = new DottedIdentifierNode("A"),
-                            Declarations = new List<AstNode>
+                            Declarations = new ListNode<AstNode>
                             {
                                 new DelegateNode
                                 {
                                     AccessModifier = new KeywordNode("public"),
                                     ReturnType = new TypeNode("int"),
                                     Name = new IdentifierNode("MyDelegate"),
-                                    Parameters = new List<ParameterNode>
+                                    Parameters = new ListNode<ParameterNode>
                                     {
-                                        new ParameterNode
+                                        Separator = new OperatorNode(","),
+                                        [0] = new ParameterNode
                                         {
                                             Type = new TypeNode("string"),
                                             Name = new IdentifierNode("x")
@@ -61,16 +59,17 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new List<AstNode>
+                    Members = new ListNode<AstNode>
                     {
                         new DelegateNode
                         {
                             AccessModifier = new KeywordNode("public"),
                             ReturnType = new TypeNode("int"),
                             Name = new IdentifierNode("MyDelegate"),
-                            Parameters = new List<ParameterNode>
+                            Parameters = new ListNode<ParameterNode>
                             {
-                                new ParameterNode
+                                Separator = new OperatorNode(","),
+                                [0] = new ParameterNode
                                 {
                                     Type = new TypeNode("string"),
                                     Name = new IdentifierNode("x")

@@ -16,8 +16,8 @@ namespace Scoop.Tests.Parsing
             result.Should().MatchAst(
                 new LambdaNode
                 {
-                    Parameters = new List<AstNode>(),
-                    Statements = new List<AstNode>()
+                    Parameters = ListNode<IdentifierNode>.Default(),
+                    Statements = new ListNode<AstNode>()
                 }
             );
         }
@@ -30,8 +30,8 @@ namespace Scoop.Tests.Parsing
             result.Should().MatchAst(
                 new LambdaNode
                 {
-                    Parameters = new List<AstNode>(),
-                    Statements = new List<AstNode>
+                    Parameters = ListNode<IdentifierNode>.Default(),
+                    Statements = new ListNode<AstNode>
                     {
                         new IntegerNode(5)
                     }
@@ -47,11 +47,12 @@ namespace Scoop.Tests.Parsing
             result.Should().MatchAst(
                 new LambdaNode
                 {
-                    Parameters = new List<AstNode>
+                    Parameters = new ListNode<IdentifierNode>
                     {
-                        new IdentifierNode("a")
+                        Separator = new OperatorNode(","),
+                        [0] = new IdentifierNode("a")
                     },
-                    Statements = new List<AstNode>
+                    Statements = new ListNode<AstNode>
                     {
                         new IntegerNode(5)
                     }
@@ -67,11 +68,12 @@ namespace Scoop.Tests.Parsing
             result.Should().MatchAst(
                 new LambdaNode
                 {
-                    Parameters = new List<AstNode>
+                    Parameters = new ListNode<IdentifierNode>
                     {
-                        new IdentifierNode("a")
+                        Separator = new OperatorNode(","),
+                        [0] = new IdentifierNode("a")
                     },
-                    Statements = new List<AstNode>
+                    Statements = new ListNode<AstNode>
                     {
                         new ReturnNode
                         {
@@ -90,13 +92,14 @@ namespace Scoop.Tests.Parsing
             result.Should().MatchAst(
                 new LambdaNode
                 {
-                    Parameters = new List<AstNode>
+                    Parameters = new ListNode<IdentifierNode>
                     {
-                        new IdentifierNode("a"),
-                        new IdentifierNode("b"),
-                        new IdentifierNode("c")
+                        Separator = new OperatorNode(","),
+                        [0] = new IdentifierNode("a"),
+                        [1] = new IdentifierNode("b"),
+                        [2] = new IdentifierNode("c")
                     },
-                    Statements = new List<AstNode>
+                    Statements = new ListNode<AstNode>
                     {
                         new IntegerNode(5)
                     }

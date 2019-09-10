@@ -20,6 +20,7 @@ namespace Scoop
             "class",
             "const",
             "delegate",
+            "dynamic",
             "enum",
             "false",
             "interface",

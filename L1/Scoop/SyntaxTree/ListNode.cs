@@ -1,20 +1,33 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Scoop.SyntaxTree
 {
-    public class ListNode : AstNode, IList<AstNode>
+    public class ListNode<TNode> : AstNode, IList<TNode>
+        where TNode : AstNode
     {
-
-        public List<AstNode> Items { get; set; }
+        public AstNode Separator { get; set; }
+        public List<TNode> Items { get; set; }
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitList(this);
 
-        public IEnumerator<AstNode> GetEnumerator() => Items.GetEnumerator();
+        public IEnumerator<TNode> GetEnumerator() => (Items ?? Enumerable.Empty<TNode>()).GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator() => Items.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => (Items ?? Enumerable.Empty<TNode>()).GetEnumerator();
 
-        public void Add(AstNode item)
+        public static ListNode<TNode> Default(string separator = ",")
         {
+            return new ListNode<TNode>
+            {
+                Separator = new OperatorNode(separator),
+                Items = new List<TNode>()
+            };
+        }
+
+        public void Add(TNode item)
+        {
+            if (Items == null)
+                Items = new List<TNode>();
             Items.Add(item);
         }
 
@@ -23,20 +36,20 @@ namespace Scoop.SyntaxTree
             Items.Clear();
         }
 
-        public bool Contains(AstNode item) => Items.Contains(item);
+        public bool Contains(TNode item) => Items.Contains(item);
 
-        public void CopyTo(AstNode[] array, int arrayIndex)
+        public void CopyTo(TNode[] array, int arrayIndex)
         {
             Items.CopyTo(array, arrayIndex);
         }
 
-        public bool Remove(AstNode item) => Items.Remove(item);
+        public bool Remove(TNode item) => Items.Remove(item);
 
-        public int Count => Items.Count;
+        public int Count => Items?.Count ?? 0;
         public bool IsReadOnly => false;
-        public int IndexOf(AstNode item) => Items.IndexOf(item);
+        public int IndexOf(TNode item) => Items.IndexOf(item);
 
-        public void Insert(int index, AstNode item)
+        public void Insert(int index, TNode item)
         {
             Items.Insert(index, item);
         }
@@ -46,10 +59,15 @@ namespace Scoop.SyntaxTree
             Items.RemoveAt(index);
         }
 
-        public AstNode this[int index]
+        public TNode this[int index]
         {
             get => Items[index];
-            set => Items[index] = value;
+            set
+            {
+                if (Items == null)
+                    Items = new List<TNode>();
+                Items.Insert(index, value);
+            }
         }
     }
 }

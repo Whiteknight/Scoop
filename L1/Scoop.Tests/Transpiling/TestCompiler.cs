@@ -21,12 +21,12 @@ namespace Scoop.Tests.Transpiling
             var testAssemblyName = GetTestAssemblyName();
             var unit = new CompilationUnitNode
             {
-                Namespaces = new List<NamespaceNode>
+                Members = new ListNode<AstNode>
                 {
                     new NamespaceNode
                     {
                         Name = new DottedIdentifierNode(testAssemblyName),
-                        Declarations = new List<AstNode>
+                        Declarations = new ListNode<AstNode>
                         {
                             ast
                         }

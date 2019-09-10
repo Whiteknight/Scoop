@@ -167,7 +167,7 @@ namespace Scoop.Tests.Parsing
                         Right = new NewNode
                         {
                             Type = new TypeNode("Exception"),
-                            Arguments = new List<AstNode>()
+                            Arguments = ListNode<AstNode>.Default()
                         }
                     }
                 }

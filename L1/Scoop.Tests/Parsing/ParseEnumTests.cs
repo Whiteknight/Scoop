@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -20,7 +17,7 @@ namespace Scoop.Tests.Parsing
                 {
                     AccessModifier = new KeywordNode("public"),
                     Name = new IdentifierNode("MyEnum"),
-                    Members = new List<EnumMemberNode>()
+                    Members = ListNode<EnumMemberNode>.Default()
                 }
             );
         }
@@ -35,18 +32,19 @@ namespace Scoop.Tests.Parsing
                 {
                     AccessModifier = new KeywordNode("public"),
                     Name = new IdentifierNode("MyEnum"),
-                    Members = new List<EnumMemberNode>
+                    Members = new ListNode<EnumMemberNode>
                     {
-                        new EnumMemberNode
+                        Separator = new OperatorNode(","),
+                        [0] = new EnumMemberNode
                         {
                             Name = new IdentifierNode("A"),
                             Value = new IntegerNode(0)
                         },
-                        new EnumMemberNode
+                        [1] = new EnumMemberNode
                         {
                             Name = new IdentifierNode("B")
                         },
-                        new EnumMemberNode
+                        [2] = new EnumMemberNode
                         {
                             Name = new IdentifierNode("C")
                         }
@@ -55,6 +53,4 @@ namespace Scoop.Tests.Parsing
             );
         }
     }
-
-
 }

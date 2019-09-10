@@ -21,10 +21,11 @@ namespace Scoop.Tests.Parsing
                         Instance = new IdentifierNode("myObj"),
                         MemberName = new IdentifierNode("Method")
                     },
-                    Arguments = new List<AstNode>
+                    Arguments = new ListNode<AstNode>
                     {
-                        new IntegerNode(1),
-                        new CharNode('b')
+                        Separator = new OperatorNode(","),
+                        [0] = new IntegerNode(1),
+                        [1] = new CharNode('b')
                     }
                 }
             );
@@ -44,7 +45,7 @@ namespace Scoop.Tests.Parsing
                         MemberName = new IdentifierNode("Method"),
                         IgnoreNulls = true
                     },
-                    Arguments = new List<AstNode>()
+                    Arguments = ListNode<AstNode>.Default()
                 }
             );
         }
@@ -58,9 +59,10 @@ namespace Scoop.Tests.Parsing
                 new InvokeNode
                 {
                     Instance = new IdentifierNode("func"),
-                    Arguments = new List<AstNode>
+                    Arguments = new ListNode<AstNode>
                     {
-                        new NamedArgumentNode
+                        Separator = new OperatorNode(","),
+                        [0] = new NamedArgumentNode
                         {
                             Name = new IdentifierNode("test"),
                             Separator = new OperatorNode(":"),

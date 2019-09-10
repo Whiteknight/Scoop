@@ -20,15 +20,13 @@ namespace Scoop.Tests.Parsing
                     {
                         Instance = new IdentifierNode("a"),
                         MemberName = new IdentifierNode("b"),
-                        GenericArguments = new List<AstNode>
+                        GenericArguments = new ListNode<TypeNode>
                         {
-                            new TypeNode
-                            {
-                                Name = new IdentifierNode("c")
-                            }
+                            Separator = new OperatorNode(","),
+                            [0] = new TypeNode("c")
                         }
                     },
-                    Arguments = new List<AstNode>()
+                    Arguments = ListNode<AstNode>.Default()
                 }
             );
         }
@@ -49,31 +47,30 @@ namespace Scoop.Tests.Parsing
                             {
                                 Instance = new IdentifierNode("e"),
                                 MemberName = new IdentifierNode("First"),
-                                GenericArguments = new List<AstNode>
+                                GenericArguments = new ListNode<TypeNode>
                                 {
-                                    new TypeNode
+                                    Separator = new OperatorNode(","),
+                                    [0] = new TypeNode
                                     {
                                         Name = new IdentifierNode("List"),
-                                        GenericArguments = new List<AstNode>
+                                        GenericArguments = new ListNode<TypeNode>
                                         {
-                                            new TypeNode
-                                            {
-                                                Name = new IdentifierNode("int")
-                                            }
+                                            Separator = new OperatorNode(","),
+                                            [0] = new TypeNode("int")
                                         }
                                     }
                                 }
                             },
-                            Arguments = new List<AstNode>()
+                            Arguments = ListNode<AstNode>.Default()
                         },
                         MemberName = new IdentifierNode("First"),
-                        GenericArguments = new List<AstNode> {
-                            new TypeNode {
-                                Name = new IdentifierNode("int")
-                            }
+                        GenericArguments = new ListNode<TypeNode>
+                        {
+                            Separator = new OperatorNode(","),
+                            [0] = new TypeNode("int")
                         }
                     },
-                    Arguments = new List<AstNode>()
+                    Arguments = ListNode<AstNode>.Default()
                 }
             );
         }

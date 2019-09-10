@@ -3,11 +3,11 @@ using System.Linq;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
-namespace Scoop
+namespace Scoop.Parsers
 {
-    public partial class Parser
+    public class DottedIdentifierParser : IParser<DottedIdentifierNode>
     {
-        private DottedIdentifierNode ParseDottedIdentifier(ITokenizer t)
+        public DottedIdentifierNode TryParse(ITokenizer t)
         {
             // <identifier> ("." <identifier>)*
             var tokens = new List<Token>();
@@ -20,6 +20,13 @@ namespace Scoop
             }
 
             return new DottedIdentifierNode(tokens.Select(x => x.Value), tokens[0].Location);
+        }
+
+        public string Name { get; set; }
+        public override string ToString()
+        {
+            var typeName = this.GetType().Name;
+            return Name == null ? base.ToString() : $"{typeName} {Name}";
         }
     }
 }

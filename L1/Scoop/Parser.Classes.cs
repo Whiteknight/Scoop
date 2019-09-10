@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
@@ -6,266 +8,377 @@ namespace Scoop
 {
     public partial class Parser
     {
-        // Helper method to start parsing at the class level, mostly to simplify unit tests
-        public ClassNode ParseClass(string s) => ParseClass(new Tokenizer(s), null);
-
-        private ClassNode ParseClass(ITokenizer t, List<AttributeNode> attributes)
+        private void InitializeClasses()
         {
-            return new ClassNode
-            {
-                Attributes = attributes ?? ParseAttributes(t),
-                AccessModifier = new KeywordNode(t.Expect(TokenType.Keyword, "public", "private")),
-                Modifiers = t.NextIs(TokenType.Keyword, "partial") ? new List<KeywordNode> { new KeywordNode(t.GetNext()) } : null,
-                Type = new KeywordNode(t.Expect(TokenType.Keyword, "class", "struct")),
-                Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
-                GenericTypeParameters = ParseGenericTypeParametersList(t),
-                Interfaces = t.NextIs(TokenType.Operator, ":", true) ? ParseInheritanceList(t) : null,
-                TypeConstraints = ParseTypeConstraints(t),
-                Members = ParseClassBody(t)
-            };
-        }
-
-        private List<AstNode> ParseClassBody(ITokenizer t)
-        {
-            t.Expect(TokenType.Operator, "{");
-            var members = new List<AstNode>();
-            while (true)
-            {
-                var lookahead = t.Peek();
-                if (lookahead.Is(TokenType.Operator, "}"))
-                    break;
-
-                if (lookahead.IsType(TokenType.CSharpLiteral))
+            var parameter = ScoopParsers.Sequence(
+                Attributes,
+                ScoopParsers.Optional(new KeywordParser("params")),
+                Types,
+                _identifiers,
+                ScoopParsers.Optional(
+                    ScoopParsers.Sequence(
+                        new OperatorParser("="),
+                        Expressions,
+                        (op, expr) => expr
+                    )
+                ),
+                (attrs, isparams, type, name, value) => new ParameterNode
                 {
-                    members.Add(new CSharpNode(t.GetNext()));
-                    continue;
+                    Location = type.Location,
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                    IsParams = isparams is KeywordNode,
+                    Type = type,
+                    Name = name,
+                    DefaultValue = value is EmptyNode ? null : value
                 }
+            ).Named("parameter");
 
-                var attributes = ParseAttributes(t);
-                var lookaheads = t.Peek(2);
-                // For now, everything must have explicit "public" or "private". We don't infer
-                // "private" if neither is specified.
-                // TODO: Allow no-modifier to infer "private"
-                if (lookaheads[0].IsKeyword("public", "private") && lookaheads[1].IsKeyword("class", "struct"))
+            ParameterList = ScoopParsers.Sequence(
+                new OperatorParser("("),
+                ScoopParsers.SeparatedList(
+                    parameter,
+                    new OperatorParser(","),
+                    parameters => new ListNode<ParameterNode> { Items = parameters.ToList(), Separator = new OperatorNode(",") }
+                ),
+                new OperatorParser(")"),
+                (a, parameters, b) => parameters
+            ).Named("ParameterList");
+
+            var inheritanceList = ScoopParsers.Optional(
+                ScoopParsers.Sequence(
+                    new OperatorParser(":"),
+                    ScoopParsers.SeparatedList(
+                        Types,
+                        new OperatorParser(","),
+                        types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") }
+                    ),
+                    (colon, types) => types
+                )
+            ).Named("inheritanceList");
+
+            var interfaceMember = ScoopParsers.Sequence(
+                Types,
+                _identifiers,
+                GenericTypeParameters,
+                ParameterList,
+                TypeConstraints,
+                new OperatorParser(";"),
+                (ret, name, genParm, parm, cons, s) => new MethodDeclareNode
                 {
-                    var classMember = ParseClass(t, attributes);
-                    members.Add(classMember);
-                    continue;
+                    Location = name.Location,
+                    ReturnType = ret,
+                    Name = name,
+                    GenericTypeParameters = genParm.IsNullOrEmpty() ? null : genParm,
+                    Parameters = parm,
+                    TypeConstraints = cons.IsNullOrEmpty() ? null : cons,
                 }
-
-                if (lookaheads[0].IsKeyword("public", "private") && lookaheads[1].IsKeyword("interface"))
+            ).Named("interfaceMember");
+            var interfaceBody = ScoopParsers.First(
+                ScoopParsers.Sequence(
+                    new OperatorParser("{"),
+                    new OperatorParser("}"),
+                    (a, b) => new ListNode<MethodDeclareNode>()
+                ),
+                ScoopParsers.Sequence(
+                    new OperatorParser("{"),
+                    ScoopParsers.List(
+                        interfaceMember,
+                        members => new ListNode<MethodDeclareNode> { Items = members.ToList() }
+                    ),
+                    new OperatorParser("}"),
+                    (a, members, b) => members
+                )
+            ).Named("interfaceBody");
+            Interfaces = ScoopParsers.Sequence(
+                Attributes,
+                ScoopParsers.Optional(
+                    new KeywordParser("public", "private")
+                ),
+                new KeywordParser("interface"),
+                _identifiers,
+                GenericTypeParameters,
+                inheritanceList,
+                TypeConstraints,
+                interfaceBody,
+                (attrs, vis, i, name, genParm, inh, cons, body) => new InterfaceNode
                 {
-                    var ifaceMember = ParseInterface(t, attributes);
-                    members.Add(ifaceMember);
-                    continue;
+                    Location = name.Location,
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                    AccessModifier = vis as KeywordNode,
+                    Name = name,
+                    GenericTypeParameters = genParm.IsNullOrEmpty() ? null : genParm,
+                    Interfaces = inh as ListNode<TypeNode>,
+                    TypeConstraints = cons.IsNullOrEmpty() ? null : cons,
+                    Members = body
                 }
-                if (lookaheads[0].IsKeyword("public", "private") && lookaheads[1].IsKeyword("enum"))
+            ).Named("Interfaces");
+
+            Delegates = ScoopParsers.Sequence(
+                // <attributes> <accessModifier>? "delegate" <type> <identifier> <genericParameters>? <parameters> <typeConstraints> ";"
+                ScoopParsers.Deferred(() => Attributes),
+                ScoopParsers.Optional(
+                    new KeywordParser("public", "private")
+                ),
+                new KeywordParser("delegate"),
+                Types,
+                new IdentifierParser(),
+                GenericTypeParameters,
+                ParameterList,
+                TypeConstraints,
+                new OperatorParser(";"),
+                (attrs, vis, d, retType, name, gen, param, cons, s) => new DelegateNode
                 {
-                    var enumMember = ParseEnum(t, attributes);
-                    members.Add(enumMember);
-                    continue;
+                    Location = d.Location,
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                    AccessModifier = vis as KeywordNode,
+                    ReturnType = retType,
+                    Name = name,
+                    GenericTypeParameters = gen.IsNullOrEmpty() ? null : gen,
+                    Parameters = param,
+                    TypeConstraints = cons.IsNullOrEmpty() ? null : cons
                 }
-                if (lookaheads[0].IsKeyword("public", "private") && lookaheads[1].IsKeyword("delegate"))
+            ).Named("Delegates");
+
+            var enumMember = ScoopParsers.Sequence(
+                Attributes,
+                new IdentifierParser(),
+                ScoopParsers.Optional(
+                    ScoopParsers.Sequence(
+                        new OperatorParser("="),
+                        Expressions,
+                        (e, expr) => expr
+                    )
+                ),
+                (attrs, name, value) => new EnumMemberNode
                 {
-                    var delegateMember = ParseDelegate(t, attributes);
-                    members.Add(delegateMember);
-                    continue;
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                    Location = name.Location,
+                    Name = name,
+                    Value = value is EmptyNode ? null : value
                 }
-
-                var member = ParseClassMember(t, attributes);
-                members.Add(member);
-            }
-            t.Expect(TokenType.Operator, "}");
-            return members;
-        }
-
-        public AstNode ParseClassMember(string s) => ParseClassMember(new Tokenizer(s), null);
-        private AstNode ParseClassMember(ITokenizer t, List<AttributeNode> attributes)
-        {
-            attributes = attributes ?? ParseAttributes(t);
-            var accessModifier = t.Peek().IsKeyword("public", "private") ? new KeywordNode(t.GetNext()) : null;
-            if (t.NextIs(TokenType.Keyword, "const"))
-            {
-                // constant
-                // <accessModifier>? "const" <type> <ident> "=" <expression>  ";"
-                var constNode = new ConstNode
+            );
+            Enums = ScoopParsers.Sequence(
+                Attributes,
+                ScoopParsers.Optional(
+                    new KeywordParser("public", "private")
+                ),
+                new KeywordParser("enum"),
+                new IdentifierParser(),
+                new OperatorParser("{"),
+                ScoopParsers.SeparatedList(
+                    enumMember,
+                    new OperatorParser(","),
+                    members => new ListNode<EnumMemberNode> { Items = members.ToList(), Separator = new OperatorNode(",") }
+                ),
+                new OperatorParser("}"),
+                (attrs, vis, e, name, x, members, y) => new EnumNode
                 {
-                    Location = t.GetNext().Location,
-                    AccessModifier = accessModifier,
-                    Type = ParseType(t),
-                    Name = new IdentifierNode(t.Expect(TokenType.Identifier))
-                };
-                t.Expect(TokenType.Operator, "=");
-                constNode.Value = ParseExpression(t);
-                t.Expect(TokenType.Operator, ";");
-                return constNode;
-            }
+                    Location = e.Location,
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                    AccessModifier = vis as KeywordNode,
+                    Name = name,
+                    Members = members
+                }
+            );
 
-            var asyncModifier = t.NextIs(TokenType.Keyword, "async") ? new KeywordNode(t.GetNext()) : null;
-            var returnType = ParseType(t);
-            if (asyncModifier == null && t.NextIs(TokenType.Operator, "("))
-            {
-                // Constructor
-                // <accessModifier>? <type> <parameterList> <methodBody>
-                var ctor = new ConstructorNode
+            var constants = ScoopParsers.Sequence(
+                ScoopParsers.Optional(
+                    new KeywordParser("public", "private")
+                ),
+                new KeywordParser("const"),
+                Types,
+                    _identifiers,
+                new OperatorParser("="),
+                Expressions,
+                new OperatorParser(";"),
+                (vis, c, type, name, e, expr, s) => new ConstNode
                 {
-                    Attributes = attributes,
-                    Location = returnType.Location,
-                    AccessModifier = accessModifier,
-                    Parameters = ParseParameterList(t),
-                    ThisArgs = ParseConstructorThisArgs(t),
-                    Statements = ParseMethodBody(t)
-                };
-                if (!(returnType is TypeNode returnTypeNode) || !returnTypeNode.GenericArguments.IsNullOrEmpty())
-                    throw new ParsingException($"Invalid name for constructor at {returnType.Location}");
-                ctor.ClassName = returnTypeNode.Name;
-                return ctor;
-            }
+                    AccessModifier = vis as KeywordNode,
+                    Location = name.Location,
+                    Type = type,
+                    Name = name,
+                    Value = expr
+                }
+            ).Named("constants");
 
-            var name = new IdentifierNode(t.Expect(TokenType.Identifier));
-            if (asyncModifier != null || t.Peek().IsOperator("<", "("))
-            {
-                // Method
+            var exprMethodBody = ScoopParsers.Sequence(
+                new OperatorParser("=>"),
+                ScoopParsers.First(
+                    ScoopParsers.Sequence(
+                        new OperatorParser("{"),
+                        new OperatorParser("}"),
+                        (a, b) => new ListNode<AstNode>()
+                    ),
+                    ScoopParsers.Sequence(
+                        new OperatorParser("{"),
+                        ScoopParsers.List(
+                            Statements,
+                            stmts => new ListNode<AstNode> { Items = stmts.ToList() }
+                        ),
+                        new OperatorParser("}"),
+                        (a, stmts, b) => stmts
+                    ),
+                    ScoopParsers.Sequence(
+                        Expressions,
+                        new OperatorParser(";"),
+                        (expr, s) => new ListNode<AstNode> { new ReturnNode { Expression = expr } }
+                    )
+                ),
+                (lambda, body) => body
+            ).Named("exprMethodBody");
+            NormalMethodBody = ScoopParsers.First(
+                ScoopParsers.Sequence(
+                    new OperatorParser("{"),
+                    new OperatorParser("}"),
+                    (a, b) => new ListNode<AstNode>()
+                ),
+                ScoopParsers.Sequence(
+                    new OperatorParser("{"),
+                    ScoopParsers.List(
+                        Statements,
+                        stmts => new ListNode<AstNode> { Items = stmts.ToList() }
+                    ),
+                    new OperatorParser("}"),
+                    (a, body, b) => body
+                )
+            ).Named("NormalMethodBody");
+            var methodBody = ScoopParsers.First(
+                exprMethodBody,
+                NormalMethodBody
+            ).Named("methodBody");
+
+            var thisArgs = ScoopParsers.Optional(
+                ScoopParsers.Sequence(
+                    new OperatorParser(":"),
+                    new IdentifierParser("this"),
+                    ArgumentLists,
+                    (a, b, args) => args
+                )
+            ).Named("thisArgs");
+            var constructors = ScoopParsers.Sequence(
+                Attributes,
+                ScoopParsers.Optional(
+                    new KeywordParser("public", "private")
+                ),
+                _identifiers,
+                ParameterList,
+                thisArgs,
+                methodBody,
+                (attrs, vis, name, param, targs, body) => new ConstructorNode
+                {
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                    Location = name.Location,
+                    AccessModifier = vis as KeywordNode,
+                    ClassName = name,
+                    Parameters = param,
+                    ThisArgs = targs as ListNode<AstNode>,
+                    Statements = body
+                }
+            ).Named("constructors");
+
+            var methods = ScoopParsers.Sequence(
                 // <accessModifier>? "async"? <type> <ident> <genericTypeParameters>? <parameterList> <typeConstraints>? <methodBody>
-                var method = new MethodNode
+                Attributes,
+                ScoopParsers.Optional(
+                    new KeywordParser("public", "private")
+                ),
+                ScoopParsers.Optional(
+                    new KeywordParser("async")
+                ),
+                Types,
+                _identifiers,
+                GenericTypeParameters,
+                ParameterList,
+                TypeConstraints,
+                methodBody,
+                (attrs, vis, isAsync, retType, name, genParam, param, cons, body) => new MethodNode
                 {
-                    Attributes = attributes,
                     Location = name.Location,
-                    AccessModifier = accessModifier
-                };
-                if (asyncModifier != null)
-                    method.AddModifier(asyncModifier);
-                method.ReturnType = returnType;
-                method.Name = name;
-                method.GenericTypeParameters = ParseGenericTypeParametersList(t);
-                method.Parameters = ParseParameterList(t);
-                method.TypeConstraints = ParseTypeConstraints(t);
-                method.Statements = ParseMethodBody(t);
-                return method;
-            }
-
-            if (accessModifier == null)
-            {
-                // It's a field. Fields may not have access modifier, because they are always private
-                // <type> <ident> ";"
-                var field = new FieldNode
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                    AccessModifier = vis as KeywordNode,
+                    Modifiers = isAsync is EmptyNode ? null : new ListNode<KeywordNode> { isAsync as KeywordNode },
+                    ReturnType = retType,
+                    Name = name,
+                    GenericTypeParameters = genParam.IsNullOrEmpty() ? null : genParam,
+                    Parameters = param,
+                    TypeConstraints = cons.IsNullOrEmpty() ? null : cons,
+                    Statements = body
+                }
+            ).Named("methods");
+            var fields = ScoopParsers.Sequence(
+                Attributes,
+                Types,
+                _identifiers,
+                new OperatorParser(";"),
+                (attrs, type, name, s) => new FieldNode
                 {
-                    Attributes = attributes,
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
                     Location = name.Location,
-                    Type = returnType,
+                    Type = type,
                     Name = name
-                };
-                t.Expect(TokenType.Operator, ";");
-                return field;
-            }
-
-            throw ParsingException.CouldNotParseRule(nameof(ParseClassMember), t.Peek());
-        }
-
-        private List<AstNode> ParseConstructorThisArgs(ITokenizer t)
-        {
-            if (!t.NextIs(TokenType.Operator, ":", true))
-                return null;
-            t.Expect(TokenType.Identifier, "this");
-            return ParseArgumentList(t);
-        }
-
-        private List<AstNode> ParseGenericTypeParametersList(ITokenizer t)
-        {
-            if (!t.NextIs(TokenType.Operator, "<"))
-                return null;
-            var types = new List<AstNode>();
-            t.Expect(TokenType.Operator, "<");
-            var type = ParseType(t);
-            types.Add(type);
-            while (t.NextIs(TokenType.Operator, ",", true))
-            {
-                type = ParseType(t);
-                types.Add(type);
-            }
-            t.Expect(TokenType.Operator, ">");
-            return types;
-        }
-
-        private List<ParameterNode> ParseParameterList(ITokenizer t)
-        {
-            t.Expect(TokenType.Operator, "(");
-            var parameterList = new List<ParameterNode>();
-            if (t.NextIs(TokenType.Operator, ")", true))
-                return parameterList;
-
-            while (true)
-            {
-                var parameter = new ParameterNode
-                {
-                    Attributes = ParseAttributes(t),
-                    IsParams = t.NextIs(TokenType.Keyword, "params", true),
-                    Type = ParseType(t),
-                    Name = new IdentifierNode(t.Expect(TokenType.Identifier)),
-                    DefaultValue = t.NextIs(TokenType.Operator, "=", true) ? ParseExpression(t) : null
-                };
-                parameter.Location = parameter.Type.Location;
-                parameterList.Add(parameter);
-                var lookahead = t.Peek();
-                if (lookahead.IsOperator(","))
-                {
-                    t.Advance();
-                    continue;
                 }
+            ).Named("fields");
 
-                if (lookahead.IsOperator(")"))
-                    break;
+            ClassMembers = ScoopParsers.First<AstNode>(
+                ScoopParsers.Token(TokenType.CSharpLiteral, cs => new CSharpNode(cs)),
+                ScoopParsers.Deferred(() => Classes),
+                Interfaces,
+                Enums,
+                Delegates,
+                constants,
+                constructors,
+                methods,
+                fields
+            ).Named("ClassMembers");
 
-                throw ParsingException.CouldNotParseRule(nameof(ParseParameterList), lookahead);
-            }
+            var classBody = ScoopParsers.First(
+                ScoopParsers.Sequence(
+                    new OperatorParser("{"),
+                    new OperatorParser("}"),
+                    (a, b) => new ListNode<AstNode>()
+                ).Named("classBody.EmptyBrackets"),
+                ScoopParsers.Sequence(
+                    new OperatorParser("{"),
+                    ScoopParsers.List(
+                        ClassMembers,
+                        members => new ListNode<AstNode> { Items = members.ToList() }
+                    ),
+                    new OperatorParser("}"),
+                    (a, members, b) => members
+                ).Named("classBody.body")
+            ).Named("classBody");
 
-            t.Expect(TokenType.Operator, ")");
-            return parameterList;
-        }
-
-        private List<AstNode> ParseMethodBody(ITokenizer t)
-        {
-            var lookahead = t.Peek();
-            if (lookahead.IsOperator("=>"))
-                return ParseExpressionBodiedMethodBody(t);
-
-            if (lookahead.IsOperator("{"))
-                return ParseNormalMethodBody(t);
-            throw ParsingException.CouldNotParseRule(nameof(ParseMethodBody), lookahead);
-        }
-
-        private List<AstNode> ParseExpressionBodiedMethodBody(ITokenizer t)
-        {
-            var lambdaToken = t.Expect(TokenType.Operator, "=>");
-            var expr = ParseExpression(t);
-            t.Expect(TokenType.Operator, ";");
-            return new List<AstNode>
-            {
-                new ReturnNode
-                {
-                    Location = lambdaToken.Location,
-                    Expression = expr
+            Classes = ScoopParsers.Sequence(
+                Attributes,
+                _accessModifiers,
+                ScoopParsers.Optional(
+                    new KeywordParser("partial")
+                ).Named("Classes.Optional.Partial"),
+                new KeywordParser("class", "struct").Named("Class.class|struct"),
+                _identifiers,
+                GenericTypeParameters,
+                inheritanceList,
+                TypeConstraints,
+                classBody,
+                (attrs, vis, isPartial, obj, name, genParm, contracts, cons, body) => new ClassNode {
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                    AccessModifier = vis as KeywordNode,
+                    Modifiers = isPartial is KeywordNode k ? new ListNode<KeywordNode> { k } : null,
+                    Type = obj,
+                    Name = name,
+                    GenericTypeParameters = genParm.IsNullOrEmpty() ? null : genParm,
+                    Interfaces = contracts as ListNode<TypeNode>,
+                    TypeConstraints = cons.IsNullOrEmpty() ? null : cons,
+                    Members = body
                 }
-            };
+            ).Named("Classes");
         }
 
-        private List<AstNode> ParseNormalMethodBody(ITokenizer t)
-        {
-            // TODO: Method-level const values
-            t.Expect(TokenType.Operator, "{");
-            var statements = new List<AstNode>();
-            if (t.NextIs(TokenType.Operator, "}", true))
-                return statements;
-            while (true)
-            {
-                if (t.Peek().IsOperator("}"))
-                    break;
-                var stmt = ParseStatement(t);
-                statements.Add(stmt);
-            }
+        // Helper method to start parsing at the class level, mostly to simplify unit tests
+        public ClassNode ParseClass(string s) => Classes.Parse(new Tokenizer(s)).GetResult();
 
-            t.Expect(TokenType.Operator, "}");
-            return statements;
-        }
+        public AstNode ParseClassMember(string s) => ClassMembers.Parse(new Tokenizer(s)).GetResult();
+
+        public InterfaceNode ParseInterface(string s) => Interfaces.Parse(new Tokenizer(s)).GetResult();
     }
 }
