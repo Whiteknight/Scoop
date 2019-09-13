@@ -847,15 +847,6 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public AstNode VisitParenthesis<TNode>(ParenthesisNode<TNode> n)
-            where TNode : AstNode
-        {
-            Append("(");
-            Visit(n.Expression);
-            Append(")");
-            return n;
-        }
-
         public AstNode VisitPostfixOperation(PostfixOperationNode n)
         {
             Visit(n.Left);

@@ -1,15 +1,16 @@
-﻿using Scoop.Tokenization;
+﻿using System.Collections.Generic;
+using Scoop.Tokenization;
 
 namespace Scoop.SyntaxTree
 {
     public class DoubleNode : AstNode
     {
-        public DoubleNode(double value)
+        public DoubleNode(double value, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
         {
             Value = value;
         }
 
-        public DoubleNode(Token t)
+        public DoubleNode(Token t, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
         {
             Value = double.Parse(t.Value);
             Location = t.Location;

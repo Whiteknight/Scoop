@@ -19,6 +19,17 @@ namespace Scoop.Parsers
             return new FirstParser<TOutput>(parsers.Cast<IParser<AstNode>>().ToArray());
         }
 
+        public static IParser<TOutput> Required<TOutput>(IParser<TOutput> p, Func<Location, TOutput> otherwise)
+            where TOutput : AstNode
+        {
+            return new RequiredParser<TOutput>(p, otherwise);
+        }
+
+        public static IParser<OperatorNode> RequireOperator(string op)
+        {
+            return new RequiredParser<OperatorNode>(new OperatorParser(op), l => new OperatorNode(op).WithDiagnostics(l, $"Missing {op}"));
+        }
+
         public static IParser<TOutput> Sequence<T1, T2, TOutput>(IParser<T1> p1, IParser<T2> p2, Func<T1, T2, TOutput> produce)
             where T1: AstNode
             where T2: AstNode

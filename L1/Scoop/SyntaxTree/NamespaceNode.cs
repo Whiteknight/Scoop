@@ -4,6 +4,10 @@ namespace Scoop.SyntaxTree
 {
     public class NamespaceNode : AstNode, IHasAttributes
     {
+        public NamespaceNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        {
+        }
+
         public ListNode<AttributeNode> Attributes { get; set; }
 
         public DottedIdentifierNode Name { get; set; }

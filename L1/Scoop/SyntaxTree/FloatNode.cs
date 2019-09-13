@@ -1,15 +1,16 @@
-﻿using Scoop.Tokenization;
+﻿using System.Collections.Generic;
+using Scoop.Tokenization;
 
 namespace Scoop.SyntaxTree
 {
     public class FloatNode : AstNode
     {
-        public FloatNode(float value)
+        public FloatNode(float value, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
         {
             Value = value;
         }
 
-        public FloatNode(Token t)
+        public FloatNode(Token t, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
         {
             Value = float.Parse(t.Value);
             Location = t.Location;

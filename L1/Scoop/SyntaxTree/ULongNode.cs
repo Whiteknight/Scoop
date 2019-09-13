@@ -1,15 +1,16 @@
-﻿using Scoop.Tokenization;
+﻿using System.Collections.Generic;
+using Scoop.Tokenization;
 
 namespace Scoop.SyntaxTree
 {
     public class ULongNode : AstNode
     {
-        public ULongNode(ulong value)
+        public ULongNode(ulong value, IReadOnlyList<Diagnostic> d = null) : base(d)
         {
             Value = value;
         }
 
-        public ULongNode(Token t)
+        public ULongNode(Token t, IReadOnlyList<Diagnostic> d = null) : base(d)
         {
             Value = ulong.Parse(t.Value);
             Location = t.Location;

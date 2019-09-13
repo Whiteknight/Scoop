@@ -1,15 +1,16 @@
-﻿using Scoop.Tokenization;
+﻿using System.Collections.Generic;
+using Scoop.Tokenization;
 
 namespace Scoop.SyntaxTree
 {
     public class DecimalNode : AstNode
     {
-        public DecimalNode(decimal value)
+        public DecimalNode(decimal value, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
         {
             Value = value;
         }
 
-        public DecimalNode(Token t)
+        public DecimalNode(Token t, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
         {
             Value = decimal.Parse(t.Value);
             Location = t.Location;

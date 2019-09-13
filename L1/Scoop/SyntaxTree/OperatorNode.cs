@@ -1,16 +1,17 @@
-﻿using Scoop.Tokenization;
+﻿using System.Collections.Generic;
+using Scoop.Tokenization;
 
 namespace Scoop.SyntaxTree
 {
     public class OperatorNode : AstNode
     {
-        public OperatorNode(Token t)
+        public OperatorNode(Token t, IReadOnlyList<Diagnostic> d = null) : base(d)
         {
             Operator = t.Value;
             Location = t.Location;
         }
 
-        public OperatorNode(string op, Location location = null)
+        public OperatorNode(string op, Location location = null, IReadOnlyList<Diagnostic> d = null) : base(d)
         {
             Operator = op;
             Location = location;

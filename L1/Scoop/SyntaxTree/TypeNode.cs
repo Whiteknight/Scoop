@@ -1,19 +1,19 @@
-﻿using Scoop.Tokenization;
+﻿using System.Collections.Generic;
 
 namespace Scoop.SyntaxTree
 {
     public class TypeNode : AstNode
     {
-        public TypeNode()
+        public TypeNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
         {
         }
 
-        public TypeNode(string typeName)
+        public TypeNode(string typeName, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
         {
             Name = new IdentifierNode(typeName);
         }
 
-        public TypeNode(IdentifierNode id)
+        public TypeNode(IdentifierNode id, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
         {
             Name = id;
             Location = id.Location;
@@ -29,6 +29,9 @@ namespace Scoop.SyntaxTree
 
     public class ArrayTypeNode : AstNode
     {
+        public ArrayTypeNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        {
+        }
         // TODO: N-arity
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitArrayType(this);
     }

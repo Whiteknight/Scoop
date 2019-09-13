@@ -62,7 +62,10 @@ namespace Scoop.Tests.Utility
             var publicProperties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public).ToList();
             foreach (var property in publicProperties)
             {
+                // Skip a few bits which aren't germane to most test scenarios.
                 if (property.Name == nameof(AstNode.Location) && property.PropertyType == typeof(Location))
+                    continue;
+                if (property.Name == nameof(AstNode.Unused) && property.PropertyType == typeof(IReadOnlyList<AstNode>))
                     continue;
                 //if (property.Name == nameof(ISqlSymbolScopeNode.Symbols) && property.PropertyType == typeof(SymbolTable))
                 //    continue;
@@ -74,8 +77,8 @@ namespace Scoop.Tests.Utility
                 var childB = property.GetValue(b);
                 if (childA == null && childB == null)
                     continue;
-                childA.Should().NotBeNull(childPath);
-                childB.Should().NotBeNull(childPath);
+                childA.Should().NotBeNull($"{childPath} received value is null but null was not expected");
+                childB.Should().NotBeNull($"{childPath} received value is not null but null was expected");
 
                 if (typeof(AstNode).IsAssignableFrom(property.PropertyType))
                 {

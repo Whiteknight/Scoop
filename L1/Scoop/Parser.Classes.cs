@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
+using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop
 {
@@ -10,13 +10,13 @@ namespace Scoop
     {
         private void InitializeClasses()
         {
-            var parameter = ScoopParsers.Sequence(
+            var parameter = Sequence(
                 Attributes,
-                ScoopParsers.Optional(new KeywordParser("params")),
+                Optional(new KeywordParser("params")),
                 Types,
                 _identifiers,
-                ScoopParsers.Optional(
-                    ScoopParsers.Sequence(
+                Optional(
+                    Sequence(
                         new OperatorParser("="),
                         Expressions,
                         (op, expr) => expr
@@ -33,36 +33,36 @@ namespace Scoop
                 }
             ).Named("parameter");
 
-            ParameterList = ScoopParsers.Sequence(
+            ParameterList = Sequence(
                 new OperatorParser("("),
-                ScoopParsers.SeparatedList(
+                SeparatedList(
                     parameter,
                     new OperatorParser(","),
                     parameters => new ListNode<ParameterNode> { Items = parameters.ToList(), Separator = new OperatorNode(",") }
                 ),
-                new OperatorParser(")"),
-                (a, parameters, b) => parameters
+                RequireOperator(")"),
+                (a, parameters, b) => parameters.WithUnused(a, b)
             ).Named("ParameterList");
 
-            var inheritanceList = ScoopParsers.Optional(
-                ScoopParsers.Sequence(
+            var inheritanceList = Optional(
+                Sequence(
                     new OperatorParser(":"),
-                    ScoopParsers.SeparatedList(
+                    SeparatedList(
                         Types,
                         new OperatorParser(","),
                         types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") }
                     ),
-                    (colon, types) => types
+                    (colon, types) => types.WithUnused(colon)
                 )
             ).Named("inheritanceList");
 
-            var interfaceMember = ScoopParsers.Sequence(
+            var interfaceMember = Sequence(
                 Types,
                 _identifiers,
                 GenericTypeParameters,
                 ParameterList,
                 TypeConstraints,
-                new OperatorParser(";"),
+                RequireOperator(";"),
                 (ret, name, genParm, parm, cons, s) => new MethodDeclareNode
                 {
                     Location = name.Location,
@@ -71,17 +71,17 @@ namespace Scoop
                     GenericTypeParameters = genParm.IsNullOrEmpty() ? null : genParm,
                     Parameters = parm,
                     TypeConstraints = cons.IsNullOrEmpty() ? null : cons,
-                }
+                }.WithUnused(s)
             ).Named("interfaceMember");
-            var interfaceBody = ScoopParsers.First(
-                ScoopParsers.Sequence(
+            var interfaceBody = First(
+                Sequence(
                     new OperatorParser("{"),
                     new OperatorParser("}"),
                     (a, b) => new ListNode<MethodDeclareNode>()
                 ),
-                ScoopParsers.Sequence(
+                Sequence(
                     new OperatorParser("{"),
-                    ScoopParsers.List(
+                    List(
                         interfaceMember,
                         members => new ListNode<MethodDeclareNode> { Items = members.ToList() }
                     ),
@@ -89,9 +89,9 @@ namespace Scoop
                     (a, members, b) => members
                 )
             ).Named("interfaceBody");
-            Interfaces = ScoopParsers.Sequence(
+            Interfaces = Sequence(
                 Attributes,
-                ScoopParsers.Optional(
+                Optional(
                     new KeywordParser("public", "private")
                 ),
                 new KeywordParser("interface"),
@@ -113,10 +113,10 @@ namespace Scoop
                 }
             ).Named("Interfaces");
 
-            Delegates = ScoopParsers.Sequence(
+            Delegates = Sequence(
                 // <attributes> <accessModifier>? "delegate" <type> <identifier> <genericParameters>? <parameters> <typeConstraints> ";"
-                ScoopParsers.Deferred(() => Attributes),
-                ScoopParsers.Optional(
+                Deferred(() => Attributes),
+                Optional(
                     new KeywordParser("public", "private")
                 ),
                 new KeywordParser("delegate"),
@@ -139,11 +139,11 @@ namespace Scoop
                 }
             ).Named("Delegates");
 
-            var enumMember = ScoopParsers.Sequence(
+            var enumMember = Sequence(
                 Attributes,
                 new IdentifierParser(),
-                ScoopParsers.Optional(
-                    ScoopParsers.Sequence(
+                Optional(
+                    Sequence(
                         new OperatorParser("="),
                         Expressions,
                         (e, expr) => expr
@@ -157,15 +157,15 @@ namespace Scoop
                     Value = value is EmptyNode ? null : value
                 }
             );
-            Enums = ScoopParsers.Sequence(
+            Enums = Sequence(
                 Attributes,
-                ScoopParsers.Optional(
+                Optional(
                     new KeywordParser("public", "private")
                 ),
                 new KeywordParser("enum"),
                 new IdentifierParser(),
                 new OperatorParser("{"),
-                ScoopParsers.SeparatedList(
+                SeparatedList(
                     enumMember,
                     new OperatorParser(","),
                     members => new ListNode<EnumMemberNode> { Items = members.ToList(), Separator = new OperatorNode(",") }
@@ -181,8 +181,8 @@ namespace Scoop
                 }
             );
 
-            var constants = ScoopParsers.Sequence(
-                ScoopParsers.Optional(
+            var constants = Sequence(
+                Optional(
                     new KeywordParser("public", "private")
                 ),
                 new KeywordParser("const"),
@@ -201,24 +201,24 @@ namespace Scoop
                 }
             ).Named("constants");
 
-            var exprMethodBody = ScoopParsers.Sequence(
+            var exprMethodBody = Sequence(
                 new OperatorParser("=>"),
-                ScoopParsers.First(
-                    ScoopParsers.Sequence(
+                First(
+                    Sequence(
                         new OperatorParser("{"),
                         new OperatorParser("}"),
                         (a, b) => new ListNode<AstNode>()
                     ),
-                    ScoopParsers.Sequence(
+                    Sequence(
                         new OperatorParser("{"),
-                        ScoopParsers.List(
+                        List(
                             Statements,
                             stmts => new ListNode<AstNode> { Items = stmts.ToList() }
                         ),
                         new OperatorParser("}"),
                         (a, stmts, b) => stmts
                     ),
-                    ScoopParsers.Sequence(
+                    Sequence(
                         Expressions,
                         new OperatorParser(";"),
                         (expr, s) => new ListNode<AstNode> { new ReturnNode { Expression = expr } }
@@ -226,15 +226,15 @@ namespace Scoop
                 ),
                 (lambda, body) => body
             ).Named("exprMethodBody");
-            NormalMethodBody = ScoopParsers.First(
-                ScoopParsers.Sequence(
+            NormalMethodBody = First(
+                Sequence(
                     new OperatorParser("{"),
                     new OperatorParser("}"),
                     (a, b) => new ListNode<AstNode>()
                 ),
-                ScoopParsers.Sequence(
+                Sequence(
                     new OperatorParser("{"),
-                    ScoopParsers.List(
+                    List(
                         Statements,
                         stmts => new ListNode<AstNode> { Items = stmts.ToList() }
                     ),
@@ -242,22 +242,22 @@ namespace Scoop
                     (a, body, b) => body
                 )
             ).Named("NormalMethodBody");
-            var methodBody = ScoopParsers.First(
+            var methodBody = First(
                 exprMethodBody,
                 NormalMethodBody
             ).Named("methodBody");
 
-            var thisArgs = ScoopParsers.Optional(
-                ScoopParsers.Sequence(
+            var thisArgs = Optional(
+                Sequence(
                     new OperatorParser(":"),
                     new IdentifierParser("this"),
                     ArgumentLists,
                     (a, b, args) => args
                 )
             ).Named("thisArgs");
-            var constructors = ScoopParsers.Sequence(
+            var constructors = Sequence(
                 Attributes,
-                ScoopParsers.Optional(
+                Optional(
                     new KeywordParser("public", "private")
                 ),
                 _identifiers,
@@ -276,13 +276,13 @@ namespace Scoop
                 }
             ).Named("constructors");
 
-            var methods = ScoopParsers.Sequence(
+            var methods = Sequence(
                 // <accessModifier>? "async"? <type> <ident> <genericTypeParameters>? <parameterList> <typeConstraints>? <methodBody>
                 Attributes,
-                ScoopParsers.Optional(
+                Optional(
                     new KeywordParser("public", "private")
                 ),
-                ScoopParsers.Optional(
+                Optional(
                     new KeywordParser("async")
                 ),
                 Types,
@@ -305,7 +305,7 @@ namespace Scoop
                     Statements = body
                 }
             ).Named("methods");
-            var fields = ScoopParsers.Sequence(
+            var fields = Sequence(
                 Attributes,
                 Types,
                 _identifiers,
@@ -319,9 +319,9 @@ namespace Scoop
                 }
             ).Named("fields");
 
-            ClassMembers = ScoopParsers.First<AstNode>(
-                ScoopParsers.Token(TokenType.CSharpLiteral, cs => new CSharpNode(cs)),
-                ScoopParsers.Deferred(() => Classes),
+            ClassMembers = First<AstNode>(
+                Token(TokenType.CSharpLiteral, cs => new CSharpNode(cs)),
+                Deferred(() => Classes),
                 Interfaces,
                 Enums,
                 Delegates,
@@ -331,15 +331,15 @@ namespace Scoop
                 fields
             ).Named("ClassMembers");
 
-            var classBody = ScoopParsers.First(
-                ScoopParsers.Sequence(
+            var classBody = First(
+                Sequence(
                     new OperatorParser("{"),
                     new OperatorParser("}"),
                     (a, b) => new ListNode<AstNode>()
                 ).Named("classBody.EmptyBrackets"),
-                ScoopParsers.Sequence(
+                Sequence(
                     new OperatorParser("{"),
-                    ScoopParsers.List(
+                    List(
                         ClassMembers,
                         members => new ListNode<AstNode> { Items = members.ToList() }
                     ),
@@ -348,10 +348,10 @@ namespace Scoop
                 ).Named("classBody.body")
             ).Named("classBody");
 
-            Classes = ScoopParsers.Sequence(
+            Classes = Sequence(
                 Attributes,
                 _accessModifiers,
-                ScoopParsers.Optional(
+                Optional(
                     new KeywordParser("partial")
                 ).Named("Classes.Optional.Partial"),
                 new KeywordParser("class", "struct").Named("Class.class|struct"),

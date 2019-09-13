@@ -6,6 +6,10 @@ namespace Scoop.SyntaxTree
     {
         // Represents a single method including access modifier, return type, name, parameters
         // and body
+        public MethodNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        {
+        }
+
 
         public ListNode<AttributeNode> Attributes { get; set; }
         public KeywordNode AccessModifier { get; set; }

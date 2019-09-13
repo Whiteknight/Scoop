@@ -1,8 +1,13 @@
-﻿namespace Scoop.SyntaxTree
+﻿using System.Collections.Generic;
+
+namespace Scoop.SyntaxTree
 {
     public class MethodDeclareNode : AstNode, IHasAttributes
     {
         // Represents a declaration of a method in an interface
+        public MethodDeclareNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        {
+        }
 
         public ListNode<AttributeNode> Attributes { get; set; }
         public AstNode ReturnType { get; set; }

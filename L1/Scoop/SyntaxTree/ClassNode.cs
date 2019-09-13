@@ -6,6 +6,10 @@ namespace Scoop.SyntaxTree
     {
         // ClassNode contains the class access modifier, class name, inherited interfaces
         // and all the fields/properties/methods/subclasses of the class
+        public ClassNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        {
+        }
+
 
         public ListNode<AttributeNode> Attributes { get; set; }
 
