@@ -12,26 +12,30 @@ namespace Scoop.Parsers
         private readonly IParser<TItem> _itemParser;
         private readonly IParser<AstNode> _separatorParser;
         private readonly Func<IReadOnlyList<TItem>, ListNode<TOutput>> _produce;
+        private readonly bool _atLeastOne;
 
-        public SeparatedListParser(IParser<TItem> itemParser, IParser<AstNode> separatorParser, Func<IReadOnlyList<TItem>, ListNode<TOutput>> produce)
+        public SeparatedListParser(IParser<TItem> itemParser, IParser<AstNode> separatorParser, Func<IReadOnlyList<TItem>, ListNode<TOutput>> produce, bool atLeastOne)
         {
             _itemParser = itemParser;
             _separatorParser = separatorParser;
             _produce = produce;
+            _atLeastOne = atLeastOne;
         }
 
         public ListNode<TOutput> TryParse(ITokenizer t)
         {
             var items = new List<TItem>();
-            var result = _itemParser.Parse(t);
-            if (!result.IsSuccess)
-                return _produce(items);
-            items.Add(result.Value);
+            var result = _itemParser.TryParse(t);
+            if (result == null)
+                return _atLeastOne ? null : _produce(items);
+            items.Add(result);
 
-            while (_separatorParser.Parse(t).IsSuccess)
+            while (_separatorParser.TryParse(t) != null)
             {
-                result = _itemParser.Parse(t);
-                items.Add(result.Value);
+                result = _itemParser.TryParse(t);
+                if (result == null)
+                    return null;
+                items.Add(result);
             }
             return _produce(items);
         }

@@ -4,7 +4,11 @@ namespace Scoop.SyntaxTree
 {
     public class TypeNode : AstNode
     {
-        public TypeNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public TypeNode() : base(null)
+        {
+        }
+
+        public TypeNode(IReadOnlyList<Diagnostic> diagnostics) : base(diagnostics)
         {
         }
 

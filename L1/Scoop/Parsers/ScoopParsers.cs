@@ -13,21 +13,28 @@ namespace Scoop.Parsers
             return new DeferredParser<TOutput>(getParser);
         }
 
+        public static IParser<TOutput> Error<TOutput>(bool consumeOne, string errorMessage)
+            where TOutput : AstNode, new()
+        {
+            return new ErrorParser<TOutput>(consumeOne, errorMessage);
+        }
+
         public static IParser<TOutput> First<TOutput>(params IParser<TOutput>[] parsers)
             where TOutput : AstNode
         {
             return new FirstParser<TOutput>(parsers.Cast<IParser<AstNode>>().ToArray());
         }
 
-        public static IParser<TOutput> Required<TOutput>(IParser<TOutput> p, Func<Location, TOutput> otherwise)
-            where TOutput : AstNode
+        public static IParser<TOutput> Required<TOutput>(IParser<TOutput> p, string errorMessage)
+            where TOutput : AstNode, new()
         {
-            return new RequiredParser<TOutput>(p, otherwise);
+            return new RequiredParser<TOutput>(p, l => new TOutput().WithDiagnostics(l, errorMessage));
         }
 
-        public static IParser<OperatorNode> RequireOperator(string op)
+        public static IParser<TOutput> Required<TOutput>(IParser<TOutput> p, Func<TOutput> produce, string errorMessage)
+            where TOutput : AstNode
         {
-            return new RequiredParser<OperatorNode>(new OperatorParser(op), l => new OperatorNode(op).WithDiagnostics(l, $"Missing {op}"));
+            return new RequiredParser<TOutput>(p, l => produce().WithDiagnostics(l, errorMessage));
         }
 
         public static IParser<TOutput> Sequence<T1, T2, TOutput>(IParser<T1> p1, IParser<T2> p2, Func<T1, T2, TOutput> produce)
@@ -136,11 +143,11 @@ namespace Scoop.Parsers
             return new ListParser<TOutput, TItem>(p, produce);
         }
 
-        public static IParser<ListNode<TOutput>> SeparatedList<TItem, TOutput>(IParser<TItem> p, IParser<AstNode> separator, Func<IReadOnlyList<TItem>, ListNode<TOutput>> produce)
+        public static IParser<ListNode<TOutput>> SeparatedList<TItem, TOutput>(IParser<TItem> p, IParser<AstNode> separator, Func<IReadOnlyList<TItem>, ListNode<TOutput>> produce, bool atLeastOne = false)
             where TOutput : AstNode
             where TItem : AstNode
         {
-            return new SeparatedListParser<TOutput, TItem>(p, separator, produce);
+            return new SeparatedListParser<TOutput, TItem>(p, separator, produce, atLeastOne);
         }
 
         public static IParser<AstNode> Optional(IParser<AstNode> p, Func<AstNode> getDefault = null)
@@ -155,11 +162,9 @@ namespace Scoop.Parsers
             return new TransformParser<TOutput, TInput>(parser, transform);
         }
 
-        public static IParser<TOutput> Infix<TOutput, TOperator>(IParser<TOutput> itemParser, IParser<TOperator> operatorParser, Func<TOutput, TOperator, TOutput, TOutput> producer)
-            where TOutput : AstNode
-            where TOperator : AstNode
+        public static IParser<AstNode> Infix(IParser<AstNode> left, IParser<OperatorNode> operatorParser, IParser<AstNode> right, Func<AstNode, OperatorNode, AstNode, AstNode> producer)
         {
-            return new InfixOperatorParser<TOutput, TOperator>(itemParser, operatorParser, producer);
+            return new InfixOperatorParser(left, operatorParser, right, producer);
         }
 
         public static IParser<TOutput> Token<TOutput>(TokenType type, Func<Token, TOutput> produce)

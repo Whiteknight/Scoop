@@ -16,6 +16,7 @@ namespace Scoop.Tests
         [OneTimeSetUp]
         public void GlobalSetup()
         {
+            // TODO: Setup a global Parser instance so we don't have to initialize the grammar for every test
             _testRunId = Guid.NewGuid().ToString("N");
             //Directory.CreateDirectory(_testRunId);
         }

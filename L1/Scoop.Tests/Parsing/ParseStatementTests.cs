@@ -33,5 +33,30 @@ namespace Scoop.Tests.Parsing
                 }
             );
         }
+
+        [Test]
+        public void Return_Expression()
+        {
+            const string syntax = @"
+return 1;";
+            var ast = new Parser().Statements.Parse(syntax);
+            ast.Should().MatchAst(
+                new ReturnNode
+                {
+                    Expression = new IntegerNode(1)
+                }
+            );
+        }
+
+        [Test]
+        public void Return_NoExpression()
+        {
+            const string syntax = @"
+return;";
+            var ast = new Parser().Statements.Parse(syntax);
+            ast.Should().MatchAst(
+                new ReturnNode()
+            );
+        }
     }
 }

@@ -1,6 +1,8 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
+using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop
 {
@@ -9,114 +11,140 @@ namespace Scoop
         private void InitializeTypes()
         {
             // <typeName> ("<" <typeArray> ("," <typeArray>)* ">")?
-            var typeName = ScoopParsers.Transform(
+            var typeName = Transform(
                 new IdentifierParser(),
                 id => new TypeNode(id)
-            );
+            ).Named("typeName");
 
-            var genericType = ScoopParsers.First(
-                ScoopParsers.Sequence(
+            var genericType = First(
+                Sequence(
                     typeName,
                     new OperatorParser("<"),
-                    ScoopParsers.SeparatedList(
-                        ScoopParsers.Deferred(() => Types),
+                    // TODO: Could simplify the "at least one" error checking by having SeparatedListAtLeastOne()
+                    SeparatedList(
+                        Types,
                         new OperatorParser(","),
-                        list => new ListNode<TypeNode> { Items = list.ToList(), Separator = new OperatorNode(",") }
-                    ),
-                    new OperatorParser(">"),
+                        ProduceGenericTypeList),
+                    _requiredCloseAngle,
                     ProduceTypeNodeGenericArguments
                 ),
                 typeName
-            );
+            ).Named("genericType");
 
-            var subtype = ScoopParsers.SeparatedList(
+            var subtype = SeparatedList(
                 genericType,
                 new OperatorParser("."),
                 types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(".") }
-            );
+            ).Named("subtype");
 
             // <subtype> ("[" "]")*
-            Types = ScoopParsers.Sequence(
+            _types = Sequence(
                 subtype,
-                ScoopParsers.List(
-                    ScoopParsers.Sequence(
+                List(
+                    Sequence(
                         new OperatorParser("["),
-                        new OperatorParser("]"),
-                        (a, b) => new ArrayTypeNode { Location = a.Location }
+                        // TODO: Should be able to support multi-dimensional arrays here
+                        _requiredCloseBrace,
+                        (a, b) => new ArrayTypeNode { Location = a.Location }.WithUnused(a, b)
                     ),
                     items => new ListNode<ArrayTypeNode> { Items = items.ToList() }
                 ),
                 ProduceTypeNodeArrayTypes
-            );
+            ).Named("_types");
 
-            DeclareTypes = ScoopParsers.First(
-                ScoopParsers.Transform(
+            DeclareTypes = First(
+                Transform(
                     new KeywordParser("var"),
                     k => new TypeNode { Name = new IdentifierNode(k.Keyword), Location = k.Location }
                 ),
-                ScoopParsers.Transform(
+                Transform(
                     new KeywordParser("dynamic"),
                     k => new TypeNode { Name = new IdentifierNode(k.Keyword), Location = k.Location }
                 ),
                 Types
-            );
+            ).Named("DeclareTypes");
 
-            GenericTypeArguments = ScoopParsers.Sequence(
+            GenericTypeArguments = Sequence(
                 new OperatorParser("<"),
-                ScoopParsers.SeparatedList(
+                SeparatedList(
                     Types,
                     new OperatorParser(","),
                     types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") }
                 ),
-                new OperatorParser(">"),
-                (a, types, b) => types
-            );
+                _requiredCloseAngle,
+                (a, types, b) => types.WithUnused(a, b)
+            ).Named("GenericTypeArguments");
 
-            GenericTypeParameters = ScoopParsers.Transform(
-                ScoopParsers.Optional(
-                    ScoopParsers.Sequence(
+            GenericTypeParameters = Transform(
+                // TODO: We could simplify this if we added an Empty option instead of Transform(Optional())
+                Optional(
+                    Sequence(
                         new OperatorParser("<"),
-                        ScoopParsers.SeparatedList(
+                        SeparatedList(
                             new IdentifierParser(),
                             new OperatorParser(","),
-                            types => new ListNode<IdentifierNode> { Items = types.ToList(), Separator = new OperatorNode(",") }
-                        ),
-                        new OperatorParser(">"),
-                        (a, types, b) => types
+                            ProduceGenericTypeParameterList),
+                        _requiredCloseAngle,
+                        (a, types, b) => types.WithUnused(a, b)
                     )
                 ),
                 n => n is EmptyNode ? ListNode<IdentifierNode>.Default() : n as ListNode<IdentifierNode>
-            );
+            ).Named("GenericTypeParameters");
 
-            var constraintList = ScoopParsers.SeparatedList(
-                ScoopParsers.First<AstNode>(
+            var constraintList = SeparatedList(
+                First<AstNode>(
                     new KeywordParser("class"),
-                    ScoopParsers.Sequence(
+                    Sequence(
                         new KeywordParser("new"),
-                        new OperatorParser("("),
-                        new OperatorParser(")"),
-                        (n, a, b) => new KeywordNode { Keyword = "new()", Location = n.Location }
-                    ),
+                        _requiredOpenParen,
+                        _requiredCloseParen,
+                        (n, a, b) => new KeywordNode { Keyword = "new()", Location = n.Location }.WithUnused(a, b)
+                    ).Named("newConstraint"),
                     Types
                 ),
                 new OperatorParser(","),
                 constraints => new ListNode<AstNode> { Items = constraints.ToList(), Separator = new OperatorNode(",") }
-            );
-            TypeConstraints = ScoopParsers.List(
-                ScoopParsers.Sequence(
+            ).Named("constraintList");
+
+            TypeConstraints = List(
+                Sequence(
                     new KeywordParser("where"),
-                    new IdentifierParser(),
-                    new OperatorParser(":"),
+                    _requiredIdentifier,
+                    _requiredColon,
                     constraintList,
                     (w, type, o, constraints) => new TypeConstraintNode
                     {
                         Location = w.Location,
                         Type = type,
                         Constraints = constraints
-                    }
+                    }.WithUnused(w, o)
                 ),
                 allConstraints => new ListNode<TypeConstraintNode> { Items = allConstraints.ToList() }
-            );
+            ).Named("TypeConstraints");
+        }
+
+        private ListNode<TypeNode> ProduceGenericTypeList(IReadOnlyList<TypeNode> list)
+        {
+            var typeList = new ListNode<TypeNode>
+            {
+                Items = list.ToList(),
+                Separator = new OperatorNode(",")
+            };
+            if (list.Count == 0)
+                typeList.WithDiagnostics(typeList.Location, Errors.MissingType);
+            return typeList;
+        }
+
+        private ListNode<IdentifierNode> ProduceGenericTypeParameterList(IReadOnlyList<IdentifierNode> types)
+        {
+            var listNode = new ListNode<IdentifierNode>
+            {
+                Items = types.ToList(),
+                Separator = new OperatorNode(",")
+            };
+            if (types.Count == 0)
+                listNode.WithDiagnostics(listNode.Location, Errors.MissingType);
+            return listNode;
         }
 
         private TypeNode ProduceTypeNodeArrayTypes(ListNode<TypeNode> a, ListNode<ArrayTypeNode> b)
@@ -140,13 +168,10 @@ namespace Scoop
             return a[0];
         }
 
-        private TypeNode ProduceTypeNodeGenericArguments(TypeNode a, OperatorNode b, ListNode<TypeNode> c, OperatorNode d)
+        private TypeNode ProduceTypeNodeGenericArguments(TypeNode type, OperatorNode b, ListNode<TypeNode> genericArgs, OperatorNode d)
         {
-            a.GenericArguments = new ListNode<TypeNode>
-            {
-                Items = c.Items.ToList(), Separator = c.Separator
-            };
-            return a;
+            type.GenericArguments = genericArgs;
+            return type.WithUnused(b, d);
         }
     }
 }

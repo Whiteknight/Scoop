@@ -5,6 +5,10 @@ namespace Scoop.SyntaxTree
 {
     public class OperatorNode : AstNode
     {
+        public OperatorNode() : base(null)
+        {
+        }
+
         public OperatorNode(Token t, IReadOnlyList<Diagnostic> d = null) : base(d)
         {
             Operator = t.Value;

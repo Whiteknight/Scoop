@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Scoop.SyntaxTree;
+﻿using Scoop.SyntaxTree;
 
 namespace Scoop.Tests.Utility
 {

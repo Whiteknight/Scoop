@@ -10,59 +10,30 @@ namespace Scoop
     {
         private void InitializeClasses()
         {
-            var parameter = Sequence(
-                Attributes,
-                Optional(new KeywordParser("params")),
-                Types,
-                _identifiers,
-                Optional(
-                    Sequence(
-                        new OperatorParser("="),
-                        Expressions,
-                        (op, expr) => expr
-                    )
-                ),
-                (attrs, isparams, type, name, value) => new ParameterNode
-                {
-                    Location = type.Location,
-                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
-                    IsParams = isparams is KeywordNode,
-                    Type = type,
-                    Name = name,
-                    DefaultValue = value is EmptyNode ? null : value
-                }
-            ).Named("parameter");
-
-            ParameterList = Sequence(
-                new OperatorParser("("),
-                SeparatedList(
-                    parameter,
-                    new OperatorParser(","),
-                    parameters => new ListNode<ParameterNode> { Items = parameters.ToList(), Separator = new OperatorNode(",") }
-                ),
-                RequireOperator(")"),
-                (a, parameters, b) => parameters.WithUnused(a, b)
-            ).Named("ParameterList");
-
             var inheritanceList = Optional(
+                // ":" <commaSeparatedType+>
                 Sequence(
                     new OperatorParser(":"),
-                    SeparatedList(
-                        Types,
-                        new OperatorParser(","),
-                        types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") }
+                    Required(
+                        SeparatedList(
+                            Types,
+                            new OperatorParser(","),
+                            types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") },
+                            atLeastOne: true
+                        ),
+                        Errors.MissingType
                     ),
-                    (colon, types) => types.WithUnused(colon)
-                )
+                    (colon, types) => types.WithUnused(colon))
             ).Named("inheritanceList");
 
             var interfaceMember = Sequence(
+                // TODO: Do we want to allow any other type of interface member?
                 Types,
-                _identifiers,
+                _requiredIdentifier,
                 GenericTypeParameters,
                 ParameterList,
                 TypeConstraints,
-                RequireOperator(";"),
+                _requiredSemicolon,
                 (ret, name, genParm, parm, cons, s) => new MethodDeclareNode
                 {
                     Location = name.Location,
@@ -73,11 +44,12 @@ namespace Scoop
                     TypeConstraints = cons.IsNullOrEmpty() ? null : cons,
                 }.WithUnused(s)
             ).Named("interfaceMember");
+
             var interfaceBody = First(
                 Sequence(
                     new OperatorParser("{"),
                     new OperatorParser("}"),
-                    (a, b) => new ListNode<MethodDeclareNode>()
+                    (a, b) => new ListNode<MethodDeclareNode>().WithUnused(a, b)
                 ),
                 Sequence(
                     new OperatorParser("{"),
@@ -85,17 +57,17 @@ namespace Scoop
                         interfaceMember,
                         members => new ListNode<MethodDeclareNode> { Items = members.ToList() }
                     ),
-                    new OperatorParser("}"),
-                    (a, members, b) => members
-                )
+                    _requiredCloseBracket,
+                    (a, members, b) => members.WithUnused(a, b)
+                ),
+                Error<ListNode<MethodDeclareNode>>(false, Errors.MissingOpenBracket)
             ).Named("interfaceBody");
+
             Interfaces = Sequence(
                 Attributes,
-                Optional(
-                    new KeywordParser("public", "private")
-                ),
+                _accessModifiers,
                 new KeywordParser("interface"),
-                _identifiers,
+                _requiredIdentifier,
                 GenericTypeParameters,
                 inheritanceList,
                 TypeConstraints,
@@ -110,87 +82,17 @@ namespace Scoop
                     Interfaces = inh as ListNode<TypeNode>,
                     TypeConstraints = cons.IsNullOrEmpty() ? null : cons,
                     Members = body
-                }
+                }.WithUnused(i)
             ).Named("Interfaces");
 
-            Delegates = Sequence(
-                // <attributes> <accessModifier>? "delegate" <type> <identifier> <genericParameters>? <parameters> <typeConstraints> ";"
-                Deferred(() => Attributes),
-                Optional(
-                    new KeywordParser("public", "private")
-                ),
-                new KeywordParser("delegate"),
-                Types,
-                new IdentifierParser(),
-                GenericTypeParameters,
-                ParameterList,
-                TypeConstraints,
-                new OperatorParser(";"),
-                (attrs, vis, d, retType, name, gen, param, cons, s) => new DelegateNode
-                {
-                    Location = d.Location,
-                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
-                    AccessModifier = vis as KeywordNode,
-                    ReturnType = retType,
-                    Name = name,
-                    GenericTypeParameters = gen.IsNullOrEmpty() ? null : gen,
-                    Parameters = param,
-                    TypeConstraints = cons.IsNullOrEmpty() ? null : cons
-                }
-            ).Named("Delegates");
-
-            var enumMember = Sequence(
-                Attributes,
-                new IdentifierParser(),
-                Optional(
-                    Sequence(
-                        new OperatorParser("="),
-                        Expressions,
-                        (e, expr) => expr
-                    )
-                ),
-                (attrs, name, value) => new EnumMemberNode
-                {
-                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
-                    Location = name.Location,
-                    Name = name,
-                    Value = value is EmptyNode ? null : value
-                }
-            );
-            Enums = Sequence(
-                Attributes,
-                Optional(
-                    new KeywordParser("public", "private")
-                ),
-                new KeywordParser("enum"),
-                new IdentifierParser(),
-                new OperatorParser("{"),
-                SeparatedList(
-                    enumMember,
-                    new OperatorParser(","),
-                    members => new ListNode<EnumMemberNode> { Items = members.ToList(), Separator = new OperatorNode(",") }
-                ),
-                new OperatorParser("}"),
-                (attrs, vis, e, name, x, members, y) => new EnumNode
-                {
-                    Location = e.Location,
-                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
-                    AccessModifier = vis as KeywordNode,
-                    Name = name,
-                    Members = members
-                }
-            );
-
             var constants = Sequence(
-                Optional(
-                    new KeywordParser("public", "private")
-                ),
+                _accessModifiers,
                 new KeywordParser("const"),
-                Types,
-                    _identifiers,
-                new OperatorParser("="),
-                Expressions,
-                new OperatorParser(";"),
+                _requiredType,
+                _requiredIdentifier,
+                _requiredEquals,
+                _requiredExpression,
+                _requiredSemicolon,
                 (vis, c, type, name, e, expr, s) => new ConstNode
                 {
                     AccessModifier = vis as KeywordNode,
@@ -198,7 +100,7 @@ namespace Scoop
                     Type = type,
                     Name = name,
                     Value = expr
-                }
+                }.WithUnused(c, e, s)
             ).Named("constants");
 
             var exprMethodBody = Sequence(
@@ -207,7 +109,7 @@ namespace Scoop
                     Sequence(
                         new OperatorParser("{"),
                         new OperatorParser("}"),
-                        (a, b) => new ListNode<AstNode>()
+                        (a, b) => new ListNode<AstNode>().WithUnused(a, b)
                     ),
                     Sequence(
                         new OperatorParser("{"),
@@ -215,22 +117,24 @@ namespace Scoop
                             Statements,
                             stmts => new ListNode<AstNode> { Items = stmts.ToList() }
                         ),
-                        new OperatorParser("}"),
-                        (a, stmts, b) => stmts
+                        _requiredCloseBracket,
+                        (a, stmts, b) => stmts.WithUnused(a, b)
                     ),
                     Sequence(
                         Expressions,
-                        new OperatorParser(";"),
-                        (expr, s) => new ListNode<AstNode> { new ReturnNode { Expression = expr } }
-                    )
+                        _requiredSemicolon,
+                        (expr, s) => new ListNode<AstNode> { new ReturnNode { Expression = expr } }.WithUnused(s)
+                    ),
+                    Error< ListNode<AstNode>>(false, Errors.MissingOpenBracket)
                 ),
-                (lambda, body) => body
+                (lambda, body) => body.WithUnused(lambda)
             ).Named("exprMethodBody");
+
             NormalMethodBody = First(
                 Sequence(
                     new OperatorParser("{"),
                     new OperatorParser("}"),
-                    (a, b) => new ListNode<AstNode>()
+                    (a, b) => new ListNode<AstNode>().WithUnused(a, b)
                 ),
                 Sequence(
                     new OperatorParser("{"),
@@ -238,31 +142,30 @@ namespace Scoop
                         Statements,
                         stmts => new ListNode<AstNode> { Items = stmts.ToList() }
                     ),
-                    new OperatorParser("}"),
-                    (a, body, b) => body
+                    _requiredCloseBracket,
+                    (a, body, b) => body.WithUnused(a, b)
                 )
             ).Named("NormalMethodBody");
+
             var methodBody = First(
                 exprMethodBody,
-                NormalMethodBody
+                NormalMethodBody,
+                Error<ListNode<AstNode>>(false, Errors.MissingOpenBracket)
             ).Named("methodBody");
 
-            var thisArgs = Optional(
-                Sequence(
-                    new OperatorParser(":"),
-                    new IdentifierParser("this"),
-                    ArgumentLists,
-                    (a, b, args) => args
-                )
-            ).Named("thisArgs");
             var constructors = Sequence(
                 Attributes,
-                Optional(
-                    new KeywordParser("public", "private")
-                ),
+                _accessModifiers,
                 _identifiers,
                 ParameterList,
-                thisArgs,
+                Optional(
+                    Sequence(
+                        new OperatorParser(":"),
+                        Required(new IdentifierParser("this"), Errors.MissingThis),
+                        ArgumentLists,
+                        (a, b, args) => args.WithUnused(a, b)
+                    )
+                ).Named("thisArgs"),
                 methodBody,
                 (attrs, vis, name, param, targs, body) => new ConstructorNode
                 {
@@ -279,15 +182,13 @@ namespace Scoop
             var methods = Sequence(
                 // <accessModifier>? "async"? <type> <ident> <genericTypeParameters>? <parameterList> <typeConstraints>? <methodBody>
                 Attributes,
-                Optional(
-                    new KeywordParser("public", "private")
-                ),
-                Optional(
-                    new KeywordParser("async")
-                ),
+                _accessModifiers,
+                // TODO: If we see "async" it must be a method and we should require everything else. No backtracking after that
+                Optional(new KeywordParser("async")),
                 Types,
                 _identifiers,
                 GenericTypeParameters,
+                // TODO: Once we see the parameter list, it must be a method and we should not backtrack
                 ParameterList,
                 TypeConstraints,
                 methodBody,
@@ -305,18 +206,19 @@ namespace Scoop
                     Statements = body
                 }
             ).Named("methods");
+
             var fields = Sequence(
                 Attributes,
                 Types,
                 _identifiers,
-                new OperatorParser(";"),
+                _requiredSemicolon,
                 (attrs, type, name, s) => new FieldNode
                 {
                     Attributes = attrs.IsNullOrEmpty() ? null : attrs,
                     Location = name.Location,
                     Type = type,
                     Name = name
-                }
+                }.WithUnused(s)
             ).Named("fields");
 
             ClassMembers = First<AstNode>(
@@ -326,16 +228,16 @@ namespace Scoop
                 Enums,
                 Delegates,
                 constants,
-                constructors,
+                fields,
                 methods,
-                fields
+                constructors
             ).Named("ClassMembers");
 
             var classBody = First(
                 Sequence(
                     new OperatorParser("{"),
                     new OperatorParser("}"),
-                    (a, b) => new ListNode<AstNode>()
+                    (a, b) => new ListNode<AstNode>().WithUnused(a, b)
                 ).Named("classBody.EmptyBrackets"),
                 Sequence(
                     new OperatorParser("{"),
@@ -343,19 +245,18 @@ namespace Scoop
                         ClassMembers,
                         members => new ListNode<AstNode> { Items = members.ToList() }
                     ),
-                    new OperatorParser("}"),
-                    (a, members, b) => members
-                ).Named("classBody.body")
+                    _requiredCloseBracket,
+                    (a, members, b) => members.WithUnused(a, b)
+                ).Named("classBody.body"),
+                Error< ListNode<AstNode>>(true, Errors.MissingOpenBracket)
             ).Named("classBody");
 
             Classes = Sequence(
                 Attributes,
                 _accessModifiers,
-                Optional(
-                    new KeywordParser("partial")
-                ).Named("Classes.Optional.Partial"),
-                new KeywordParser("class", "struct").Named("Class.class|struct"),
-                _identifiers,
+                Optional(new KeywordParser("partial")),
+                new KeywordParser("class", "struct"),
+                _requiredIdentifier,
                 GenericTypeParameters,
                 inheritanceList,
                 TypeConstraints,
@@ -372,6 +273,53 @@ namespace Scoop
                     Members = body
                 }
             ).Named("Classes");
+        }
+
+        private void InitializeParameters()
+        {
+            var parameter = Sequence(
+                // <attributes> "params"? <type> <ident> ("=" <expr>)?
+                Attributes,
+                Optional(new KeywordParser("params")),
+                Types,
+                _requiredIdentifier,
+                Optional(
+                    Sequence(
+                        new OperatorParser("="),
+                        _requiredExpression,
+                        (op, expr) => expr.WithUnused(op)
+                    )
+                ),
+                (attrs, isparams, type, name, value) => new ParameterNode
+                {
+                    Location = type.Location,
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                    IsParams = isparams is KeywordNode,
+                    Type = type,
+                    Name = name,
+                    DefaultValue = value is EmptyNode ? null : value
+                }
+            ).Named("parameter");
+
+            ParameterList = First(
+                //("(" ")") | ("(" <commaSeparatedParameterList> ")")
+                Sequence(
+                    new OperatorParser("("),
+                    new OperatorParser(")"),
+                    (a, b) => ListNode<ParameterNode>.Default().WithUnused(a, b)
+                ),
+                Sequence(
+                    _requiredOpenParen,
+                    SeparatedList(
+                        parameter,
+                        new OperatorParser(","),
+                        parameters => new ListNode<ParameterNode> { Items = parameters.ToList(), Separator = new OperatorNode(",") }
+                    ),
+                    _requiredCloseParen,
+                    (a, parameters, b) => parameters.WithUnused(a, b)
+                ),
+                Error<ListNode<ParameterNode>>(false, Errors.MissingParameterList)
+            ).Named("ParameterList");
         }
 
         // Helper method to start parsing at the class level, mostly to simplify unit tests

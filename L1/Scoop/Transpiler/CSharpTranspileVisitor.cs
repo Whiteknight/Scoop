@@ -871,8 +871,12 @@ namespace Scoop.Transpiler
 
         public AstNode VisitReturn(ReturnNode n)
         {
-            Append("return ");
-            Visit(n.Expression);
+            Append("return");
+            if (n.Expression != null)
+            {
+                Append(" ");
+                Visit(n.Expression);
+            }
             return n;
         }
 
@@ -906,6 +910,21 @@ namespace Scoop.Transpiler
             foreach (var a in n.ArrayTypes.OrEmptyIfNull())
                 Visit(a);
 
+            return n;
+        }
+
+        public AstNode VisitTypeCoerce(TypeCoerceNode n)
+        {
+            Visit(n.Left);
+            Append(" ");
+            Visit(n.Operator);
+            Append(" ");
+            Visit(n.Type);
+            if (n.Alias != null)
+            {
+                Append(" ");
+                Visit(n.Alias);
+            }
             return n;
         }
 

@@ -7,6 +7,10 @@ namespace Scoop.SyntaxTree
     public class ListNode<TNode> : AstNode, IList<TNode>
         where TNode : AstNode
     {
+        public ListNode() : base(null)
+        {
+        }
+
         public ListNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
         {
         }

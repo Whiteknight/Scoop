@@ -22,10 +22,10 @@ namespace Scoop.Parsers
             var items = new List<TItem>();
             while (true)
             {
-                var result = _parser.Parse(t);
-                if (!result.IsSuccess)
+                var result = _parser.TryParse(t);
+                if (result == null)
                     break;
-                items.Add(result.Value);
+                items.Add(result);
             }
             return _produce(items);
         }

@@ -8,6 +8,10 @@ namespace Scoop.SyntaxTree
     {
         public string Id { get; }
 
+        public IdentifierNode() : base(null)
+        {
+        }
+
         public IdentifierNode(Token t, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
         {
             if (t.Type != TokenType.Identifier)

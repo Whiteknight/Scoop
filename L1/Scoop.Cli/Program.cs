@@ -17,7 +17,7 @@ namespace Scoop.Cli
             var fileName = args.First();
             var source = new StreamCharacterSequence(fileName, Encoding.UTF8);
             var tokenizer = new Tokenizer(new TokenScanner(source));
-            var ast = new Parser().ParseUnit(tokenizer);
+            var ast = new Parser().CompilationUnits.Parse(tokenizer).GetResult();
             var outFile = fileName + ".cs";
             var outStream = new StreamWriter(outFile, false);
             new CSharpTranspileVisitor(outStream).Visit(ast);

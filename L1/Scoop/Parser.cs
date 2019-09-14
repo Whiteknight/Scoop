@@ -1,6 +1,6 @@
 ﻿using Scoop.Parsers;
 using Scoop.SyntaxTree;
-using Scoop.Tokenization;
+using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop
 {
@@ -32,30 +32,53 @@ namespace Scoop
 
         private IParser<AstNode> _accessModifiers;
         private IParser<IdentifierNode> _identifiers;
+        private IParser<OperatorNode> _requiredSemicolon;
+        private IParser<OperatorNode> _requiredOpenBracket;
+        private IParser<OperatorNode> _requiredCloseBracket;
+        private IParser<OperatorNode> _requiredOpenParen;
+        private IParser<OperatorNode> _requiredCloseParen;
+        private IParser<OperatorNode> _requiredColon;
+        private IParser<OperatorNode> _requiredCloseBrace;
+        private IParser<OperatorNode> _requiredCloseAngle;
+        private IParser<OperatorNode> _requiredEquals;
+        private IParser<IdentifierNode> _requiredIdentifier;
+        private IParser<TypeNode> _requiredType;
+        private IParser<AstNode> _requiredExpression;
+
+        private IParser<AstNode> _expressions;
+        private IParser<TypeNode> _types;
 
         private void Initialize()
         {
+            Expressions = Deferred(() => _expressions).Named("Expressions");
+            Types = Deferred(() => _types).Named("Types");
+
             _identifiers = new IdentifierParser();
-            _accessModifiers = ScoopParsers.Optional(
+            _accessModifiers = Optional(
                 new KeywordParser("public", "private")
             ).Named("accessModifiers");
+            _requiredSemicolon = Required(new OperatorParser(";"), Errors.MissingSemicolon);
+            _requiredOpenBracket = Required(new OperatorParser("{"), Errors.MissingOpenBracket);
+            _requiredCloseBracket = Required(new OperatorParser("}"), Errors.MissingCloseBracket);
+            _requiredOpenParen = Required(new OperatorParser("("), Errors.MissingOpenParen);
+            _requiredCloseParen = Required(new OperatorParser(")"), Errors.MissingCloseParen);
+            _requiredColon = Required(new OperatorParser(":"), Errors.MissingColon);
+            _requiredCloseBrace = Required(new OperatorParser("]"), Errors.MissingCloseBrace);
+            _requiredCloseAngle = Required(new OperatorParser(">"), Errors.MissingCloseAngle);
+            _requiredIdentifier = Required(new IdentifierParser(), Errors.MissingIdentifier);
+            _requiredType = Required(Types, Errors.MissingType);
+            _requiredEquals = Required(new OperatorParser("="), Errors.MissingEquals);
+            _requiredExpression = Required(Expressions, () => new EmptyNode(), Errors.MissingExpression);
 
             InitializeTopLevel();
             InitializeTypes();
             InitializeExpressions();
             InitializeStatements();
             InitializeAttributes();
+            InitializeParameters();
+            InitializeDelegates();
+            InitializeEnums();
             InitializeClasses();
-
-            
-        }
-
-        private void Fail(ITokenizer t, string ruleName, Token next = null)
-        {
-            if (t is WindowTokenizer wt)
-                wt.Rewind();
-            else
-                throw ParsingException.CouldNotParseRule(ruleName, next ?? t.Peek());
         }
     }
 }

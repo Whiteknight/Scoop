@@ -2,6 +2,7 @@
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
+using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop
 {
@@ -10,52 +11,56 @@ namespace Scoop
         private void InitializeTopLevel()
         {
             // "using" <namespaceName> ";"
-            var parseUsingDirective = ScoopParsers.Sequence(
+            var parseUsingDirective = Sequence(
                 new KeywordParser("using"),
-                new DottedIdentifierParser(),
-                new OperatorParser(";"),
-                (a, b, _) => new UsingDirectiveNode
+                Required(new DottedIdentifierParser(), () => new DottedIdentifierNode(""), Errors.MissingNamespaceName),
+                _requiredSemicolon,
+                (a, b, c) => new UsingDirectiveNode
                 {
                     Location = a.Location,
                     Namespace = b
-                });
-
-            var namespaceMembers = ScoopParsers.First<AstNode>(
-                ScoopParsers.Deferred(() => Classes),
-                ScoopParsers.Deferred(() => Interfaces),
-                ScoopParsers.Deferred(() => Enums),
-                ScoopParsers.Deferred(() => Delegates)
+                }.WithUnused(a, c)
             );
-            var namespaceBody = ScoopParsers.First(
-                ScoopParsers.Sequence(
+
+            var namespaceMembers = First<AstNode>(
+                // TODO: Do we want to allow using statements here?
+                Deferred(() => Classes),
+                Deferred(() => Interfaces),
+                Deferred(() => Enums),
+                Deferred(() => Delegates)
+            );
+            var namespaceBody = First(
+                Sequence(
                     new OperatorParser("{"),
                     new OperatorParser("}"),
                     (a, b) => new ListNode<AstNode>()
                 ),
-                ScoopParsers.Sequence(
+                Sequence(
                     new OperatorParser("{"),
-                    ScoopParsers.List(
+                    List(
                         namespaceMembers,
                         members => new ListNode<AstNode> { Items = members.ToList() }
                     ),
-                    new OperatorParser("}"),
-                    (a, members, b) => members
-                )
+                    _requiredCloseBracket,
+                    (a, members, b) => members.WithUnused(a, b)
+                ),
+                Error<ListNode<AstNode>>(false, Errors.MissingOpenBracket)
             );
-            var parseNamespace = ScoopParsers.Sequence(
+            var parseNamespace = Sequence(
                 // TODO: assembly-level attributes
                 new KeywordParser("namespace"),
-                new DottedIdentifierParser(),
+                Required(new DottedIdentifierParser(), () => new DottedIdentifierNode(""), Errors.MissingNamespaceName),
                 namespaceBody,
                 (ns, name, members) => new NamespaceNode
                 {
                     Location = ns.Location,
                     Name = name,
                     Declarations = members
-                });
-            CompilationUnits = ScoopParsers.Transform(
-                ScoopParsers.List(
-                    ScoopParsers.First<AstNode>(
+                }.WithUnused(ns)
+            );
+            CompilationUnits = Transform(
+                List(
+                    First<AstNode>(
                         parseUsingDirective,
                         parseNamespace
                     ),
@@ -69,7 +74,77 @@ namespace Scoop
         }
 
         public CompilationUnitNode ParseUnit(string s) => CompilationUnits.Parse(new Tokenizer(s)).GetResult();
-        public CompilationUnitNode ParseUnit(ITokenizer t) => CompilationUnits.Parse(t).GetResult();
         public EnumNode ParseEnum(string s) => Enums.Parse(new Tokenizer(s)).GetResult();
+
+        private void InitializeEnums()
+        {
+            var enumMember = Sequence(
+                Attributes,
+                new IdentifierParser(),
+                Optional(
+                    Sequence(
+                        new OperatorParser("="),
+                        _requiredExpression,
+                        (e, expr) => expr.WithUnused(e)
+                    )
+                ),
+                (attrs, name, value) => new EnumMemberNode
+                {
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                    Location = name.Location,
+                    Name = name,
+                    Value = value is EmptyNode ? null : value
+                }
+            ).Named("enumMember");
+
+            Enums = Sequence(
+                Attributes,
+                _accessModifiers,
+                new KeywordParser("enum"),
+                _requiredIdentifier,
+                _requiredOpenBracket,
+                SeparatedList(
+                    enumMember,
+                    new OperatorParser(","),
+                    members => new ListNode<EnumMemberNode> { Items = members.ToList(), Separator = new OperatorNode(",") }
+                ),
+                _requiredCloseBracket,
+                (attrs, vis, e, name, x, members, y) => new EnumNode
+                {
+                    Location = e.Location,
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                    AccessModifier = vis as KeywordNode,
+                    Name = name,
+                    Members = members
+                }.WithUnused(e, x, y)
+            ).Named("Enums");
+        }
+
+        private void InitializeDelegates()
+        {
+            Delegates = Sequence(
+                // <attributes> <accessModifier>? "delegate" <type> <identifier> <genericParameters>? <parameters> <typeConstraints> ";"
+                Deferred(() => Attributes),
+                _accessModifiers,
+                new KeywordParser("delegate"),
+                _requiredType,
+                _requiredIdentifier,
+                GenericTypeParameters,
+                ParameterList,
+                TypeConstraints,
+                _requiredSemicolon,
+                (attrs, vis, d, retType, name, gen, param, cons, s) => new DelegateNode
+                {
+                    Location = d.Location,
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                    AccessModifier = vis as KeywordNode,
+                    ReturnType = retType,
+                    Name = name,
+                    GenericTypeParameters = gen.IsNullOrEmpty() ? null : gen,
+                    Parameters = param,
+                    TypeConstraints = cons.IsNullOrEmpty() ? null : cons
+                }.WithUnused(d, s)
+            ).Named("Delegates");
+        }
     }
 }

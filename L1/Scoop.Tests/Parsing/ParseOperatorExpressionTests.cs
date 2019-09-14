@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -37,11 +36,27 @@ namespace Scoop.Tests.Parsing
             var target = new Parser();
             var result = target.ParseExpression(@"a as b");
             result.Should().MatchAst(
-                new InfixOperationNode
+                new TypeCoerceNode
                 {
                     Left = new IdentifierNode("a"),
                     Operator = new OperatorNode("as"),
-                    Right = new TypeNode("b")
+                    Type = new TypeNode("b")
+                }
+            );
+        }
+
+        [Test]
+        public void AsOperator_Alias()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression(@"a as b test");
+            result.Should().MatchAst(
+                new TypeCoerceNode
+                {
+                    Left = new IdentifierNode("a"),
+                    Operator = new OperatorNode("as"),
+                    Type = new TypeNode("b"),
+                    Alias = new IdentifierNode("test")
                 }
             );
         }
@@ -52,11 +67,27 @@ namespace Scoop.Tests.Parsing
             var target = new Parser();
             var result = target.ParseExpression(@"a is b");
             result.Should().MatchAst(
-                new InfixOperationNode
+                new TypeCoerceNode
                 {
                     Left = new IdentifierNode("a"),
                     Operator = new OperatorNode("is"),
-                    Right = new TypeNode("b")
+                    Type = new TypeNode("b")
+                }
+            );
+        }
+
+        [Test]
+        public void IsOperator_Alias()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression(@"a is b test");
+            result.Should().MatchAst(
+                new TypeCoerceNode
+                {
+                    Left = new IdentifierNode("a"),
+                    Operator = new OperatorNode("is"),
+                    Type = new TypeNode("b"),
+                    Alias = new IdentifierNode("test")
                 }
             );
         }
@@ -87,6 +118,45 @@ namespace Scoop.Tests.Parsing
                     Condition = new KeywordNode("true"),
                     IfTrue = new IntegerNode(0),
                     IfFalse = new IntegerNode(1)
+                }
+            );
+        }
+
+        [Test]
+        public void ConditionalOperator_NestedConsequent()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression(@"true ? false ? 0 : 1 : 2");
+            result.Should().MatchAst(
+                new ConditionalNode
+                {
+                    Condition = new KeywordNode("true"),
+                    IfTrue = new ConditionalNode {
+                            Condition = new KeywordNode("false"),
+                            IfTrue = new IntegerNode(0),
+                            IfFalse = new IntegerNode(1)
+                    },
+                    IfFalse = new IntegerNode(2)
+                }
+            );
+        }
+
+        [Test]
+        public void ConditionalOperator_NestedAlternate()
+        {
+            var target = new Parser();
+            var result = target.ParseExpression(@"true ? 0 : false ? 1 : 2");
+            result.Should().MatchAst(
+                new ConditionalNode
+                {
+                    Condition = new KeywordNode("true"),
+                    IfTrue = new IntegerNode(0),
+                    IfFalse = new ConditionalNode
+                    {
+                        Condition = new KeywordNode("false"),
+                        IfTrue = new IntegerNode(1),
+                        IfFalse = new IntegerNode(2)
+                    }
                 }
             );
         }
@@ -170,6 +240,19 @@ namespace Scoop.Tests.Parsing
                             Arguments = ListNode<AstNode>.Default()
                         }
                     }
+                }
+            );
+        }
+
+        [Test]
+        public void Cast_Test()
+        {
+            var result = new Parser().Expressions.Parse("(a)b");
+            result.Should().MatchAst(
+                new CastNode
+                {
+                    Type = new TypeNode("a"),
+                    Right = new IdentifierNode("b")
                 }
             );
         }

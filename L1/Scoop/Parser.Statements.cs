@@ -1,6 +1,7 @@
 ﻿using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
+using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop
 {
@@ -8,107 +9,95 @@ namespace Scoop
     {
         private void InitializeStatements()
         {
-            // "const" ("var" | <type>) <ident> "=" <expression>
-            var constParser = ScoopParsers.Sequence(
+            var constStmtParser = Sequence(
+                // "const" <type> <ident> "=" <expression> ";"
                 new KeywordParser("const"),
-                DeclareTypes,
-                new IdentifierParser(),
-                ScoopParsers.Optional(
-                    ScoopParsers.Sequence(
-                        new OperatorParser("="),
-                        Expressions,
-                        (op, expr) => expr
-                    )
-                ),
-                new OperatorParser(";"),
-                ProduceConstant
-            );
-            var varDeclareParser = ScoopParsers.Sequence(
-                // <type> <ident> ("=" <expression>)?
-                DeclareTypes,
-                new IdentifierParser(),
-                ScoopParsers.Optional(
-                    ScoopParsers.Sequence(
-                        new OperatorParser("="),
-                        Expressions,
-                        (op, expr) => expr
-                    )
-                ),
-                ProduceVariableDeclare
-            );
-            var varDeclareStmtParser = ScoopParsers.Sequence(
-                varDeclareParser,
-                new OperatorParser(";"),
-                (v, s) => v
-            );
+                _requiredType,
+                _requiredIdentifier,
+                _requiredEquals,
+                _requiredExpression,
+                _requiredSemicolon,
+                (c, type, name, e, expr, s) => new ConstNode {
+                    Location = c.Location,
+                    Type = type,
+                    Name = name,
+                    Value = expr
+                }.WithUnused(c, e, s)
+            ).Named("constStmt");
 
-            var returnParser = ScoopParsers.Sequence(
-                // "return" <expression>
+            var varDeclareParser = Sequence(
+                // <type> <ident> ("=" <expression>)? ";"
+                DeclareTypes,
+                new IdentifierParser(),
+                Optional(
+                    Sequence(
+                        new OperatorParser("="),
+                        Expressions,
+                        (op, expr) => expr.WithUnused(op)
+                    )
+                ),
+                (type, name, value) => new VariableDeclareNode
+                {
+                    Location = type.Location,
+                    Type = type,
+                    Name = name,
+                    Value = value is EmptyNode ? null : value
+                }
+            ).Named("varDeclare");
+            var varDeclareStmtParser = Sequence(
+                varDeclareParser,
+                _requiredSemicolon,
+                (v, s) => v.WithUnused(s)
+            ).Named("varDeclareStmt");
+
+            var returnStmtParser = Sequence(
+                // "return" <expression>? ";"
                 new KeywordParser("return"),
-                Expressions,
-                new OperatorParser(";"),
+                Optional(Expressions),
+                _requiredSemicolon,
                 (r, expr, s) => new ReturnNode
                 {
                     Location = r.Location,
-                    // Parse expression. It may be a tuple literal, but those will be surrounded with parens
-                    Expression = expr
-                }
-            );
-            var usingStmtParser = ScoopParsers.Sequence(
-                // "using" "(" "var" <ident> "=" <expression> ")" <statement>
-                // "using" "(" <expression> ")" <statement>
+                    Expression = expr is EmptyNode ? null : expr
+                }.WithUnused(s)
+            ).Named("returnStmt");
+
+            var usingStmtParser = Sequence(
+                // "using" "(" <varDeclare> | <expr> ")" <statement>
                 new KeywordParser("using"),
-                new OperatorParser("("),
-                ScoopParsers.First(
+                _requiredOpenParen,
+                First(
                     varDeclareParser,
-                    Expressions
+                    Expressions,
+                    Error<EmptyNode>(false, Errors.MissingExpression)
                 ),
-                new OperatorParser(")"),
-                ScoopParsers.Deferred(() => Statements),
+                _requiredCloseParen,
+                Required(Deferred(() => Statements), () => new EmptyNode(), Errors.MissingStatement),
                 (u, a, disposable, b, stmt) => new UsingStatementNode {
                     Location = u.Location,
                     Disposable = disposable,
                     Statement = stmt
-                }
-            );
+                }.WithUnused(a, b)
+            ).Named("usingStmt");
 
-            Statements = ScoopParsers.First(
-                // <returnStatement | <declaration> | <constDeclaration> | <expression>
-                // <csharpLiteral> | <usingStatement> | <unterminatedStatement> ";" | null
-                ScoopParsers.Transform(
+            Statements = First(
+                // ";" | <returnStatement> | <declaration> | <constDeclaration> | <expression>
+                // <csharpLiteral> | <usingStatement>
+                Transform(
                     new OperatorParser(";"),
-                    o => new EmptyNode()
-                ),
-                ScoopParsers.Token(TokenType.CSharpLiteral, x => new CSharpNode(x)),
+                    o => new EmptyNode().WithUnused(o)
+                ).Named("emptyStmt"),
+                Token(TokenType.CSharpLiteral, x => new CSharpNode(x)),
                 usingStmtParser,
-                returnParser,
-                constParser,
+                returnStmtParser,
+                constStmtParser,
                 varDeclareStmtParser,
-                ScoopParsers.Sequence(
+                Sequence(
                     Expressions,
-                    new OperatorParser(";"),
-                    (expr, s) => expr
-                )
-            );
-        }
-
-        private VariableDeclareNode ProduceVariableDeclare(TypeNode type, IdentifierNode name, AstNode value)
-        {
-            return new VariableDeclareNode
-            {
-                Location = type.Location,
-                Type = type,
-                Name = name,
-                Value = value is EmptyNode ? null : value
-            };
-        }
-
-        private ConstNode ProduceConstant(KeywordNode c, TypeNode type, IdentifierNode name, AstNode value, OperatorNode s)
-        {
-            return new ConstNode
-            {
-                Location = c.Location, Type = type, Name = name, Value = value is EmptyNode ? null : value
-            };
+                    _requiredSemicolon,
+                    (expr, s) => expr.WithUnused(s)
+                ).Named("expressionStmt")
+            ).Named("Statements");
         }
 
         // Helper for testing

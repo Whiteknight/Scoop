@@ -23,6 +23,8 @@ namespace Scoop.Parsers
             for (int i = 0; i < _parsers.Count; i++)
             {
                 var result = _parsers[i].Parse(t);
+                if (!result.IsSuccess)
+                    return default;
                 outputs[i] = result.GetResult();
             }
             return _produce(outputs);

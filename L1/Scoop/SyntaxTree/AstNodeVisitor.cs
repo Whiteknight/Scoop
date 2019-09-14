@@ -259,7 +259,6 @@
             Visit(n.ReturnType);
             Visit(n.Name);
             Visit(n.Parameters);
-            Visit(n.Parameters);
             Visit(n.GenericTypeParameters);
             Visit(n.TypeConstraints);
             return n;
@@ -341,6 +340,15 @@
             Visit(n.GenericArguments);
             Visit(n.ArrayTypes);
             Visit(n.Child);
+            return n;
+        }
+
+        public AstNode VisitTypeCoerce(TypeCoerceNode n)
+        {
+            Visit(n.Left);
+            Visit(n.Operator);
+            Visit(n.Type);
+            Visit(n.Alias);
             return n;
         }
 

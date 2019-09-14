@@ -22,7 +22,8 @@ namespace Scoop.Parsers
                 if (result.IsSuccess)
                     return result.Value as TOutput;
             }
-            throw ParsingException.CouldNotParseRule(nameof(FirstParser<TOutput>), t.Peek());
+
+            return null;
         }
 
         public string Name { get; set; }

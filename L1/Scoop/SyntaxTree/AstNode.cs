@@ -71,7 +71,7 @@ namespace Scoop.SyntaxTree
             return node;
         }
 
-        public static IReadOnlyCollection<Diagnostic> Validate(this AstNode node)
+        public static IReadOnlyList<Diagnostic> Validate(this AstNode node)
         {
             var errors = new List<Diagnostic>();
             new ValidationVisitor(errors).Visit(node);

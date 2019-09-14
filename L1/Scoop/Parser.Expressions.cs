@@ -3,58 +3,261 @@ using System.Linq;
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
+using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop
 {
     public partial class Parser
     {
+        private IParser<AstNode> _expressionConditional;
+
+        public AstNode ParseExpression(string s) => Expressions.Parse(new Tokenizer(s)).GetResult();
+
         private void InitializeExpressions()
         {
-            var argumentParser = ScoopParsers.First(
-                ScoopParsers.Sequence(
+            var argumentParser = First(
+                Sequence(
                     new IdentifierParser(),
                     new OperatorParser(":"),
-                    ScoopParsers.Deferred(() => Expressions),
+                    _requiredExpression,
                     (name, s, expr) => new NamedArgumentNode { Name = name, Separator = s, Value = expr }
                 ),
-                ScoopParsers.Deferred(() => Expressions)
+                Expressions
             );
-            ArgumentLists = ScoopParsers.First(
-                ScoopParsers.Sequence(
+            ArgumentLists = First(
+                Sequence(
                     new OperatorParser("("),
                     new OperatorParser(")"),
                     (a, b) => ListNode<AstNode>.Default()
                 ),
-                ScoopParsers.Sequence(
-                    new OperatorParser("("),
-                    ScoopParsers.SeparatedList(
+                Sequence(
+                    _requiredOpenParen,
+                    SeparatedList(
                         argumentParser,
                         new OperatorParser(","),
                         items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") }
                     ),
-                    new OperatorParser(")"),
-                    (a, items, c) => items
+                    _requiredCloseParen,
+                    (a, items, c) => items.WithUnused(a, c)
                 )
+            ).Named("ArgumentLists");
+
+            // TODO: A proper precedence-based parser for expressions to try and save performance and stack space.
+            var expressionPostfix = new OldStyleRuleParser<AstNode>(ParseExpressionPostfix);
+            var expressionUnary = First(
+                // TODO: We should loop and get multiple unary operators
+                // ("-" | "+" | "~", etc) <Postfix>
+                Sequence(
+                    new OperatorParser("-", "+", "++", "--", "!", "~"),
+                    expressionPostfix,
+                    (op, expr) => new PrefixOperationNode
+                    {
+                        Location = op.Location,
+                        Operator = op,
+                        Right = expr
+                    }
+                ),
+                // "await" | "throw" <postfix>
+                Sequence(
+                    Transform(
+                        new KeywordParser("await", "throw"),
+                        k => new OperatorNode
+                        {
+                            Location = k.Location,
+                            Operator = k.Keyword
+                        }
+                    ),
+                    expressionPostfix,
+                    (op, expr) => new PrefixOperationNode
+                    {
+                        Location = op.Location,
+                        Operator = op,
+                        Right = expr
+                    }
+                ),
+                // "(" <type> ")" <postfix>
+                Sequence(
+                    new OperatorParser("("),
+                    Types,
+                    new OperatorParser(")"),
+                    expressionPostfix,
+                    (o, type, c, expr) => new CastNode
+                    {
+                        Location = o.Location,
+                        Type = type,
+                        Right = expr
+                    }.WithUnused(o, c)
+                ),
+                // <postfix>
+                expressionPostfix
             );
-            // "(" ")" "=>" ( <expression> | "{" <methodBody> "}" )
-            // <assignmentExpression>
-            // <Identifier> "=>" ( <expression> | "{" <methodBody> "}" )
-            // "(" <identifierList> ")"  "=>" ( <expression> | "{" <methodBody> "}" )
-            var lambdaParser = ScoopParsers.First(
-                ScoopParsers.Sequence(
-                    ScoopParsers.First(
-                        ScoopParsers.Transform(
+            var expressionMultiplicative = Infix(
+                // Operators with * / % precidence
+                // <Unary> (<op> <Unary>)+
+                expressionUnary,
+                new OperatorParser("*", "/", "%"),
+                expressionUnary,
+                (left, op, right) => new InfixOperationNode
+                {
+                    Location = op.Location,
+                    Left = left,
+                    Operator = op,
+                    Right = right
+                }
+            );
+            var expressionAdditive = Infix(
+                // Operators with + - precidence
+                // <multiplicative> (<op> <multiplicative>)+
+                expressionMultiplicative,
+                new OperatorParser("+", "-"),
+                expressionMultiplicative,
+                (left, op, right) => new InfixOperationNode
+                {
+                    Location = op.Location,
+                    Left = left,
+                    Operator = op,
+                    Right = right
+                }
+            );
+            var expressionTypeCoerce = Sequence(
+                // "as" and "is" operators, which don't chain and have a slightly different form
+                // <additive> (<op> <additive> <ident>?)?
+                expressionAdditive,
+                Optional(
+                    Sequence<OperatorNode, TypeNode, AstNode, AstNode>(
+                        new OperatorParser("as", "is"),
+                        Types,
+                        Optional(_identifiers),
+                        (op, type, name) => new TypeCoerceNode
+                        {
+                            Operator = op,
+                            Type = type,
+                            Alias = name as IdentifierNode
+                        }
+                    )
+                ),
+                ProduceTypeCoerce
+            );
+            var expressionEquality = Infix(
+                // Equality/comparison operators
+                // <typeCoerce> (<op> <typeCoerce>)+
+                expressionTypeCoerce,
+                new OperatorParser("==", "!=", ">=", "<=", "<", ">"),
+                expressionTypeCoerce,
+                (left, op, right) => new InfixOperationNode
+                {
+                    Location = op.Location,
+                    Left = left,
+                    Operator = op,
+                    Right = right
+                }
+            );
+            var expressionBitwise = Infix(
+                // Bitwise operators
+                // <equality> (<op> <equality>)+
+                expressionEquality,
+                new OperatorParser("&", "^", "|"),
+                expressionEquality,
+                (left, op, right) => new InfixOperationNode
+                {
+                    Location = op.Location,
+                    Left = left,
+                    Operator = op,
+                    Right = right
+                }
+            );
+            var expressionLogical = Infix(
+                // Logical operators
+                // <bitwise> (<op> <bitwise>)+
+                expressionBitwise,
+                new OperatorParser("&&", "||"),
+                expressionBitwise,
+                (left, op, right) => new InfixOperationNode
+                {
+                    Location = op.Location,
+                    Left = left,
+                    Operator = op,
+                    Right = right
+                }
+            );
+            var expressionCoalesce = Infix(
+                // null-coalesce operator
+                // <logical> (<op> <local>)+
+                expressionLogical,
+                new OperatorParser("??"),
+                expressionLogical,
+                (left, op, right) => new InfixOperationNode
+                {
+                    Location = op.Location,
+                    Left = left,
+                    Operator = op,
+                    Right = right
+                }
+            );
+            _expressionConditional = Sequence(
+                // <expr> | <expr> "?" <expr> ":"
+                expressionCoalesce,
+                Optional(
+                    Sequence(
+                        new OperatorParser("?"),
+                        Required(
+                            Deferred(() => _expressionConditional),
+                            () => new EmptyNode(),
+                            Errors.MissingExpression
+                        ),
+                        new OperatorParser(":"),
+                        Required(
+                            Deferred(() => _expressionConditional),
+                            () => new EmptyNode(),
+                            Errors.MissingExpression
+                        ),
+                        (q, consequent, c, alternative) => new ConditionalNode
+                        {
+                            Location = q.Location,
+                            IfTrue = consequent,
+                            IfFalse = alternative
+                        }.WithUnused(q, c)
+                    )
+                ),
+                ProduceConditional
+            );
+            var expressionAssignment = Infix(
+                // null-coalesce operator
+                // <logical> (<op> <local>)+
+                // TODO: Assignment operators cannot be overloaded, so is there any possible way
+                // to have an infix expression on the lhs?
+                // I think we only allow identifiers, members and indexers on the lhs
+                _expressionConditional,
+                new OperatorParser("=", "+=", "-=", "/=", "%="),
+                _expressionConditional,
+                (left, op, right) => new InfixOperationNode
+                {
+                    Location = op.Location,
+                    Left = left,
+                    Operator = op,
+                    Right = right
+                }
+            );
+
+            var expressionLambda = First(
+                // "(" ")" "=>" ( <expression> | "{" <methodBody> "}" )
+                // <assignmentExpression>
+                // <Identifier> "=>" ( <expression> | "{" <methodBody> "}" )
+                // "(" <identifierList> ")"  "=>" ( <expression> | "{" <methodBody> "}" )
+                Sequence(
+                    First(
+                        Transform(
                             new IdentifierParser(),
                             id => new ListNode<IdentifierNode> { Separator = new OperatorNode(","), [0] = id }
                         ),
-                        ScoopParsers.Sequence(
+                        Sequence(
                             new OperatorParser("("),
                             new OperatorParser(")"),
                             (a, b) => new ListNode<IdentifierNode> { Separator = new OperatorNode(","), Items = new List<IdentifierNode>() }
                         ),
-                        ScoopParsers.Sequence(
+                        Sequence(
                             new OperatorParser("("),
-                            ScoopParsers.SeparatedList(
+                            SeparatedList(
                                 new IdentifierParser(),
                                 new OperatorParser(","),
                                 args => new ListNode<IdentifierNode> { Items = args.ToList(), Separator =  new OperatorNode(",") }
@@ -64,10 +267,10 @@ namespace Scoop
                         )
                     ),
                     new OperatorParser("=>"),
-                    ScoopParsers.First(
-                        ScoopParsers.Deferred(() => NormalMethodBody),
-                        ScoopParsers.Transform(
-                            new OldStyleRuleParser<AstNode>(ParseExpressionAssignment),
+                    First(
+                        Deferred(() => NormalMethodBody),
+                        Transform(
+                            expressionAssignment,
                             body => new ListNode<AstNode> { [0] = body }
                         )
                     ),
@@ -76,231 +279,40 @@ namespace Scoop
                         Parameters = parameters,
                         Location = x.Location,
                         Statements = body
-                    }
+                    }.WithUnused(x)
                 ),
-                new OldStyleRuleParser<AstNode>(ParseExpressionAssignment)
+                expressionAssignment
             );
-            Expressions = lambdaParser;
+            _expressions = expressionLambda;
 
-            ExpressionList = ScoopParsers.SeparatedList(
+            ExpressionList = SeparatedList(
                 Expressions,
                 new OperatorParser(","),
-                items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") }
-            );
+                items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") },
+                atLeastOne: true
+            ).Named("ExpressionList");
         }
 
-        public AstNode ParseExpression(string s) => Expressions.Parse(new Tokenizer(s)).GetResult();
-
-        private AstNode ParseExpressionAssignment(ITokenizer t)
+        private AstNode ProduceConditional(AstNode expr, AstNode rhs)
         {
-            // Operators with Assignment precidence
-            // <Conditional> (<op> <Conditional>)+
-            var left = ParseExpressionConditional(t);
-            while (t.Peek().IsOperator("=", "+=", "-=", "/=", "%="))
+            if (rhs is ConditionalNode conditional)
             {
-                var op = new OperatorNode(t.GetNext());
-                var right = ParseExpressionConditional(t);
-                left = new InfixOperationNode
-                {
-                    Location = op.Location,
-                    Left = left,
-                    Operator = op,
-                    Right = right
-                };
+                conditional.Condition = expr;
+                return conditional;
+            }
+
+            return expr;
+        }
+
+        private AstNode ProduceTypeCoerce(AstNode left, AstNode rhs)
+        {
+            if (rhs is TypeCoerceNode coerce)
+            {
+                coerce.Left = left;
+                return coerce;
             }
 
             return left;
-        }
-
-        private AstNode ParseExpressionConditional(ITokenizer t)
-        {
-            // <coalesceExpression>
-            // <coalesceExpression> "?" <coalesceExpression> ":" <coalesceExpression>
-            var left = ParseExpressionCoalesce(t);
-            while (t.Peek().IsOperator("?"))
-            {
-                var op = t.GetNext();
-                var ifTrue = ParseExpressionCoalesce(t);
-                t.Expect(TokenType.Operator, ":");
-                var ifFalse = ParseExpressionCoalesce(t);
-                left = new ConditionalNode
-                {
-                    Location = op.Location,
-                    Condition = left,
-                    IfTrue = ifTrue,
-                    IfFalse = ifFalse
-                };
-            }
-
-            return left;
-        }
-
-        private AstNode ParseExpressionCoalesce(ITokenizer t)
-        {
-            // <logicalExpression>
-            // <logicalExpression> "??" <logicalExpression>
-            var left = ParseExpressionLogical(t);
-            while (t.Peek().IsOperator("??"))
-            {
-                var op = new OperatorNode(t.GetNext());
-                var right = ParseExpressionLogical(t);
-                left = new InfixOperationNode
-                {
-                    Location = op.Location,
-                    Left = left,
-                    Operator = op,
-                    Right = right
-                };
-            }
-
-            return left;
-        }
-
-        private AstNode ParseExpressionLogical(ITokenizer t)
-        {
-            // Operators with + - precidence
-            // <Bitwise> (<op> <Bitwise>)+
-            var left = ParseExpressionBitwise(t);
-            while (t.Peek().IsOperator("&&", "||"))
-            {
-                var op = new OperatorNode(t.GetNext());
-                var right = ParseExpressionBitwise(t);
-                left = new InfixOperationNode
-                {
-                    Location = op.Location,
-                    Left = left,
-                    Operator = op,
-                    Right = right
-                };
-            }
-
-            return left;
-        }
-
-        private AstNode ParseExpressionBitwise(ITokenizer t)
-        {
-            // Operators with + - precidence
-            // <Equality> (<op> <Equality>)+
-            var left = ParseExpressionEquality(t);
-            while (t.Peek().IsOperator("&", "^", "|"))
-            {
-                var op = new OperatorNode(t.GetNext());
-                var right = ParseExpressionEquality(t);
-                left = new InfixOperationNode
-                {
-                    Location = op.Location,
-                    Left = left,
-                    Operator = op,
-                    Right = right
-                };
-            }
-
-            return left;
-        }
-
-        private AstNode ParseExpressionEquality(ITokenizer t)
-        {
-            // Operators with + - precidence
-            // <Additive> (<op> <Additive>)+
-            var left = ParseExpressionTypeCoerce(t);
-            while (t.Peek().IsOperator("==", "!=", ">=", "<=", "<", ">"))
-            {
-                var op = new OperatorNode(t.GetNext());
-                var right = ParseExpressionTypeCoerce(t);
-                left = new InfixOperationNode
-                {
-                    Location = op.Location,
-                    Left = left,
-                    Operator = op,
-                    Right = right
-                };
-            }
-
-            return left;
-        }
-
-        private AstNode ParseExpressionTypeCoerce(ITokenizer t)
-        {
-            var left = ParseExpressionAdditive(t);
-            var lookahead = t.Peek();
-            if (lookahead.IsOperator("is", "as"))
-            {
-                var op = t.GetNext();
-                var type = Types.Parse(t).GetResult();
-                return new InfixOperationNode
-                {
-                    Location = op.Location,
-                    Left = left,
-                    Operator = new OperatorNode(op),
-                    Right = type
-                };
-            }
-
-            return left;
-        }
-
-        private AstNode ParseExpressionAdditive(ITokenizer t)
-        {
-            // Operators with + - precidence
-            // <Multiplicative> (<op> <Multiplicative>)+
-            var left = ParseExpressionMultiplicative(t);
-            while (t.Peek().IsOperator("+", "-"))
-            {
-                var op = new OperatorNode(t.GetNext());
-                var right = ParseExpressionMultiplicative(t);
-                left = new InfixOperationNode
-                {
-                    Location = op.Location,
-                    Left = left,
-                    Operator = op,
-                    Right = right
-                };
-            }
-
-            return left;
-        }
-
-        private AstNode ParseExpressionMultiplicative(ITokenizer t)
-        {
-            // Operators with * / % precidence
-            // <Unary> (<op> <Unary>)+
-            var left = ParseExpressionUnary(t);
-            while (t.Peek().IsOperator("*", "/", "%"))
-            {
-                var op = new OperatorNode(t.GetNext());
-                var right = ParseExpressionUnary(t);
-                left = new InfixOperationNode
-                {
-                    Location = op.Location,
-                    Left = left,
-                    Operator = op,
-                    Right = right
-                };
-            }
-
-            return left;
-        }
-
-        private AstNode ParseExpressionUnary(ITokenizer t)
-        {
-            // ("-" | "+" | "~") <Postfix> | <Postfix>
-            var next = t.Peek();
-            // TODO: Loop to get all possible prefixes
-            // TODO: <cast> <expr>
-            // Probably won't do cast operator because of ambiguous parsing rules
-            if (next.IsOperator("-", "+", "++", "--", "!", "~") || next.IsKeyword("await", "throw"))
-            {
-                var op = t.GetNext();
-                var expr = ParseExpressionPostfix(t);
-                return new PrefixOperationNode
-                {
-                    Location = op.Location,
-                    Operator = new OperatorNode(op),
-                    Right = expr
-                };
-            }
-
-            return ParseExpressionPostfix(t);
         }
 
         private bool IsGenericTypeArgument(ITokenizer t)
@@ -345,65 +357,91 @@ namespace Scoop
 
         private AstNode ParseExpressionPostfix(ITokenizer t)
         {
-            var indexingParser = ScoopParsers.Sequence(
+            var indexingParser = Sequence(
                 new OperatorParser("["),
-                ScoopParsers.SeparatedList(
-                    ScoopParsers.Deferred(() => Expressions),
+                SeparatedList(
+                    Expressions,
                     new OperatorParser(","),
                     items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") }
                 ),
-                new OperatorParser("]"),
-                (a, items, b) => items
+                _requiredCloseBrace,
+                (a, items, b) => items.WithUnused(a, b)
             );
-            var newParser = ScoopParsers.First(
+            var newParser = First(
                 // "new" "{" <initializers> "}"
-                ScoopParsers.Sequence(
+                Sequence(
                     new KeywordParser("new"),
                     new OldStyleRuleParser<ListNode<AstNode>>(ParseInitializers),
                     (n, inits) => new NewNode { Location = n.Location, Initializers = inits }
                 ),
                 // "new" <type> <arguments> ("{" <initializers> "}")?
-                ScoopParsers.Sequence(
+                Sequence(
                     new KeywordParser("new"),
                     Types,
                     ArgumentLists,
-                    ScoopParsers.Optional(
+                    Optional(
                         new OldStyleRuleParser<ListNode<AstNode>>(ParseInitializers)
                     ),
                     (n, type, args, inits) => new NewNode { Location = n.Location, Type = type, Arguments = args, Initializers = inits as ListNode<AstNode> }
                 ),
                 // "new" <type> "{" <initializers> "}"
-                ScoopParsers.Sequence(
+                Sequence(
                     new KeywordParser("new"),
                     Types,
                     new OldStyleRuleParser<ListNode<AstNode>>(ParseInitializers),
                     (n, type, inits) => new NewNode { Location = n.Location, Type = type, Initializers = inits }
                 )
             );
-            var terminal = ScoopParsers.First(
+            var terminal = First(
                 // Terminal expression
                 // Some of these "terminal" values may themselves be productions, but
                 // are treated as a single value for the purposes of the expression parser
                 // "true" | "false" | "null" | <Identifier> | <String> | <Number> | <new> | "(" <Expression> ")"
                 new KeywordParser("true", "false", "null"),
                 new IdentifierParser(),
-                ScoopParsers.Token(TokenType.String, x => new StringNode(x)),
-                ScoopParsers.Token(TokenType.Character, x => new CharNode(x)),
-                ScoopParsers.Token(TokenType.Integer, x => new IntegerNode(x)),
-                ScoopParsers.Token(TokenType.UInteger, x => new UIntegerNode(x)),
-                ScoopParsers.Token(TokenType.Long, x => new LongNode(x)),
-                ScoopParsers.Token(TokenType.ULong, x => new ULongNode(x)),
-                ScoopParsers.Token(TokenType.Decimal, x => new DecimalNode(x)),
-                ScoopParsers.Token(TokenType.Float, x => new FloatNode(x)),
-                ScoopParsers.Token(TokenType.Double, x => new DoubleNode(x)),
+                Token(TokenType.String, x => new StringNode(x)),
+                Token(TokenType.Character, x => new CharNode(x)),
+                Token(TokenType.Integer, x => new IntegerNode(x)),
+                Token(TokenType.UInteger, x => new UIntegerNode(x)),
+                Token(TokenType.Long, x => new LongNode(x)),
+                Token(TokenType.ULong, x => new ULongNode(x)),
+                Token(TokenType.Decimal, x => new DecimalNode(x)),
+                Token(TokenType.Float, x => new FloatNode(x)),
+                Token(TokenType.Double, x => new DoubleNode(x)),
                 newParser,
-                ScoopParsers.Sequence<OperatorNode, AstNode, OperatorNode, AstNode>(
+                Sequence<OperatorNode, AstNode, OperatorNode, AstNode>(
                     new OperatorParser("("),
-                    ScoopParsers.Deferred(() => ExpressionList),
+                    Deferred(() => ExpressionList),
                     new OperatorParser(")"),
                     (a, expr, b) => expr
                 )
             );
+            // TODO: This
+            //var expressionPostfix = Sequence(
+            //    terminal,
+            //    List(
+            //        // TODO: Need a way to pass the parsed terminal to the produce methods below?
+            //        First<AstNode>(
+            //            new OperatorParser("++", "--"),
+            //            Sequence(
+            //                new OperatorParser(".", "?."),
+            //                _requiredIdentifier,
+            //                (op, id) => new MemberAccessNode
+            //                {
+            //                    Location = op.Location,
+            //                    // TODO: Instead of a bool here, use an OperatorNode
+            //                    IgnoreNulls = op.Operator == "?.",
+            //                    MemberName = id
+            //                }
+            //            ),
+            //            // TODO: Need to be able to tell these apart, they return the same type
+            //            ArgumentLists,
+            //            indexingParser
+            //        ),
+            //        operations => new ListNode<AstNode>()
+            //    ),
+            //    (term, ops) => new EmptyNode()
+            //);
 
             var current = terminal.Parse(t).GetResult();
             while (true)
@@ -434,7 +472,7 @@ namespace Scoop
                     {
                         Location = lookahead.Location,
                         Instance = current,
-                        // TODO: Instead of a bool here, use an OperatorNode
+                        
                         IgnoreNulls = lookahead.Value == "?.",
                         MemberName = new IdentifierNode(identifier)
                     };
@@ -477,15 +515,19 @@ namespace Scoop
 
         private ListNode<AstNode> ParseInitializers(ITokenizer t)
         {
+            // TODO: Need to really understand initializer syntax better
             // TODO: "[" <key> "]" "=" initializers may only occur after property initializers
             if (!t.NextIs(TokenType.Operator, "{", true))
                 return null;
             var inits = new ListNode<AstNode>();
             while (true)
             {
+                // TODO: We can either have expression initializers (for lists) or we can have other initializers in any order
                 var lookaheads = t.Peek(2);
                 if (lookaheads[0].IsOperator("{"))
                 {
+                    // TODO: This initializer corresponds to a .Add method call, and can have as many arguments as .Add has
+                    // (not just 2, and not just for Dictionary types
                     var dictInit = ParseKeyValueInitializer(t);
                     inits.Add(dictInit);
                 }

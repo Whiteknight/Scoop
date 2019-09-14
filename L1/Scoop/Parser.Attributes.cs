@@ -2,6 +2,7 @@
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
+using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop
 {
@@ -9,46 +10,50 @@ namespace Scoop
     {
         private void InitializeAttributes()
         {
-            var argumentParser = ScoopParsers.First(
-                ScoopParsers.Sequence(
+            var argumentParser = First(
+                // (<identifier> "=" <expr>) | <expr>
+                Sequence(
                     new IdentifierParser(),
                     new OperatorParser("="),
                     // TODO: I think these expressions can only be terminals or member accesses (consts or enums, etc)
-                    ScoopParsers.Deferred(() => Expressions),
+                    Expressions,
                     (name, s, expr) => new NamedArgumentNode { Name = name, Separator = s, Value = expr }
                 ),
                 // TODO: I think these expressions can only be terminals or member accesses (consts or enums, etc)
-                ScoopParsers.Deferred(() => Expressions)
-            );
-            var argumentListParser = ScoopParsers.Optional(
-                ScoopParsers.First(
-                    ScoopParsers.Sequence(
+                Expressions
+            ).Named("attributeArgument");
+            var argumentListParser = Optional(
+                // (("(" ")") | ("(" <argumentList> ")"))?
+                // TODO: We could replace the Optional() call with an EmptyNode in the First()
+                First(
+                    Sequence(
                         new OperatorParser("("),
                         new OperatorParser(")"),
                         (a, b) => ListNode<AstNode>.Default()
                     ),
-                    ScoopParsers.Sequence(
+                    Sequence(
                         new OperatorParser("("),
-                        ScoopParsers.SeparatedList(
+                        SeparatedList(
                             argumentParser,
                             new OperatorParser(","),
                             items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") }
                         ),
-                        new OperatorParser(")"),
-                        (a, items, c) => items
+                        _requiredCloseParen,
+                        (a, items, c) => items.WithUnused(a, c)
                     )
-                )
+                ).Named("attributeArgumentList")
             );
-            var attrParser = ScoopParsers.SeparatedList(
-                ScoopParsers.Sequence(
-                    ScoopParsers.Optional(
-                        ScoopParsers.Sequence(
+            var attrParser = SeparatedList(
+                Sequence(
+                    // (<keyword> ":")? <type> <argumentList>
+                    Optional(
+                        Sequence(
                             new KeywordParser(),
-                            new OperatorParser(":"),
-                            (target, o) => target
+                            _requiredColon,
+                            (target, o) => target.WithUnused(o)
                         )
                     ),
-                    ScoopParsers.Deferred(() => Types),
+                    Types,
                     argumentListParser,
                     (target, type, args) => new AttributeNode
                     {
@@ -57,21 +62,22 @@ namespace Scoop
                         Type = type,
                         Arguments = args as ListNode<AstNode>
                     }
-                ),
+                ).Named("attribute"),
                 new OperatorParser(","),
-                (list) => new ListNode<AttributeNode> { Items = list.ToList(), Separator = new OperatorNode(",") }
-            );
-            Attributes = ScoopParsers.Transform(
-                ScoopParsers.Optional(
-                    ScoopParsers.List(
-                        ScoopParsers.Sequence(
+                list => new ListNode<AttributeNode> { Items = list.ToList(), Separator = new OperatorNode(",") }
+            ).Named("attributeList");
+            Attributes = Transform(
+                Optional(
+                    List(
+                        Sequence(
+                            // "[" <attributeList> "]"
                             new OperatorParser("["),
                             attrParser,
-                            new OperatorParser("]"),
-                            (a, attrs, b) => attrs
+                            _requiredCloseBrace,
+                            (a, attrs, b) => attrs.WithUnused(a, b)
                         ),
-                        list => new ListNode<AttributeNode> { Items = list.SelectMany(l => l.Items).ToList() }
-                    )
+                        list => new ListNode<AttributeNode> { Items = list.SelectMany(l => l.Items).ToList() }.WithUnused(list.SelectMany(a => a.Unused.OrEmptyIfNull()).ToArray())
+                    ).Named("attributeTagList")
                 ),
                 n => n is EmptyNode ? ListNode<AttributeNode>.Default() : n as ListNode<AttributeNode>
             );
