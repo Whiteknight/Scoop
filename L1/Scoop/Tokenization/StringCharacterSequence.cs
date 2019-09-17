@@ -15,7 +15,7 @@ namespace Scoop.Tokenization
         public StringCharacterSequence(string s, string fileName = null)
         {
             _s = s;
-            _fileName = fileName ?? "string literal";
+            _fileName = fileName;
             _putbacks = new Stack<char>();
         }
 

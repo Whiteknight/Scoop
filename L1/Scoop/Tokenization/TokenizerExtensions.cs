@@ -130,41 +130,6 @@ namespace Scoop.Tokenization
             }
         }
 
-        //public static Token MaybeGetKeywordSequence(this Tokenizer tokenizer, params string[] allowed)
-        //{
-        //    var lookup = new HashSet<string>(allowed);
-        //    var keywords = new List<Token>();
-        //    while (true)
-        //    {
-        //        var next = tokenizer.GetNext();
-        //        if (!next.IsType(TokenType.Keyword))
-        //        {
-        //            tokenizer.PutBack(next);
-        //            break;
-        //        }
-        //        if (!lookup.Contains(next.Value))
-        //        {
-        //            tokenizer.PutBack(next);
-        //            break;
-        //        }
-        //        keywords.Add(next);
-        //    }
-
-        //    if (!keywords.Any())
-        //        return null;
-
-        //    var combined = string.Join(" ", keywords.Select(k => k.Value));
-        //    return Token.Keyword(combined, keywords.First().Location);
-        //}
-
-        public static Token GetIdentifierOrKeyword(this ITokenizer tokenizer)
-        {
-            var next = tokenizer.GetNext();
-            if (next.IsType(TokenType.Identifier) || next.IsType(TokenType.Keyword))
-                return next;
-            throw ParsingException.UnexpectedToken(TokenType.Identifier, next);
-        }
-
         public static ITokenizer Mark(this ITokenizer tokenizer) => new WindowTokenizer(tokenizer);
     }
 }

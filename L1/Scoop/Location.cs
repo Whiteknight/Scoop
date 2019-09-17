@@ -9,15 +9,13 @@
             Column = column;
         }
 
-        public string FileName { get; set; }
+        public string FileName { get; }
         public int Line { get; }
         public int Column { get; }
 
         public override string ToString()
         {
-            if (!string.IsNullOrEmpty(FileName))
-                return $"File {FileName} at Line {Line} Column {Column}";
-            return $"Line {Line} Column {Column}";
+            return !string.IsNullOrEmpty(FileName) ? $"File {FileName} at Line {Line} Column {Column}" : $"Line {Line} Column {Column}";
         }
     }
 }

@@ -2,6 +2,10 @@
 {
     public static class Errors
     {
+        // Class to hold error messages. The only error messages we should be matching against
+        // in our test suite should be here. Otherwise we shouldn't be relying on the exact
+        // text of any error message
+
         public const string MissingNamespaceName = "Missing namespace name";
 
         public const string MissingCloseAngle = "Missing >";

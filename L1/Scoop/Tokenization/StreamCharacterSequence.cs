@@ -30,7 +30,7 @@ namespace Scoop.Tokenization
 
         public StreamCharacterSequence(StreamReader reader, string fileName = null)
         {
-            _fileName = fileName ?? "stream";
+            _fileName = fileName;
             _putbacks = new Stack<char>();
             _bufferIndex = BufferSize;
             _buffer = new char[BufferSize];
@@ -99,7 +99,5 @@ namespace Scoop.Tokenization
                 _isComplete = true;
             _bufferIndex = 0;
         }
-
-        
     }
 }
