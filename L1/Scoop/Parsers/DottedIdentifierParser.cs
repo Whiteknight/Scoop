@@ -5,6 +5,10 @@ using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
+    // TODO: This could probably be replaced by a Transform(List()) 
+    /// <summary>
+    /// Attempts to parse a dotted identifier
+    /// </summary>
     public class DottedIdentifierParser : IParser<DottedIdentifierNode>
     {
         public DottedIdentifierNode TryParse(ITokenizer t)

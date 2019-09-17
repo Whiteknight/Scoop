@@ -3,6 +3,9 @@ using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
+    /// <summary>
+    /// Parses one of a list of allowable keywords
+    /// </summary>
     public class KeywordParser : IParser<KeywordNode>
     {
         private readonly string[] _keywords;

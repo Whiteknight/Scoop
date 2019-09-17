@@ -9,16 +9,18 @@ namespace Scoop.Tests
     {
         private static string _testRunId;
         private static DirectoryInfo _testDirectory;
+        private static ScoopGrammar _scoopGrammar;
 
         public static string GetTestRunId() => _testRunId;
         public static string GetTestDirectoryPath() => _testDirectory.FullName;
+        public static ScoopGrammar GetScoopGrammar() => _scoopGrammar ?? (_scoopGrammar = new ScoopGrammar());
 
         [OneTimeSetUp]
         public void GlobalSetup()
         {
-            // TODO: Setup a global Parser instance so we don't have to initialize the grammar for every test
             _testRunId = Guid.NewGuid().ToString("N");
             //Directory.CreateDirectory(_testRunId);
+            _scoopGrammar = new ScoopGrammar();
         }
 
         [OneTimeTearDown]

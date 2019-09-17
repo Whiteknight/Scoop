@@ -10,7 +10,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void ParseInterface_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseInterface("public interface MyInterface { }");
             result.Should().MatchAst(
                 new InterfaceNode
@@ -25,7 +25,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void ParseInterface_MethodDeclares()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseInterface(@"
 public interface MyInterface 
 { 
@@ -65,7 +65,7 @@ public interface MyInterface
         [Test]
         public void ParseInterface_MethodDeclaresParameters()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseInterface(@"
 public interface MyInterface 
 { 
@@ -122,7 +122,7 @@ public interface MyInterface
         [Test]
         public void ParseInterface_GenericInterfaceAndMethod()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseInterface(@"
 public interface MyInterface<TA> 
 {
@@ -162,7 +162,7 @@ public interface MyInterface<TA>
         [Test]
         public void ParseInterface_InheritInterfaces()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseInterface("public interface MyInterface : IFaceA, IFaceB { }");
             result.Should().MatchAst(
                 new InterfaceNode
@@ -189,7 +189,7 @@ public interface MyInterface<TA>
         [Test]
         public void ParseInterface_GenericInterfaceAndMethodConstraints()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseInterface(@"
 public interface MyInterface<TA> 
     where TA : class, new()

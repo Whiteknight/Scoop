@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Scoop.Tokenization;
+﻿using Scoop.Tokenization;
 
 namespace Scoop.SyntaxTree
 {
@@ -8,11 +7,11 @@ namespace Scoop.SyntaxTree
     {
         public string Id { get; }
 
-        public IdentifierNode() : base(null)
+        public IdentifierNode()
         {
         }
 
-        public IdentifierNode(Token t, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public IdentifierNode(Token t)
         {
             if (t.Type != TokenType.Identifier)
                 throw ParsingException.UnexpectedToken(TokenType.Identifier, t);
@@ -20,7 +19,7 @@ namespace Scoop.SyntaxTree
             Id = t.Value;
         }
 
-        public IdentifierNode(string id, Location location = null, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public IdentifierNode(string id, Location location = null)
         {
             Id = id;
             Location = location;

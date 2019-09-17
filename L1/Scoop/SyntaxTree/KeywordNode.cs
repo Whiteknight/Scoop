@@ -1,15 +1,14 @@
-﻿using System.Collections.Generic;
-using Scoop.Tokenization;
+﻿using Scoop.Tokenization;
 
 namespace Scoop.SyntaxTree
 {
     public class KeywordNode : AstNode
     {
-        public KeywordNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public KeywordNode()
         {
         }
 
-        public KeywordNode(Token t, IReadOnlyList<Diagnostic> d = null) : base(d)
+        public KeywordNode(Token t)
         {
             if (t.Type != TokenType.Keyword)
                 throw ParsingException.UnexpectedToken(TokenType.Keyword, t);
@@ -17,7 +16,7 @@ namespace Scoop.SyntaxTree
             Location = t.Location;
         }
 
-        public KeywordNode(string keyword, IReadOnlyList<Diagnostic> d = null) : base(d)
+        public KeywordNode(string keyword)
         {
             Keyword = keyword;
         }

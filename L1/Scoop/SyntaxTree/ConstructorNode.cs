@@ -1,13 +1,7 @@
-﻿using System.Collections.Generic;
-
-namespace Scoop.SyntaxTree
+﻿namespace Scoop.SyntaxTree
 {
     public class ConstructorNode : AstNode
     {
-        public ConstructorNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
-        {
-        }
-
         // Represents a constructor, a special case of method
         public ListNode<AttributeNode> Attributes { get; set; }
         public IdentifierNode ClassName { get; set; }

@@ -1,14 +1,8 @@
-﻿using System.Collections.Generic;
-
-namespace Scoop.SyntaxTree
+﻿namespace Scoop.SyntaxTree
 {
-    public class DelegateNode : AstNode, IHasAttributes
+    public class DelegateNode : AstNode
     {
         // Represents a delegate declaration
-        public DelegateNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
-        {
-        }
-
 
         public ListNode<AttributeNode> Attributes { get; set; }
         public KeywordNode AccessModifier { get; set; }

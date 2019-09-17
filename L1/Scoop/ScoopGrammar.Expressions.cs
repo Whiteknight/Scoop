@@ -7,7 +7,7 @@ using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop
 {
-    public partial class Parser
+    public partial class ScoopGrammar
     {
         private IParser<AstNode> _expressionConditional;
 
@@ -224,9 +224,7 @@ namespace Scoop
             var expressionAssignment = Infix(
                 // null-coalesce operator
                 // <logical> (<op> <local>)+
-                // TODO: Assignment operators cannot be overloaded, so is there any possible way
-                // to have an infix expression on the lhs?
-                // I think we only allow identifiers, members and indexers on the lhs
+                // TODO: assignment operators are right associative, so this rule does chained assignments backwards
                 _expressionConditional,
                 new OperatorParser("=", "+=", "-=", "/=", "%="),
                 _expressionConditional,
@@ -429,7 +427,6 @@ namespace Scoop
             //                (op, id) => new MemberAccessNode
             //                {
             //                    Location = op.Location,
-            //                    // TODO: Instead of a bool here, use an OperatorNode
             //                    IgnoreNulls = op.Operator == "?.",
             //                    MemberName = id
             //                }
@@ -473,7 +470,7 @@ namespace Scoop
                         Location = lookahead.Location,
                         Instance = current,
                         
-                        IgnoreNulls = lookahead.Value == "?.",
+                        Operator = new OperatorNode(lookahead),
                         MemberName = new IdentifierNode(identifier)
                     };
                     if (t.NextIs(TokenType.Operator, "<") && IsGenericTypeArgument(t))

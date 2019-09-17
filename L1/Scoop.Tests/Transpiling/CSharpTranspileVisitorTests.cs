@@ -13,7 +13,7 @@ namespace Scoop.Tests.Transpiling
         [Test]
         public void Compile_EmptyNamespace()
         {
-            var ast = new Parser().ParseUnit(@"
+            var ast = TestSuite.GetScoopGrammar().ParseUnit(@"
 namespace XYZ
 {
     public class MyClass { }
@@ -26,7 +26,7 @@ namespace XYZ
         [Test]
         public void Compile_ClassCtorAndMethod()
         {
-            var ast = new Parser().ParseClass(@"
+            var ast = TestSuite.GetScoopGrammar().ParseClass(@"
 
 public class MyClass 
 {
@@ -56,7 +56,7 @@ public class MyClass
         [Test]
         public void Compile_ClassMethodReturnValue()
         {
-            var ast = new Parser().ParseClass(@"
+            var ast = TestSuite.GetScoopGrammar().ParseClass(@"
 public class MyClass 
 {
     public int MyMethod()
@@ -76,7 +76,7 @@ public class MyClass
         [Test]
         public void Compile_ClassMethodReturnExpression()
         {
-            var ast = new Parser().ParseClass(@"
+            var ast = TestSuite.GetScoopGrammar().ParseClass(@"
 public class MyClass 
 {
     public string MyMethod()
@@ -96,7 +96,7 @@ public class MyClass
         [Test]
         public void Compile_MethodReturnListOfInt()
         {
-            var ast = new Parser().ParseUnit(@"
+            var ast = TestSuite.GetScoopGrammar().ParseUnit(@"
 using System.Collections.Generic;
 
 namespace XYZ 
@@ -121,7 +121,7 @@ namespace XYZ
         [Test]
         public void Compile_MethodReturnListOfInt_Add()
         {
-            var ast = new Parser().ParseUnit(@"
+            var ast = TestSuite.GetScoopGrammar().ParseUnit(@"
 using System.Collections.Generic;
 
 namespace XYZ 
@@ -153,7 +153,7 @@ namespace XYZ
         [Test]
         public void Compile_MethodAddToListIndex()
         {
-            var ast = new Parser().ParseUnit(@"
+            var ast = TestSuite.GetScoopGrammar().ParseUnit(@"
 using System.Collections.Generic;
 
 namespace XYZ 
@@ -181,7 +181,7 @@ namespace XYZ
         [Test]
         public void Compile_MethodReturnNullInvokeCoalesce()
         {
-            var ast = new Parser().ParseUnit(@"
+            var ast = TestSuite.GetScoopGrammar().ParseUnit(@"
 using System.Collections.Generic;
 
 namespace XYZ 
@@ -205,7 +205,7 @@ namespace XYZ
         [Test]
         public void Compile_MethodReturnLambdaInvoke()
         {
-            var ast = new Parser().ParseUnit(@"
+            var ast = TestSuite.GetScoopGrammar().ParseUnit(@"
 using System;
 using System.Collections.Generic;
 
@@ -232,7 +232,7 @@ namespace XYZ
         [Test]
         public void Compile_CSharpCodeLiterals()
         {
-            var ast = new Parser().ParseUnit(@"
+            var ast = TestSuite.GetScoopGrammar().ParseUnit(@"
 using System.Collections.Generic;
 
 namespace XYZ 
@@ -268,7 +268,7 @@ namespace XYZ
         [Test]
         public void Compile_MethodGenericExtensionMethod()
         {
-            var ast = new Parser().ParseUnit(@"
+            var ast = TestSuite.GetScoopGrammar().ParseUnit(@"
 using System.Collections.Generic;
 using System.Linq;
 
@@ -293,7 +293,7 @@ namespace XYZ
         [Test]
         public void Compile_Initializers()
         {
-            var ast = new Parser().ParseUnit(@"
+            var ast = TestSuite.GetScoopGrammar().ParseUnit(@"
 using System.Collections.Generic;
 using System.Linq;
 

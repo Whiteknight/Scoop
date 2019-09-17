@@ -84,7 +84,7 @@ namespace Scoop.Tokenization
                 // Fall through, we might use that 'c' for an identifier somewhere
             }
 
-            // TODO: global:: which should be treated as a single keyword for our purposes and not
+            // TODO: "global" keyword and "::" operator
             // a keyword followed by an operator
             if (c == '_' || char.IsLetter(c))
                 return ReadWord();
@@ -127,17 +127,22 @@ namespace Scoop.Tokenization
                 {
                     buffer.Add(c);
                     c = _chars.GetNext();
+                    buffer.Add(c);
                     if (c == '\\')
                     {
+                        c = _chars.GetNext();
                         buffer.Add(c);
                         c = _chars.GetNext();
-                        if (c == 'x')
+                        while (c != '\'')
                         {
-                            // TODO: hex escape codes may be 4 chars long
+                            buffer.Add(c);
+                            c = _chars.GetNext();
                         }
                     }
+                    else 
+                        c = _chars.Expect('\'');
                     buffer.Add(c);
-                    c = _chars.Expect('\'');
+                    continue;
                 }
                 if (c == '"')
                 {
@@ -156,6 +161,8 @@ namespace Scoop.Tokenization
                         }
                         buffer.Add(c);
                     }
+                    buffer.Add(c);
+                    continue;
                 }
                 if (c == '@' && _chars.Peek() == '"')
                 {
@@ -176,16 +183,25 @@ namespace Scoop.Tokenization
 
                         buffer.Add(c);
                     }
+                    buffer.Add(c);
+                    continue;
                 }
 
 
                 if (c == '{')
+                {
                     braceCount++;
+                    buffer.Add(c);
+                    continue;
+                }
+
                 if (c == '}')
                 {
                     braceCount--;
                     if (braceCount == 0)
                         break;
+                    buffer.Add(c);
+                    continue;
                 }
 
                 buffer.Add(c);
@@ -195,15 +211,37 @@ namespace Scoop.Tokenization
             return Token.CSharpLiteral(new string(buffer.ToArray()), l);
         }
 
+        private static readonly HashSet<char> _hexChars = new HashSet<char>("0123456789abcdefABCDEF");
+
         private Token ReadCharacter()
         {
-            char c;
-            _chars.GetNext();
-            var l = _chars.GetLocation();
-            // TODO: Escape sequences
-            c = _chars.GetNext();
             _chars.Expect('\'');
-            return Token.Character(c.ToString(), l);
+            var l = _chars.GetLocation();
+            var c = _chars.GetNext();
+            if (c != '\\')
+            {
+                _chars.Expect('\'');
+                return Token.Character($"'{c}'", l);
+            }
+
+            c = _chars.GetNext();
+            if (c != 'x')
+            {
+                _chars.Expect('\'');
+                return Token.Character($"'\\{c}'", l);
+            }
+
+            var buffer = new char[4];
+            int i = 0;
+            for (; i < 4; i++)
+            {
+                if (!_hexChars.Contains(_chars.Peek()))
+                    break;
+                buffer[i] = _chars.GetNext();
+            }
+
+            _chars.Expect('\'');
+            return Token.Character($"'\\x{new string(buffer, 0, i)}'", l);
         }
 
         private Token ReadWhitespace()

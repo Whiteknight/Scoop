@@ -1,14 +1,8 @@
-﻿using System.Collections.Generic;
-
-namespace Scoop.SyntaxTree
+﻿namespace Scoop.SyntaxTree
 {
-    public class MethodDeclareNode : AstNode, IHasAttributes
+    public class MethodDeclareNode : AstNode
     {
         // Represents a declaration of a method in an interface
-        public MethodDeclareNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
-        {
-        }
-
         public ListNode<AttributeNode> Attributes { get; set; }
         public AstNode ReturnType { get; set; }
         public IdentifierNode Name { get; set; }

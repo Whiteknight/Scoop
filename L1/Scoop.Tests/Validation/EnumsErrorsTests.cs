@@ -16,7 +16,7 @@ enum
     MemberA,
     MemberB = 1
 }";
-            var ast = new Parser().Enums.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Enums.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingIdentifier);
@@ -31,7 +31,7 @@ enum MyEnum
     MemberA,
     MemberB = 1
 }";
-            var ast = new Parser().Enums.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Enums.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingOpenBracket);
@@ -46,7 +46,7 @@ enum MyEnum
     MemberA,
     MemberB = 1
 ";
-            var ast = new Parser().Enums.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Enums.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseBracket);

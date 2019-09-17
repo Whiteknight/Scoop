@@ -3,6 +3,10 @@ using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
+    /// <summary>
+    /// Represents an error situation. Returns a default node with error information
+    /// </summary>
+    /// <typeparam name="TOutput"></typeparam>
     public class ErrorParser<TOutput> : IParser<TOutput>
         where TOutput : AstNode, new()
     {

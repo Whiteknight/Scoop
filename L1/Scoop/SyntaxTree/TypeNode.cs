@@ -1,23 +1,17 @@
-﻿using System.Collections.Generic;
-
-namespace Scoop.SyntaxTree
+﻿namespace Scoop.SyntaxTree
 {
     public class TypeNode : AstNode
     {
-        public TypeNode() : base(null)
+        public TypeNode()
         {
         }
 
-        public TypeNode(IReadOnlyList<Diagnostic> diagnostics) : base(diagnostics)
-        {
-        }
-
-        public TypeNode(string typeName, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public TypeNode(string typeName)
         {
             Name = new IdentifierNode(typeName);
         }
 
-        public TypeNode(IdentifierNode id, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public TypeNode(IdentifierNode id)
         {
             Name = id;
             Location = id.Location;
@@ -33,10 +27,6 @@ namespace Scoop.SyntaxTree
 
     public class ArrayTypeNode : AstNode
     {
-        public ArrayTypeNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
-        {
-        }
-        // TODO: N-arity
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitArrayType(this);
     }
 }

@@ -6,7 +6,7 @@ using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop
 {
-    public partial class Parser
+    public partial class ScoopGrammar
     {
         private void InitializeClasses()
         {
@@ -27,7 +27,6 @@ namespace Scoop
             ).Named("inheritanceList");
 
             var interfaceMember = Sequence(
-                // TODO: Do we want to allow any other type of interface member?
                 Types,
                 _requiredIdentifier,
                 GenericTypeParameters,

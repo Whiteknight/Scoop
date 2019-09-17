@@ -12,7 +12,7 @@ namespace Scoop.Tests.Validation
         {
             const string syntax = @"
 using;";
-            var ast = new Parser().CompilationUnits.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingNamespaceName);
@@ -23,7 +23,7 @@ using;";
         {
             const string syntax = @"
 using A.B.C";
-            var ast = new Parser().CompilationUnits.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingSemicolon);
@@ -34,7 +34,7 @@ using A.B.C";
         {
             const string syntax = @"
 namespace A.B.C";
-            var ast = new Parser().CompilationUnits.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingOpenBracket);
@@ -45,7 +45,7 @@ namespace A.B.C";
         {
             const string syntax = @"
 namespace A.B.C {";
-            var ast = new Parser().CompilationUnits.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseBracket);
@@ -58,7 +58,7 @@ namespace A.B.C {";
 namespace A.B.C {
     TEST
 }";
-            var ast = new Parser().CompilationUnits.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseBracket);

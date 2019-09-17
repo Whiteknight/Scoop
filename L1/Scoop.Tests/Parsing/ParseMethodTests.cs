@@ -11,7 +11,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void ParseMethod_NewListOfMyClass()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseClassMember(@"
 public List<int[]> GetListOfIntArrays()
 {
@@ -70,7 +70,7 @@ public List<int[]> GetListOfIntArrays()
         [Test]
         public void ParseMethod_UsingStatementAssignment()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseClassMember(@"
 public void MyMethod()
 {
@@ -103,7 +103,8 @@ public void MyMethod()
                                 Instance = new MemberAccessNode
                                 {
                                     Instance = new IdentifierNode("x"),
-                                    MemberName = new IdentifierNode("DoWork")
+                                    MemberName = new IdentifierNode("DoWork"),
+                                    Operator = new OperatorNode(".")
                                 },
                                 Arguments = ListNode<AstNode>.Default()
                             }
@@ -116,7 +117,7 @@ public void MyMethod()
         [Test]
         public void ParseMethod_UsingStatementExpression()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseClassMember(@"
 public void MyMethod()
 {
@@ -144,7 +145,8 @@ public void MyMethod()
                                 Instance = new MemberAccessNode
                                 {
                                     Instance = new IdentifierNode("x"),
-                                    MemberName = new IdentifierNode("DoWork")
+                                    MemberName = new IdentifierNode("DoWork"),
+                                    Operator = new OperatorNode(".")
                                 },
                                 Arguments = ListNode<AstNode>.Default()
                             }
@@ -157,7 +159,7 @@ public void MyMethod()
         [Test]
         public void ParseMethod_Parameters()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseClassMember(@"
 public void TestMethod(int a, double b, string c)
 {
@@ -207,7 +209,7 @@ public void TestMethod(int a, double b, string c)
         [Test]
         public void ParseMethod_DefaultParameter()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseClassMember(@"
 public void TestMethod(int a = 5)
 {
@@ -242,7 +244,7 @@ public void TestMethod(int a = 5)
         [Test]
         public void ParseMethod_Params()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseClassMember(@"
 public void TestMethod(params int[] a)
 {
@@ -277,7 +279,7 @@ public void TestMethod(params int[] a)
         [Test]
         public void ParseMethod_AsyncAwait()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseClassMember(@"
 public async Task TestMethod(Task t)
 {
@@ -317,7 +319,7 @@ public async Task TestMethod(Task t)
         [Test]
         public void ParseMethod_Const()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseClassMember(@"
 public int TestMethod()
 {

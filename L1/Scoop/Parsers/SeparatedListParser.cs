@@ -5,6 +5,12 @@ using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
+    /// <summary>
+    /// Parses a list of items separated by some separator. Returns a ListNode of
+    /// the results
+    /// </summary>
+    /// <typeparam name="TOutput"></typeparam>
+    /// <typeparam name="TItem"></typeparam>
     public class SeparatedListParser<TOutput, TItem> : IParser<ListNode<TOutput>>
         where TOutput : AstNode
         where TItem : AstNode

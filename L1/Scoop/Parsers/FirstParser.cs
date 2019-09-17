@@ -4,6 +4,11 @@ using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
+    /// <summary>
+    /// Takes a list of parsers and attempts each one in order. Returns as soon as the first parser
+    /// succeeds
+    /// </summary>
+    /// <typeparam name="TOutput"></typeparam>
     public class FirstParser<TOutput> : IParser<TOutput>
         where TOutput : AstNode
     {

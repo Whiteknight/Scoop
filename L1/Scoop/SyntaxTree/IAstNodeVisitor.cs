@@ -2,6 +2,11 @@
 {
     public interface IAstNodeVisitor
     {
+        /// <summary>
+        /// Visit this node. The node type will dispatch to the appropriate handler method
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
         AstNode Visit(AstNode node);
     }
 

@@ -4,9 +4,9 @@ using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop
 {
-    public partial class Parser
+    public partial class ScoopGrammar
     {
-        public Parser()
+        public ScoopGrammar()
         {
             Initialize();
         }
@@ -50,13 +50,17 @@ namespace Scoop
 
         private void Initialize()
         {
+            // Setup some parsers by reference to avoid circular references
             Expressions = Deferred(() => _expressions).Named("Expressions");
             Types = Deferred(() => _types).Named("Types");
 
-            _identifiers = new IdentifierParser();
+            // Setup some commonly-used parsers
+            _identifiers = new IdentifierParser().Named("_identifiers");
             _accessModifiers = Optional(
                 new KeywordParser("public", "private")
             ).Named("accessModifiers");
+
+            // Setup some parsers for requiring operators or communicating helpful errors
             _requiredSemicolon = Required(new OperatorParser(";"), Errors.MissingSemicolon);
             _requiredOpenBracket = Required(new OperatorParser("{"), Errors.MissingOpenBracket);
             _requiredCloseBracket = Required(new OperatorParser("}"), Errors.MissingCloseBracket);
@@ -66,10 +70,13 @@ namespace Scoop
             _requiredCloseBrace = Required(new OperatorParser("]"), Errors.MissingCloseBrace);
             _requiredCloseAngle = Required(new OperatorParser(">"), Errors.MissingCloseAngle);
             _requiredIdentifier = Required(new IdentifierParser(), Errors.MissingIdentifier);
-            _requiredType = Required(Types, Errors.MissingType);
             _requiredEquals = Required(new OperatorParser("="), Errors.MissingEquals);
+
+            // Parsers to require certain productions or add a helpful error
+            _requiredType = Required(Types, Errors.MissingType);
             _requiredExpression = Required(Expressions, () => new EmptyNode(), Errors.MissingExpression);
 
+            // Setup individual sections of the grammar
             InitializeTopLevel();
             InitializeTypes();
             InitializeExpressions();

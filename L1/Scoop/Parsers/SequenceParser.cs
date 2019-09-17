@@ -5,7 +5,10 @@ using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
-
+    /// <summary>
+    /// Parses a list of steps and produces a single output
+    /// </summary>
+    /// <typeparam name="TOutput"></typeparam>
     public class SequenceParser<TOutput> : IParser<TOutput>
     {
         private readonly IReadOnlyList<IParser<AstNode>> _parsers;

@@ -8,35 +8,150 @@ namespace Scoop.Parsers
 {
     public static class ScoopParsers
     {
+        /// <summary>
+        /// Get a reference to a parser. Avoids circular dependencies in the grammar
+        /// </summary>
+        /// <typeparam name="TOutput"></typeparam>
+        /// <param name="getParser"></param>
+        /// <returns></returns>
         public static IParser<TOutput> Deferred<TOutput>(Func<IParser<TOutput>> getParser)
         {
             return new DeferredParser<TOutput>(getParser);
         }
 
+        /// <summary>
+        /// Return a node which represents an error in the parse
+        /// </summary>
+        /// <typeparam name="TOutput"></typeparam>
+        /// <param name="consumeOne"></param>
+        /// <param name="errorMessage"></param>
+        /// <returns></returns>
         public static IParser<TOutput> Error<TOutput>(bool consumeOne, string errorMessage)
             where TOutput : AstNode, new()
         {
             return new ErrorParser<TOutput>(consumeOne, errorMessage);
         }
 
+        /// <summary>
+        /// Return the reuslt of the first parser which succeeds
+        /// </summary>
+        /// <typeparam name="TOutput"></typeparam>
+        /// <param name="parsers"></param>
+        /// <returns></returns>
         public static IParser<TOutput> First<TOutput>(params IParser<TOutput>[] parsers)
             where TOutput : AstNode
         {
             return new FirstParser<TOutput>(parsers.Cast<IParser<AstNode>>().ToArray());
         }
 
+        /// <summary>
+        /// Parse a left-associative single operator precedence level. Parse an item as the left-hand-side,
+        /// then try to parse an operator and a right-hand-side. If possible, reduce to a single node, set
+        /// that as the new left-hand-side, and continue
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="operatorParser"></param>
+        /// <param name="right"></param>
+        /// <param name="producer"></param>
+        /// <returns></returns>
+        public static IParser<AstNode> Infix(IParser<AstNode> left, IParser<OperatorNode> operatorParser, IParser<AstNode> right, Func<AstNode, OperatorNode, AstNode, AstNode> producer)
+        {
+            return new InfixOperatorParser(left, operatorParser, right, producer);
+        }
+
+        /// <summary>
+        /// Parse a list of zero or more items.
+        /// </summary>
+        /// <typeparam name="TItem"></typeparam>
+        /// <typeparam name="TOutput"></typeparam>
+        /// <param name="p"></param>
+        /// <param name="produce"></param>
+        /// <returns></returns>
+        public static IParser<ListNode<TOutput>> List<TItem, TOutput>(IParser<TItem> p, Func<IReadOnlyList<TItem>, ListNode<TOutput>> produce)
+            where TOutput : AstNode
+        {
+            return new ListParser<TOutput, TItem>(p, produce);
+        }
+
+        /// <summary>
+        /// Attempt to parse an item and return a default value otherwise
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="getDefault"></param>
+        /// <returns></returns>
+        public static IParser<AstNode> Optional(IParser<AstNode> p, Func<AstNode> getDefault = null)
+        {
+            return new OptionalParser(p, getDefault);
+        }
+
+        /// <summary>
+        /// Produce an empty or default node without consuming anything out of the tokenizer
+        /// </summary>
+        /// <typeparam name="TOutput"></typeparam>
+        /// <param name="produce"></param>
+        /// <returns></returns>
+        public static IParser<TOutput> Produce<TOutput>(Func<TOutput> produce)
+        {
+            return new ProduceParser<TOutput>(produce);
+        }
+
+        /// <summary>
+        /// Parse a required item. If the parse fails, return a default version with diagnostic
+        /// error information for the missing tokens
+        /// </summary>
+        /// <typeparam name="TOutput"></typeparam>
+        /// <param name="p"></param>
+        /// <param name="errorMessage"></param>
+        /// <returns></returns>
         public static IParser<TOutput> Required<TOutput>(IParser<TOutput> p, string errorMessage)
             where TOutput : AstNode, new()
         {
             return new RequiredParser<TOutput>(p, l => new TOutput().WithDiagnostics(l, errorMessage));
         }
 
+        /// <summary>
+        /// Parse a required item. If the parse fails, produce a default version and attach a
+        /// diagnostic error message
+        /// </summary>
+        /// <typeparam name="TOutput"></typeparam>
+        /// <param name="p"></param>
+        /// <param name="produce"></param>
+        /// <param name="errorMessage"></param>
+        /// <returns></returns>
         public static IParser<TOutput> Required<TOutput>(IParser<TOutput> p, Func<TOutput> produce, string errorMessage)
             where TOutput : AstNode
         {
             return new RequiredParser<TOutput>(p, l => produce().WithDiagnostics(l, errorMessage));
         }
 
+        /// <summary>
+        /// Parse a list of items separated by some separator production
+        /// </summary>
+        /// <typeparam name="TItem"></typeparam>
+        /// <typeparam name="TOutput"></typeparam>
+        /// <param name="p"></param>
+        /// <param name="separator"></param>
+        /// <param name="produce"></param>
+        /// <param name="atLeastOne"></param>
+        /// <returns></returns>
+        public static IParser<ListNode<TOutput>> SeparatedList<TItem, TOutput>(IParser<TItem> p, IParser<AstNode> separator, Func<IReadOnlyList<TItem>, ListNode<TOutput>> produce, bool atLeastOne = false)
+            where TOutput : AstNode
+            where TItem : AstNode
+        {
+            return new SeparatedListParser<TOutput, TItem>(p, separator, produce, atLeastOne);
+        }
+
+        /// <summary>
+        /// Parse a sequence of productions and reduce them into a single output. If any item fails, rollback all and
+        /// return failure
+        /// </summary>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="TOutput"></typeparam>
+        /// <param name="p1"></param>
+        /// <param name="p2"></param>
+        /// <param name="produce"></param>
+        /// <returns></returns>
         public static IParser<TOutput> Sequence<T1, T2, TOutput>(IParser<T1> p1, IParser<T2> p2, Func<T1, T2, TOutput> produce)
             where T1: AstNode
             where T2: AstNode
@@ -137,40 +252,32 @@ namespace Scoop.Parsers
                 (list) => produce((T1)list[0], (T2)list[1], (T3)list[2], (T4)list[3], (T5)list[4], (T6)list[5], (T7)list[6], (T8)list[7], (T9)list[8]));
         }
 
-        public static IParser<ListNode<TOutput>> List<TItem, TOutput>(IParser<TItem> p, Func<IReadOnlyList<TItem>, ListNode<TOutput>> produce)
+        /// <summary>
+        /// Parse a single token of an expected type and return the appropriate output node
+        /// </summary>
+        /// <typeparam name="TOutput"></typeparam>
+        /// <param name="type"></param>
+        /// <param name="produce"></param>
+        /// <returns></returns>
+        public static IParser<TOutput> Token<TOutput>(TokenType type, Func<Token, TOutput> produce)
             where TOutput : AstNode
         {
-            return new ListParser<TOutput, TItem>(p, produce);
+            return new TokenParser<TOutput>(type, produce);
         }
 
-        public static IParser<ListNode<TOutput>> SeparatedList<TItem, TOutput>(IParser<TItem> p, IParser<AstNode> separator, Func<IReadOnlyList<TItem>, ListNode<TOutput>> produce, bool atLeastOne = false)
-            where TOutput : AstNode
-            where TItem : AstNode
-        {
-            return new SeparatedListParser<TOutput, TItem>(p, separator, produce, atLeastOne);
-        }
-
-        public static IParser<AstNode> Optional(IParser<AstNode> p, Func<AstNode> getDefault = null)
-        {
-            return new OptionalParser(p, getDefault);
-        }
-
+        /// <summary>
+        /// Transform one node into another node to fit into the grammar
+        /// </summary>
+        /// <typeparam name="TInput"></typeparam>
+        /// <typeparam name="TOutput"></typeparam>
+        /// <param name="parser"></param>
+        /// <param name="transform"></param>
+        /// <returns></returns>
         public static IParser<TOutput> Transform<TInput, TOutput>(IParser<TInput> parser, Func<TInput, TOutput> transform)
             where TOutput : AstNode
             where TInput : AstNode
         {
             return new TransformParser<TOutput, TInput>(parser, transform);
-        }
-
-        public static IParser<AstNode> Infix(IParser<AstNode> left, IParser<OperatorNode> operatorParser, IParser<AstNode> right, Func<AstNode, OperatorNode, AstNode, AstNode> producer)
-        {
-            return new InfixOperatorParser(left, operatorParser, right, producer);
-        }
-
-        public static IParser<TOutput> Token<TOutput>(TokenType type, Func<Token, TOutput> produce)
-            where TOutput : AstNode
-        {
-            return new TokenParser<TOutput>(type, produce);
         }
     }
 }

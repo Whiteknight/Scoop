@@ -1,13 +1,7 @@
-﻿using System.Collections.Generic;
-
-namespace Scoop.SyntaxTree
+﻿namespace Scoop.SyntaxTree
 {
-    public class ParameterNode : AstNode, IHasAttributes
+    public class ParameterNode : AstNode
     {
-        public ParameterNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
-        {
-        }
-
         public ListNode<AttributeNode> Attributes { get; set; }
         public bool IsParams { get; set; }
         public TypeNode Type { get; set; }

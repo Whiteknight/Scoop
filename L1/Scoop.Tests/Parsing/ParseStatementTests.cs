@@ -10,7 +10,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void DeclareVariable_ExplicitComplexType()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.Statements.Parse("x.y<z>[] myVar;");
             result.Should().MatchAst(
                 new VariableDeclareNode
@@ -39,7 +39,7 @@ namespace Scoop.Tests.Parsing
         {
             const string syntax = @"
 return 1;";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             ast.Should().MatchAst(
                 new ReturnNode
                 {
@@ -53,7 +53,7 @@ return 1;";
         {
             const string syntax = @"
 return;";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             ast.Should().MatchAst(
                 new ReturnNode()
             );

@@ -11,7 +11,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void MemberInvoke_GenericArguments()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"a.b<c>()");
             result.Should().MatchAst(
                 new InvokeNode
@@ -24,7 +24,8 @@ namespace Scoop.Tests.Parsing
                         {
                             Separator = new OperatorNode(","),
                             [0] = new TypeNode("c")
-                        }
+                        },
+                        Operator = new OperatorNode(".")
                     },
                     Arguments = ListNode<AstNode>.Default()
                 }
@@ -34,7 +35,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void MemberInvoke_GenericMethodChain()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"e.First<List<int>>().First<int>()");
             result.Should().MatchAst(
                 new InvokeNode
@@ -59,7 +60,8 @@ namespace Scoop.Tests.Parsing
                                             [0] = new TypeNode("int")
                                         }
                                     }
-                                }
+                                },
+                                Operator = new OperatorNode(".")
                             },
                             Arguments = ListNode<AstNode>.Default()
                         },
@@ -68,7 +70,8 @@ namespace Scoop.Tests.Parsing
                         {
                             Separator = new OperatorNode(","),
                             [0] = new TypeNode("int")
-                        }
+                        },
+                        Operator = new OperatorNode(".")
                     },
                     Arguments = ListNode<AstNode>.Default()
                 }
@@ -80,7 +83,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void Member_LessThan()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"a.b<c");
             result.Should().MatchAst(
                 new InfixOperationNode
@@ -89,6 +92,7 @@ namespace Scoop.Tests.Parsing
                     {
                         Instance = new IdentifierNode("a"),
                         MemberName = new IdentifierNode("b"),
+                        Operator = new OperatorNode(".")
                     },
                     Operator = new OperatorNode("<"),
                     Right = new IdentifierNode("c")

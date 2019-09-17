@@ -11,7 +11,7 @@ namespace Scoop.Tests.Validation
         public void Types_EmptyGenericTypeList()
         {
             const string syntax = @"a<>";
-            var ast = new Parser().Types.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Types.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingType);
@@ -21,7 +21,7 @@ namespace Scoop.Tests.Validation
         public void Types_MissingCloseAngle()
         {
             const string syntax = @"a<b";
-            var ast = new Parser().Types.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Types.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseAngle);
@@ -31,7 +31,7 @@ namespace Scoop.Tests.Validation
         public void Types_MisingCloseBrace()
         {
             const string syntax = @"a[";
-            var ast = new Parser().Types.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Types.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseBrace);
@@ -41,7 +41,7 @@ namespace Scoop.Tests.Validation
         public void GenericTypeArguments_MissingCloseAngle()
         {
             const string syntax = @"<b";
-            var ast = new Parser().GenericTypeArguments.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().GenericTypeArguments.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseAngle);
@@ -51,7 +51,7 @@ namespace Scoop.Tests.Validation
         public void GenericTypeParameters_MissingCloseAngle()
         {
             const string syntax = @"<b";
-            var ast = new Parser().GenericTypeParameters.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().GenericTypeParameters.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseAngle);
@@ -61,7 +61,7 @@ namespace Scoop.Tests.Validation
         public void TypeConstraints_MissingIdentifier()
         {
             const string syntax = @"where  : class";
-            var ast = new Parser().TypeConstraints.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().TypeConstraints.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingIdentifier);
@@ -71,7 +71,7 @@ namespace Scoop.Tests.Validation
         public void TypeConstraints_MissingColon()
         {
             const string syntax = @"where T  class";
-            var ast = new Parser().TypeConstraints.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().TypeConstraints.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingColon);
@@ -81,7 +81,7 @@ namespace Scoop.Tests.Validation
         public void TypeConstraints_NewMissingOpenParan()
         {
             const string syntax = @"where T : new)";
-            var ast = new Parser().TypeConstraints.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().TypeConstraints.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingOpenParen);
@@ -91,7 +91,7 @@ namespace Scoop.Tests.Validation
         public void TypeConstraints_NewMissingCloseParan()
         {
             const string syntax = @"where T : new(";
-            var ast = new Parser().TypeConstraints.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().TypeConstraints.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseParen);

@@ -1,21 +1,10 @@
-﻿using System.Collections.Generic;
-using Scoop.Tokenization;
+﻿using Scoop.Tokenization;
 
 namespace Scoop.SyntaxTree
 {
     public class CSharpNode : AstNode
     {
-        public CSharpNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
-        {
-        }
-
-
-        public CSharpNode(string code, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
-        {
-            Code = code;
-        }
-
-        public CSharpNode(Token t, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public CSharpNode(Token t)
         {
             Location = t.Location;
             Code = t.Value;

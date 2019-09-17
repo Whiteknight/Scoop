@@ -6,7 +6,7 @@ using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop
 {
-    public partial class Parser
+    public partial class ScoopGrammar
     {
         private void InitializeTopLevel()
         {
@@ -23,7 +23,6 @@ namespace Scoop
             );
 
             var namespaceMembers = First<AstNode>(
-                // TODO: Do we want to allow using statements here?
                 Deferred(() => Classes),
                 Deferred(() => Interfaces),
                 Deferred(() => Enums),

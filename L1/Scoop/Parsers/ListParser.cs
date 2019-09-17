@@ -5,6 +5,12 @@ using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
+    /// <summary>
+    /// Parses a list of productions with no explicit separator. Continues as long as the parser
+    /// succeeds. Terminates and returns a ListNode when the parser fails. May return 0 items.
+    /// </summary>
+    /// <typeparam name="TOutput"></typeparam>
+    /// <typeparam name="TItem"></typeparam>
     public class ListParser<TOutput, TItem> : IParser<ListNode<TOutput>>
         where TOutput : AstNode
     {

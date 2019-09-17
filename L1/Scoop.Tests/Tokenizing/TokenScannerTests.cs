@@ -109,5 +109,26 @@ comment ");
             target.ScanNext().Should().Match(TokenType.Whitespace, " ");
             target.ScanNext().Should().Match(TokenType.Operator, "}");
         }
+
+        [Test]
+        public void ParseNext_Character()
+        {
+            var target = new TokenScanner("'x'");
+            target.ScanNext().Should().Match(TokenType.Character, "'x'");
+        }
+
+        [Test]
+        public void ParseNext_CharacterEscapedQuote()
+        {
+            var target = new TokenScanner("'\\''");
+            target.ScanNext().Should().Match(TokenType.Character, "'\\''");
+        }
+
+        [Test]
+        public void ParseNext_CharacterEscapedHexValue()
+        {
+            var target = new TokenScanner("'\\x41'");
+            target.ScanNext().Should().Match(TokenType.Character, "'\\x41'");
+        }
     }
 }

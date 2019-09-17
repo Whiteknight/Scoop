@@ -10,7 +10,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void Operator_PostfixThenInfixThenPrefix()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("x--+--y");
             result.Should().MatchAst(
                 new InfixOperationNode
@@ -33,7 +33,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void AsOperator_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"a as b");
             result.Should().MatchAst(
                 new TypeCoerceNode
@@ -48,7 +48,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void AsOperator_Alias()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"a as b test");
             result.Should().MatchAst(
                 new TypeCoerceNode
@@ -64,7 +64,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void IsOperator_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"a is b");
             result.Should().MatchAst(
                 new TypeCoerceNode
@@ -79,7 +79,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void IsOperator_Alias()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"a is b test");
             result.Should().MatchAst(
                 new TypeCoerceNode
@@ -95,7 +95,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void CoalesceOperator_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"a ?? b");
             result.Should().MatchAst(
                 new InfixOperationNode
@@ -110,7 +110,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void ConditionalOperator_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"true ? 0 : 1");
             result.Should().MatchAst(
                 new ConditionalNode
@@ -125,7 +125,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void ConditionalOperator_NestedConsequent()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"true ? false ? 0 : 1 : 2");
             result.Should().MatchAst(
                 new ConditionalNode
@@ -144,7 +144,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void ConditionalOperator_NestedAlternate()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"true ? 0 : false ? 1 : 2");
             result.Should().MatchAst(
                 new ConditionalNode
@@ -164,7 +164,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void LogicalAndOperator_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"a && b");
             result.Should().MatchAst(
                 new InfixOperationNode
@@ -179,7 +179,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void LogicalOrOperator_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"a || b");
             result.Should().MatchAst(
                 new InfixOperationNode
@@ -194,7 +194,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void BitwiseAndOperator_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"a & b");
             result.Should().MatchAst(
                 new InfixOperationNode
@@ -209,7 +209,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void MultiplyOperator_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"a * b");
             result.Should().MatchAst(
                 new InfixOperationNode
@@ -224,7 +224,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void CoalesceOperator_Throw()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression(@"a ?? throw new Exception()");
             result.Should().MatchAst(
                 new InfixOperationNode
@@ -247,7 +247,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void Cast_Test()
         {
-            var result = new Parser().Expressions.Parse("(a)b");
+            var result = TestSuite.GetScoopGrammar().Expressions.Parse("(a)b");
             result.Should().MatchAst(
                 new CastNode
                 {

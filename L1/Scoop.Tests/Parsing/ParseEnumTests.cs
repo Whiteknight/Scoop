@@ -10,7 +10,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void Enum_Empty()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseEnum("public enum MyEnum { }");
             result.Should().MatchAst(
                 new EnumNode
@@ -25,7 +25,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void Enum_Values()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseEnum("public enum MyEnum { A = 0, B, C }");
             result.Should().MatchAst(
                 new EnumNode

@@ -11,7 +11,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void New_MyClass()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseStatement(@"new MyClass();");
             result.Should().MatchAst(
                 new NewNode
@@ -28,7 +28,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void New_MyClassArgs()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseStatement(@"new MyClass(1, ""test"");");
             result.Should().MatchAst(
                 new NewNode
@@ -50,7 +50,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void New_MyClassChild()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseStatement(@"new MyClass.Child();");
             result.Should().MatchAst(
                 new NewNode
@@ -71,7 +71,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void New_ListOfMyClass()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseStatement(@"new List<MyClass>();");
             result.Should().MatchAst(
                 new NewNode
@@ -93,7 +93,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void New_ListOfMyClassChild()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseStatement(@"new List<MyClass.Child>();");
             result.Should().MatchAst(
                 new NewNode
@@ -119,7 +119,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void New_ComplexType()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseStatement(@"new A<B>.C<D.E<F>>();");
             result.Should().MatchAst(
                 new NewNode
@@ -162,7 +162,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void New_AnonymousType()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseStatement(@"new { A = ""test"" };");
             result.Should().MatchAst(
                 new NewNode

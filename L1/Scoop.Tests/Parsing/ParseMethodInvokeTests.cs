@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -11,7 +10,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void InvokeMethod_Args()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseStatement(@"myObj.Method(1, 'b');");
             result.Should().MatchAst(
                 new InvokeNode
@@ -19,7 +18,8 @@ namespace Scoop.Tests.Parsing
                     Instance = new MemberAccessNode
                     {
                         Instance = new IdentifierNode("myObj"),
-                        MemberName = new IdentifierNode("Method")
+                        MemberName = new IdentifierNode("Method"),
+                        Operator = new OperatorNode(".")
                     },
                     Arguments = new ListNode<AstNode>
                     {
@@ -34,7 +34,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void InvokeMethod_NullInvoke()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseStatement(@"myObj?.Method();");
             result.Should().MatchAst(
                 new InvokeNode
@@ -43,7 +43,7 @@ namespace Scoop.Tests.Parsing
                     {
                         Instance = new IdentifierNode("myObj"),
                         MemberName = new IdentifierNode("Method"),
-                        IgnoreNulls = true
+                        Operator = new OperatorNode("?.")
                     },
                     Arguments = ListNode<AstNode>.Default()
                 }
@@ -53,7 +53,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void InvokeMethod_NamedArgs()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseStatement(@"func(test: 1);");
             result.Should().MatchAst(
                 new InvokeNode

@@ -10,7 +10,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void ParseUnit_UsingDirective()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseUnit("using A.B.C;");
             result.Should().MatchAst(
                 new CompilationUnitNode
@@ -29,7 +29,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void ParseUnit_Class()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseUnit("namespace A { public class MyClass { } }");
             result.Should().MatchAst(
                 new CompilationUnitNode
@@ -58,7 +58,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void Namespace_Class_Attribute()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseUnit(@"
 namespace A 
 { 
@@ -103,7 +103,7 @@ namespace A
         [Test]
         public void ParseInterface()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseUnit("namespace A { public interface MyInterface { } }");
             result.Should().MatchAst(
                 new CompilationUnitNode

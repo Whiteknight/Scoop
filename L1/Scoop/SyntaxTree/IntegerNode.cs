@@ -1,16 +1,15 @@
-﻿using System.Collections.Generic;
-using Scoop.Tokenization;
+﻿using Scoop.Tokenization;
 
 namespace Scoop.SyntaxTree
 {
     public class IntegerNode : AstNode
     {
-        public IntegerNode(int value, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public IntegerNode(int value)
         {
             Value = value;
         }
 
-        public IntegerNode(Token t, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public IntegerNode(Token t)
         {
             Value = int.Parse(t.Value);
             Location = t.Location;

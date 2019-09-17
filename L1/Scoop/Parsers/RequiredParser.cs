@@ -4,6 +4,12 @@ using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
+    /// <summary>
+    /// Parser to require a valid output. If the inner parser fails, a default fallback value
+    /// is constructed and returned.
+    /// The default fallback value might be an error/diagnostic object to help with error reporting
+    /// </summary>
+    /// <typeparam name="TOutput"></typeparam>
     public class RequiredParser<TOutput> : IParser<TOutput>
         where TOutput : AstNode
     {

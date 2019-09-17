@@ -5,7 +5,7 @@ using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop
 {
-    public partial class Parser
+    public partial class ScoopGrammar
     {
         private void InitializeStatements()
         {

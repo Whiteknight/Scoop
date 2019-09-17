@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Scoop.Tokenization;
 
 namespace Scoop.SyntaxTree
 {
@@ -9,21 +8,14 @@ namespace Scoop.SyntaxTree
         public string Id { get; }
         public IReadOnlyList<string> Parts { get; }
 
-        public DottedIdentifierNode(Token t, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
-        {
-            Location = t.Location;
-            Id = t.Value;
-            Parts = Id.Split('.');
-        }
-
-        public DottedIdentifierNode(IEnumerable<string> parts, Location location = null, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public DottedIdentifierNode(IEnumerable<string> parts, Location location = null)
         {
             Parts = parts.ToList();
             Id = string.Join(".", Parts);
             Location = location;
         }
 
-        public DottedIdentifierNode(string id, Location location = null, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public DottedIdentifierNode(string id, Location location = null)
         {
             // TODO: global:: ?
             Id = id;

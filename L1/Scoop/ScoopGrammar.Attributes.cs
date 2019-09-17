@@ -6,7 +6,7 @@ using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop
 {
-    public partial class Parser
+    public partial class ScoopGrammar
     {
         private void InitializeAttributes()
         {
@@ -24,7 +24,6 @@ namespace Scoop
             ).Named("attributeArgument");
             var argumentListParser = Optional(
                 // (("(" ")") | ("(" <argumentList> ")"))?
-                // TODO: We could replace the Optional() call with an EmptyNode in the First()
                 First(
                     Sequence(
                         new OperatorParser("("),

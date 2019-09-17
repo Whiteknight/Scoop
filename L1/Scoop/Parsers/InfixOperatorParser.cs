@@ -4,6 +4,11 @@ using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
+    /// <summary>
+    /// Parses a left-associative infix operator precidence level. Parses a left-hand-side production then attempts
+    /// to parse an operator and then a right-hand-side production. For each successful match, it produces an
+    /// operation node, sets that as the new left-hand-side and continues.
+    /// </summary>
     public class InfixOperatorParser : IParser<AstNode>
     {
         private readonly IParser<AstNode> _left;

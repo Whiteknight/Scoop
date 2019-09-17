@@ -1,23 +1,22 @@
-﻿using System.Collections.Generic;
-using Scoop.Tokenization;
+﻿using Scoop.Tokenization;
 
 namespace Scoop.SyntaxTree
 {
     public class CharNode : AstNode
     {
-        public CharNode(char value, Location location = null, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public CharNode(char value, Location location = null)
         {
-            Value = value;
+            Value = $"'{value}'";
             Location = location;
         }
 
-        public CharNode(Token t, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public CharNode(Token t)
         {
-            Value = t.Value[0];
+            Value = t.Value;
             Location = t.Location;
         }
 
-        public char Value { get; set; }
+        public string Value { get; set; }
 
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitChar(this);
     }

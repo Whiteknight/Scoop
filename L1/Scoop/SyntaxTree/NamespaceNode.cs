@@ -1,13 +1,7 @@
-﻿using System.Collections.Generic;
-
-namespace Scoop.SyntaxTree
+﻿namespace Scoop.SyntaxTree
 {
-    public class NamespaceNode : AstNode, IHasAttributes
+    public class NamespaceNode : AstNode
     {
-        public NamespaceNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
-        {
-        }
-
         public ListNode<AttributeNode> Attributes { get; set; }
 
         public DottedIdentifierNode Name { get; set; }

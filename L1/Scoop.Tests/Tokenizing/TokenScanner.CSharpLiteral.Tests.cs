@@ -85,5 +85,29 @@ namespace Scoop.Tests.Tokenizing
 
             target.ScanNext().Should().Match(TokenType.CSharpLiteral, "@\"quo\\\"\"ted\"");
         }
+
+        [Test]
+        public void ParseNext_CSharpLiteral_Character()
+        {
+            var target = new TokenScanner(@"c# {'x'}");
+
+            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "'x'");
+        }
+
+        [Test]
+        public void ParseNext_CSharpLiteral_CharacterEscapedQuote()
+        {
+            var target = new TokenScanner(@"c# {'\''}");
+
+            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "'\\''");
+        }
+
+        [Test]
+        public void ParseNext_CSharpLiteral_CharacterEscapedHexSequence()
+        {
+            var target = new TokenScanner(@"c# {'\x1234'}");
+
+            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "'\\x1234'");
+        }
     }
 }

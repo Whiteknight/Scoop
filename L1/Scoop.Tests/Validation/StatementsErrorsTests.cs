@@ -13,7 +13,7 @@ namespace Scoop.Tests.Validation
             // Case where type is missing is indistinguishable. Always comes back as missing identifier
             const string syntax = @"
 const int = 1;";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingIdentifier);
@@ -24,7 +24,7 @@ const int = 1;";
         {
             const string syntax = @"
 const int x  1;";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingEquals);
@@ -35,7 +35,7 @@ const int x  1;";
         {
             const string syntax = @"
 const int x = ;";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingExpression);
@@ -46,7 +46,7 @@ const int x = ;";
         {
             const string syntax = @"
 const int x = 1";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingSemicolon);
@@ -57,7 +57,7 @@ const int x = 1";
         {
             const string syntax = @"
 int x  1;";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingSemicolon);
@@ -68,7 +68,7 @@ int x  1;";
         {
             const string syntax = @"
 int x = ;";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingSemicolon);
@@ -79,7 +79,7 @@ int x = ;";
         {
             const string syntax = @"
 return";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingSemicolon);
@@ -90,7 +90,7 @@ return";
         {
             const string syntax = @"
 return 1";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingSemicolon);
@@ -101,7 +101,7 @@ return 1";
         {
             const string syntax = @"
 using x) x.DoWork();";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingOpenParen);
@@ -112,7 +112,7 @@ using x) x.DoWork();";
         {
             const string syntax = @"
 using() x.DoWork();";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingExpression);
@@ -123,7 +123,7 @@ using() x.DoWork();";
         {
             const string syntax = @"
 using(x x.DoWork();";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             var result = ast.Validate();
             // There are actually other messages which come out here, so don't assert the count
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseParen);
@@ -134,7 +134,7 @@ using(x x.DoWork();";
         {
             const string syntax = @"
 using(x) x.DoWork()";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingSemicolon);
@@ -145,7 +145,7 @@ using(x) x.DoWork()";
         {
             const string syntax = @"
 DoWork()";
-            var ast = new Parser().Statements.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Statements.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingSemicolon);

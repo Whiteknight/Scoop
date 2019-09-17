@@ -4,6 +4,11 @@ using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
+    /// <summary>
+    /// Transforms the output of one parser into a different form based on context
+    /// </summary>
+    /// <typeparam name="TOutput"></typeparam>
+    /// <typeparam name="TInput"></typeparam>
     public class TransformParser<TOutput, TInput> : IParser<TOutput>
         where TOutput : AstNode
         where TInput : AstNode

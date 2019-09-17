@@ -10,7 +10,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void String_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("\"test\"");
             result.Should().MatchAst(
                 new StringNode("\"test\"")
@@ -20,7 +20,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void String_EscapedQuote()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("\"test\\\"\"");
             result.Should().MatchAst(
                 new StringNode("\"test\\\"\"")
@@ -30,7 +30,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void BlockString_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("@\"test\"");
             result.Should().MatchAst(
                 new StringNode("@\"test\"")
@@ -40,7 +40,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void BlockString_Quote()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("@\"test\"\"\"");
             result.Should().MatchAst(
                 new StringNode("@\"test\"\"\"")
@@ -50,7 +50,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void InterpolatedString_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("$\"test\"");
             result.Should().MatchAst(
                 new StringNode("$\"test\"")
@@ -60,7 +60,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void InterpolatedString_EscapedQuote()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("$\"test\\\"\"");
             result.Should().MatchAst(
                 new StringNode("$\"test\\\"\"")
@@ -70,7 +70,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void InterpolatedString_Int()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("$\"{5}\"");
             result.Should().MatchAst(
                 new StringNode("$\"{5}\"")
@@ -80,7 +80,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void InterpolatedString_NestedString()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("$\"{\"test\"}\"");
             result.Should().MatchAst(
                 new StringNode("$\"{\"test\"}\"")
@@ -90,7 +90,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void InterpolatedString_NestedBlock()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("$\"{@\"test\"}\"");
             result.Should().MatchAst(
                 new StringNode("$\"{@\"test\"}\"")
@@ -100,7 +100,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void InterpolatedString_NestedInterpBlock()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("$\"{$@\"test\"}\"");
             result.Should().MatchAst(
                 new StringNode("$\"{$@\"test\"}\"")
@@ -110,7 +110,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void InterpolatedString_NestedInterp()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("$\"{$\"test\"}\"");
             result.Should().MatchAst(
                 new StringNode("$\"{$\"test\"}\"")
@@ -120,7 +120,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void InterpolatedBlockString_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("$@\"test\"");
             result.Should().MatchAst(
                 new StringNode("$@\"test\"")
@@ -130,7 +130,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void InterpolatedBlockString_Quote()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("$@\"test\"\"\"");
             result.Should().MatchAst(
                 new StringNode("$@\"test\"\"\"")
@@ -140,7 +140,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void InterpolatedBlockString_NestedInteger()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("$@\"{5}\"");
             result.Should().MatchAst(
                 new StringNode("$@\"{5}\"")

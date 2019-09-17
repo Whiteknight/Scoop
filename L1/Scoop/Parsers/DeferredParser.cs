@@ -3,7 +3,10 @@ using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
-    // Looks up a parser at Parse() time, to avoid circular references in the grammar
+    /// <summary>
+    /// Looks up a parser at Parse() time, to avoid circular references in the grammar
+    /// </summary>
+    /// <typeparam name="TOutput"></typeparam>
     public class DeferredParser<TOutput> : IParser<TOutput>
     {
         private readonly Func<IParser<TOutput>> _getParser;

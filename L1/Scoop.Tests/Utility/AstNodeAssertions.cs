@@ -32,7 +32,7 @@ namespace Scoop.Tests.Utility
         //    AstNode roundTripped = null;
         //    try
         //    {
-        //        roundTripped = new Parser().Parse(asString);
+        //        roundTripped = TestSuite.GetParser().Parse(asString);
         //        AssertMatchAst(Subject, roundTripped, "ROUNDTRIP");
         //        return new AndConstraint<AstNodeAssertions>(this);
         //    }

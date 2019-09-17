@@ -6,7 +6,7 @@ using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop
 {
-    public partial class Parser
+    public partial class ScoopGrammar
     {
         private void InitializeTypes()
         {
@@ -20,7 +20,6 @@ namespace Scoop
                 Sequence(
                     typeName,
                     new OperatorParser("<"),
-                    // TODO: Could simplify the "at least one" error checking by having SeparatedListAtLeastOne()
                     SeparatedList(
                         Types,
                         new OperatorParser(","),
@@ -75,20 +74,17 @@ namespace Scoop
                 (a, types, b) => types.WithUnused(a, b)
             ).Named("GenericTypeArguments");
 
-            GenericTypeParameters = Transform(
-                // TODO: We could simplify this if we added an Empty option instead of Transform(Optional())
-                Optional(
-                    Sequence(
-                        new OperatorParser("<"),
-                        SeparatedList(
-                            new IdentifierParser(),
-                            new OperatorParser(","),
-                            ProduceGenericTypeParameterList),
-                        _requiredCloseAngle,
-                        (a, types, b) => types.WithUnused(a, b)
-                    )
+            GenericTypeParameters = First(
+                Sequence(
+                    new OperatorParser("<"),
+                    SeparatedList(
+                        new IdentifierParser(),
+                        new OperatorParser(","),
+                        ProduceGenericTypeParameterList),
+                    _requiredCloseAngle,
+                    (a, types, b) => types.WithUnused(a, b)
                 ),
-                n => n is EmptyNode ? ListNode<IdentifierNode>.Default() : n as ListNode<IdentifierNode>
+                Produce(() => ListNode<IdentifierNode>.Default())
             ).Named("GenericTypeParameters");
 
             var constraintList = SeparatedList(

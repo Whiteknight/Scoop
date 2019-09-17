@@ -1,8 +1,12 @@
-﻿using Scoop.SyntaxTree;
+﻿using System.Linq;
+using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
+    /// <summary>
+    /// Attempts to parse an identifier
+    /// </summary>
     public class IdentifierParser : IParser<IdentifierNode>
     {
         private readonly string[] _identifiers;
@@ -17,22 +21,14 @@ namespace Scoop.Parsers
             var id = t.Peek();
             if (!id.IsType(TokenType.Identifier))
                 return null;
-            if (_identifiers != null && _identifiers.Length > 0)
-            {
-                foreach (var identifier in _identifiers)
-                {
-                    if (identifier == id.Value)
-                    {
-                        t.Advance();
-                        return new IdentifierNode(id);
-                    }
-                }
 
-                return null;
-            }
+            if (_identifiers == null || _identifiers.Length <= 0)
+                return new IdentifierNode(t.GetNext());
 
-            t.Advance();
-            return new IdentifierNode(id);
+            if (_identifiers.Any(identifier => identifier == id.Value))
+                return new IdentifierNode(t.GetNext());
+
+            return null;
         }
 
         public string Name { get; set; }

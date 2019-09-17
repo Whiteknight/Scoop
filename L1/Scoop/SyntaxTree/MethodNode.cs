@@ -1,16 +1,9 @@
-﻿using System.Collections.Generic;
-
-namespace Scoop.SyntaxTree
+﻿namespace Scoop.SyntaxTree
 {
-    public class MethodNode : AstNode, IHasAttributes
+    public class MethodNode : AstNode
     {
         // Represents a single method including access modifier, return type, name, parameters
         // and body
-        public MethodNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
-        {
-        }
-
-
         public ListNode<AttributeNode> Attributes { get; set; }
         public KeywordNode AccessModifier { get; set; }
         public ListNode<KeywordNode> Modifiers { get; set; }

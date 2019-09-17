@@ -3,7 +3,9 @@ using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
-
+    /// <summary>
+    /// Parse one of a list of allowable operators and return an OperatorNode
+    /// </summary>
     public class OperatorParser : IParser<OperatorNode>
     {
         private readonly string[] _operators;

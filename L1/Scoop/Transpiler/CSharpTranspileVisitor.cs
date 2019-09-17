@@ -74,13 +74,7 @@ namespace Scoop.Transpiler
 
         public AstNode VisitChar(CharNode n)
         {
-            Append("'");
-            var asInt = (int) n.Value;
-            if (asInt > 127 || char.IsControl(n.Value) || n.Value == '\n' || n.Value == '\r' || n.Value == '\v')
-                Append($"\\x{asInt:X}");
-            else
-                Append(n.Value.ToString());
-            Append("'");
+            Append(n.Value);
             return n;
         }
 
@@ -600,7 +594,7 @@ namespace Scoop.Transpiler
         public AstNode VisitMemberAccess(MemberAccessNode n)
         {
             Visit(n.Instance);
-            Append(n.IgnoreNulls ? "?." : ".");
+            Visit(n.Operator);
             Visit(n.MemberName);
             if (!n.GenericArguments.IsNullOrEmpty())
             {

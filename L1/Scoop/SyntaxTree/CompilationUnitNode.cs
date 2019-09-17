@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 
 namespace Scoop.SyntaxTree
 {
@@ -8,11 +7,11 @@ namespace Scoop.SyntaxTree
         // A compilation unit is a single file, which typically will contain some
         // using statements, maybe a namespace declaration, and maybe some classes
 
-        public CompilationUnitNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public CompilationUnitNode()
         {
         }
 
-        public CompilationUnitNode(string relativeFilePath, IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
+        public CompilationUnitNode(string relativeFilePath)
         {
             FileName = Path.GetFileName(relativeFilePath);
             RelativeFilePath = Path.GetFullPath(relativeFilePath);

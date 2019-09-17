@@ -10,7 +10,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void Double_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("123.45");
             result.Should().MatchAst(
                 new DoubleNode(123.45)
@@ -20,7 +20,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void Float_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("123.45F");
             result.Should().MatchAst(
                 new FloatNode(123.45F)
@@ -30,7 +30,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void Decimal_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("123.45M");
             result.Should().MatchAst(
                 new DecimalNode(123.45M)
@@ -40,7 +40,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void Long_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("123L");
             result.Should().MatchAst(
                 new LongNode(123L)
@@ -50,7 +50,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void UInteger_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("123U");
             result.Should().MatchAst(
                 new UIntegerNode(123U)
@@ -60,7 +60,7 @@ namespace Scoop.Tests.Parsing
         [Test]
         public void ULong_Test()
         {
-            var target = new Parser();
+            var target = TestSuite.GetScoopGrammar();
             var result = target.ParseExpression("123UL");
             result.Should().MatchAst(
                 new ULongNode(123UL)

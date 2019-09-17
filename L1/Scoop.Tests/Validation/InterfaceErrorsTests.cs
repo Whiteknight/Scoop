@@ -15,7 +15,7 @@ namespace Scoop.Tests.Validation
 public interface  { 
     int MyMethod();
 }";
-            var ast = new Parser().Interfaces.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Interfaces.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingIdentifier);
@@ -28,7 +28,7 @@ public interface  {
 public interface MyInterface 
     int MyMethod();
 }";
-            var ast = new Parser().Interfaces.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Interfaces.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingOpenBracket);
@@ -41,7 +41,7 @@ public interface MyInterface
 public interface MyInterface { 
     int MyMethod();
 ";
-            var ast = new Parser().Interfaces.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Interfaces.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseBracket);
@@ -54,7 +54,7 @@ public interface MyInterface {
 public interface MyInterface { 
     int MyMethod);
 }";
-            var ast = new Parser().Interfaces.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Interfaces.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             // we can't do anything about ordering here
@@ -68,7 +68,7 @@ public interface MyInterface {
 public interface MyInterface { 
     int MyMethod(;
 }";
-            var ast = new Parser().Interfaces.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Interfaces.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseParen);
@@ -81,7 +81,7 @@ public interface MyInterface {
 public interface MyInterface { 
     int MyMethod()
 }";
-            var ast = new Parser().Interfaces.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Interfaces.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingSemicolon);
@@ -94,7 +94,7 @@ public interface MyInterface {
 public interface MyInterface : 
 { 
 }";
-            var ast = new Parser().Interfaces.Parse(syntax);
+            var ast = TestSuite.GetScoopGrammar().Interfaces.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingType);

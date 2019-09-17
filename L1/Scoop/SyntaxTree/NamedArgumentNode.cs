@@ -1,13 +1,7 @@
-﻿using System.Collections.Generic;
-
-namespace Scoop.SyntaxTree
+﻿namespace Scoop.SyntaxTree
 {
     public class NamedArgumentNode : AstNode
     {
-        public NamedArgumentNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
-        {
-        }
-
         public IdentifierNode Name { get; set; }
         public OperatorNode Separator { get; set; }
         public AstNode Value { get; set; }

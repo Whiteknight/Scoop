@@ -7,14 +7,6 @@ namespace Scoop.SyntaxTree
     public class ListNode<TNode> : AstNode, IList<TNode>
         where TNode : AstNode
     {
-        public ListNode() : base(null)
-        {
-        }
-
-        public ListNode(IReadOnlyList<Diagnostic> diagnostics = null) : base(diagnostics)
-        {
-        }
-
         public AstNode Separator { get; set; }
         public List<TNode> Items { get; set; }
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitList(this);

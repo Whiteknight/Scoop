@@ -1,30 +1,25 @@
 ﻿using System;
-using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
     /// <summary>
-    /// Consumes a single Token of a specified type and produces an output
+    /// Parser to produce an output node unconditionally. Consumes no input.
+    /// This is used to provide a default node value
     /// </summary>
     /// <typeparam name="TOutput"></typeparam>
-    public class TokenParser<TOutput> : IParser<TOutput>
-        where TOutput : AstNode
+    public class ProduceParser<TOutput> : IParser<TOutput>
     {
-        private readonly TokenType _type;
-        private readonly Func<Token, TOutput> _produce;
+        private readonly Func<TOutput> _produce;
 
-        public TokenParser(TokenType type, Func<Token, TOutput> produce)
+        public ProduceParser(Func<TOutput> produce)
         {
-            _type = type;
             _produce = produce;
         }
 
         public TOutput TryParse(ITokenizer t)
         {
-            if (t.Peek().IsType(_type))
-                return _produce(t.GetNext());
-            return null as TOutput;
+            return _produce();
         }
 
         public string Name { get; set; }
