@@ -20,7 +20,7 @@ namespace Scoop
         public IParser<AstNode> Statements { get; private set; }
         public IParser<ListNode<AttributeNode>> Attributes { get; set; }
         public IParser<ListNode<IdentifierNode>> GenericTypeParameters { get; set; }
-        public IParser<ListNode<TypeNode>> GenericTypeArguments { get; set; }
+        
         public IParser<ListNode<ParameterNode>> ParameterList { get; set; }
         public IParser<ListNode<TypeConstraintNode>> TypeConstraints { get; set; }
         public IParser<DelegateNode> Delegates { get; set; }
@@ -44,6 +44,8 @@ namespace Scoop
         private IParser<IdentifierNode> _requiredIdentifier;
         private IParser<TypeNode> _requiredType;
         private IParser<AstNode> _requiredExpression;
+        private IParser<ListNode<TypeNode>> _requiredGenericTypeArguments;
+        private IParser<AstNode> _optionalGenericTypeArguments;
 
         private IParser<AstNode> _expressions;
         private IParser<TypeNode> _types;

@@ -6,10 +6,15 @@ namespace Scoop.Transpiler
 {
     public partial class CSharpTranspileVisitor : IAstNodeVisitorImplementation
     {
-        public AstNode VisitArrayInitializer(ArrayInitializerNode n)
+        public AstNode VisitIndexerInitializer(IndexerInitializerNode n)
         {
             Append("[");
-            Visit(n.Key);
+            Visit(n.Arguments.First());
+            foreach (var a in n.Arguments.Skip(1))
+            {
+                Append(", ");
+                Visit(a);
+            }
             Append("] = ");
             Visit(n.Value);
             return n;
@@ -514,12 +519,15 @@ namespace Scoop.Transpiler
             return n;
         }
 
-        public AstNode VisitKeyValueInitializer(KeyValueInitializerNode n)
+        public AstNode VisitAddInitializer(AddInitializerNode n)
         {
             Append("{");
-            Visit(n.Key);
-            Append(", ");
-            Visit(n.Value);
+            Visit(n.Arguments.First());
+            foreach (var a in n.Arguments.Skip(1))
+            {
+                Append(", ");
+                Visit(a);
+            }
             Append("}");
             return n;
         }

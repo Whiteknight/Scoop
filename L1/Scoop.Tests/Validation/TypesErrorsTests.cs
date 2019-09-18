@@ -40,8 +40,8 @@ namespace Scoop.Tests.Validation
         [Test]
         public void GenericTypeArguments_MissingCloseAngle()
         {
-            const string syntax = @"<b";
-            var ast = TestSuite.GetScoopGrammar().GenericTypeArguments.Parse(syntax);
+            const string syntax = @"public int x<b(){}";
+            var ast = TestSuite.GetScoopGrammar().ClassMembers.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseAngle);

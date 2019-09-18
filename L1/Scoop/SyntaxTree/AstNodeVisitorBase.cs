@@ -4,10 +4,9 @@
     {
         public virtual AstNode Visit(AstNode node) => node?.Accept(this);
 
-        public virtual AstNode VisitArrayInitializer(ArrayInitializerNode n)
+        public virtual AstNode VisitAddInitializer(AddInitializerNode n)
         {
-            Visit(n.Key);
-            Visit(n.Value);
+            Visit(n.Arguments);
             return n;
         }
 
@@ -163,6 +162,13 @@
             return n;
         }
 
+        public virtual AstNode VisitIndexerInitializer(IndexerInitializerNode n)
+        {
+            Visit(n.Arguments);
+            Visit(n.Value);
+            return n;
+        }
+
         public virtual AstNode VisitInfixOperation(InfixOperationNode n)
         {
             Visit(n.Left);
@@ -192,13 +198,6 @@
         {
             Visit(n.Instance);
             Visit(n.Arguments);
-            return n;
-        }
-
-        public virtual AstNode VisitKeyValueInitializer(KeyValueInitializerNode n)
-        {
-            Visit(n.Key);
-            Visit(n.Value);
             return n;
         }
 

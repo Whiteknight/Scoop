@@ -39,7 +39,10 @@ namespace Scoop.Tests.Transpiling
 
         public static Assembly Compile(CompilationUnitNode ast)
         {
+            var errors = ast.Validate();
+            errors.Count.Should().Be(0);
             var code = CSharpTranspileVisitor.ToString(ast);
+            Debug.WriteLine(code);
             var testAssemblyName = GetTestAssemblyName();
             return Compile(code, testAssemblyName);
         }

@@ -17,7 +17,15 @@ namespace Scoop.Parsers
         }
 
         public TOutput TryParse(ITokenizer t) => _getParser().TryParse(t);
-        public string Name { get; set; }
+
+        private string _name;
+
+        public string Name
+        {
+            get { return _name ?? _getParser().Name; }
+            set { _name = value; }
+        }
+
         public override string ToString()
         {
             var typeName = this.GetType().Name;

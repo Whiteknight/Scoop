@@ -169,7 +169,8 @@ namespace Scoop.Tests.Parsing
                 {
                     Initializers = new ListNode<AstNode>
                     {
-                        new PropertyInitializerNode
+                        Separator = new OperatorNode(","),
+                        [0] = new PropertyInitializerNode
                         {
                             Property = new IdentifierNode("A"),
                             Value = new StringNode("\"test\"")

@@ -63,16 +63,30 @@ namespace Scoop
                 Types
             ).Named("DeclareTypes");
 
-            GenericTypeArguments = Sequence(
+            _requiredGenericTypeArguments = Sequence(
                 new OperatorParser("<"),
                 SeparatedList(
                     Types,
                     new OperatorParser(","),
-                    types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") }
+                    types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") },
+                    atLeastOne: true
                 ),
                 _requiredCloseAngle,
                 (a, types, b) => types.WithUnused(a, b)
-            ).Named("GenericTypeArguments");
+            ).Named("_requiredGenericTypeArguments");
+            _optionalGenericTypeArguments = Optional(
+                Sequence(
+                    new OperatorParser("<"),
+                    SeparatedList(
+                        Types,
+                        new OperatorParser(","),
+                        types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") },
+                        atLeastOne: true
+                    ),
+                    new OperatorParser(">"),
+                    (a, types, b) => types.WithUnused(a, b)
+                )
+            ).Named("_optionalGenericTypeArguments");
 
             GenericTypeParameters = First(
                 Sequence(

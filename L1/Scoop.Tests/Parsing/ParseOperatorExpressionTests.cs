@@ -11,7 +11,7 @@ namespace Scoop.Tests.Parsing
         public void Operator_PostfixThenInfixThenPrefix()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression("x--+--y");
+            var result = target.Expressions.Parse("x--+--y");
             result.Should().MatchAst(
                 new InfixOperationNode
                 {
@@ -34,7 +34,7 @@ namespace Scoop.Tests.Parsing
         public void AsOperator_Test()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"a as b");
+            var result = target.Expressions.Parse(@"a as b");
             result.Should().MatchAst(
                 new TypeCoerceNode
                 {
@@ -49,7 +49,7 @@ namespace Scoop.Tests.Parsing
         public void AsOperator_Alias()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"a as b test");
+            var result = target.Expressions.Parse(@"a as b test");
             result.Should().MatchAst(
                 new TypeCoerceNode
                 {
@@ -65,7 +65,7 @@ namespace Scoop.Tests.Parsing
         public void IsOperator_Test()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"a is b");
+            var result = target.Expressions.Parse(@"a is b");
             result.Should().MatchAst(
                 new TypeCoerceNode
                 {
@@ -80,7 +80,7 @@ namespace Scoop.Tests.Parsing
         public void IsOperator_Alias()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"a is b test");
+            var result = target.Expressions.Parse(@"a is b test");
             result.Should().MatchAst(
                 new TypeCoerceNode
                 {
@@ -96,7 +96,7 @@ namespace Scoop.Tests.Parsing
         public void CoalesceOperator_Test()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"a ?? b");
+            var result = target.Expressions.Parse(@"a ?? b");
             result.Should().MatchAst(
                 new InfixOperationNode
                 {
@@ -111,7 +111,7 @@ namespace Scoop.Tests.Parsing
         public void ConditionalOperator_Test()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"true ? 0 : 1");
+            var result = target.Expressions.Parse(@"true ? 0 : 1");
             result.Should().MatchAst(
                 new ConditionalNode
                 {
@@ -126,7 +126,7 @@ namespace Scoop.Tests.Parsing
         public void ConditionalOperator_NestedConsequent()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"true ? false ? 0 : 1 : 2");
+            var result = target.Expressions.Parse(@"true ? false ? 0 : 1 : 2");
             result.Should().MatchAst(
                 new ConditionalNode
                 {
@@ -145,7 +145,7 @@ namespace Scoop.Tests.Parsing
         public void ConditionalOperator_NestedAlternate()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"true ? 0 : false ? 1 : 2");
+            var result = target.Expressions.Parse(@"true ? 0 : false ? 1 : 2");
             result.Should().MatchAst(
                 new ConditionalNode
                 {
@@ -165,7 +165,7 @@ namespace Scoop.Tests.Parsing
         public void LogicalAndOperator_Test()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"a && b");
+            var result = target.Expressions.Parse(@"a && b");
             result.Should().MatchAst(
                 new InfixOperationNode
                 {
@@ -180,7 +180,7 @@ namespace Scoop.Tests.Parsing
         public void LogicalOrOperator_Test()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"a || b");
+            var result = target.Expressions.Parse(@"a || b");
             result.Should().MatchAst(
                 new InfixOperationNode
                 {
@@ -195,7 +195,7 @@ namespace Scoop.Tests.Parsing
         public void BitwiseAndOperator_Test()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"a & b");
+            var result = target.Expressions.Parse(@"a & b");
             result.Should().MatchAst(
                 new InfixOperationNode
                 {
@@ -210,7 +210,7 @@ namespace Scoop.Tests.Parsing
         public void MultiplyOperator_Test()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"a * b");
+            var result = target.Expressions.Parse(@"a * b");
             result.Should().MatchAst(
                 new InfixOperationNode
                 {
@@ -225,7 +225,7 @@ namespace Scoop.Tests.Parsing
         public void CoalesceOperator_Throw()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"a ?? throw new Exception()");
+            var result = target.Expressions.Parse(@"a ?? throw new Exception()");
             result.Should().MatchAst(
                 new InfixOperationNode
                 {
@@ -253,6 +253,27 @@ namespace Scoop.Tests.Parsing
                 {
                     Type = new TypeNode("a"),
                     Right = new IdentifierNode("b")
+                }
+            );
+        }
+
+        [Test]
+        public void Unary_Multiple()
+        {
+            var result = TestSuite.GetScoopGrammar().Expressions.Parse("(a)++--b");
+            result.Should().MatchAst(
+                new CastNode
+                {
+                    Type = new TypeNode("a"),
+                    Right = new PrefixOperationNode
+                    {
+                        Operator = new OperatorNode("++"),
+                        Right = new PrefixOperationNode
+                        {
+                            Operator = new OperatorNode("--"),
+                            Right = new IdentifierNode("b")
+                        }
+                    }
                 }
             );
         }

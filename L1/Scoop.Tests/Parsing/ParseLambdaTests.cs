@@ -12,7 +12,7 @@ namespace Scoop.Tests.Parsing
         public void Lambda_ParameterlessBodyless()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"() => {}");
+            var result = target.Expressions.Parse(@"() => {}");
             result.Should().MatchAst(
                 new LambdaNode
                 {
@@ -26,7 +26,7 @@ namespace Scoop.Tests.Parsing
         public void Lambda_ParameterlessExpression()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"() => 5");
+            var result = target.Expressions.Parse(@"() => 5");
             result.Should().MatchAst(
                 new LambdaNode
                 {
@@ -43,7 +43,7 @@ namespace Scoop.Tests.Parsing
         public void Lambda_OneParameter()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"a => 5");
+            var result = target.Expressions.Parse(@"a => 5");
             result.Should().MatchAst(
                 new LambdaNode
                 {
@@ -64,7 +64,7 @@ namespace Scoop.Tests.Parsing
         public void Lambda_OneParameterBody()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"a => { return 5; }");
+            var result = target.Expressions.Parse(@"a => { return 5; }");
             result.Should().MatchAst(
                 new LambdaNode
                 {
@@ -88,7 +88,7 @@ namespace Scoop.Tests.Parsing
         public void Lambda_Parameters()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseExpression(@"(a, b, c) => 5");
+            var result = target.Expressions.Parse(@"(a, b, c) => 5");
             result.Should().MatchAst(
                 new LambdaNode
                 {

@@ -8,6 +8,11 @@ namespace Scoop.Parsers
 {
     public static class ScoopParsers
     {
+        public static IParser<AstNode> ApplyPostfix(IParser<AstNode> left, Func<IParser<AstNode>, IParser<AstNode>> produce)
+        {
+            return new ApplyPostfixParser(left, produce);
+        }
+
         /// <summary>
         /// Get a reference to a parser. Avoids circular dependencies in the grammar
         /// </summary>

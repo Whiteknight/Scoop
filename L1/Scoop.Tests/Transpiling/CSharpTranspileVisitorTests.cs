@@ -311,7 +311,7 @@ namespace XYZ
         {
             return new List<object> {
                 new Dictionary<int, string> { { 1, ""test"" } },
-                new TestClass { Value = 5 }
+                new TestClass() { Value = 5 }
             };
         }
     }
