@@ -12,6 +12,8 @@ namespace Scoop
 {
     public static class ScoopTranspiler
     {
+        public static readonly string CompilerVersion = "Scoop L1";
+
         public static AstNode ParseFile(string inputFileName)
         {
             using (var source = new StreamCharacterSequence(inputFileName, Encoding.UTF8))
@@ -33,6 +35,8 @@ namespace Scoop
             outputFileName = outputFileName ?? inputFileName + ".cs";
             using (var outStream = new StreamWriter(outputFileName, false))
             {
+                var preamble = Formatting.GetPreamble(CompilerVersion, inputFileName);
+                outStream.WriteLine(preamble);
                 new CSharpTranspileVisitor(outStream).Visit(ast);
                 outStream.Flush();
             }

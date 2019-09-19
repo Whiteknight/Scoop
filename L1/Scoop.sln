@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.757
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29306.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scoop", "Scoop\Scoop.csproj", "{9E368ACF-FCB7-41E9-81BB-7BB68239F382}"
 EndProject
@@ -10,6 +10,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scoop.Cli", "Scoop.Cli\Scoop.Cli.csproj", "{1C9FCFC6-17F6-4BA4-8382-85D4DC6B16A5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scoop.Example", "Scoop.Example\Scoop.Example.csproj", "{C29DBF98-EB31-468B-92DA-FDA15790B715}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1C9FCFC6-17F6-4BA4-8382-85D4DC6B16A5} = {1C9FCFC6-17F6-4BA4-8382-85D4DC6B16A5}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1A7A0CF4-6CA4-43A8-9E89-C57DE43FC04C}"
 	ProjectSection(SolutionItems) = preProject
