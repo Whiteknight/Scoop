@@ -1,10 +1,5 @@
 ﻿# TODO
 
-## Required L1 Items:
-
-These items are required in L1 before we call it "complete" and cutover to L2.
-
-1. Improve test coverage of transpiler
 
 ## Items we might want in L1
 

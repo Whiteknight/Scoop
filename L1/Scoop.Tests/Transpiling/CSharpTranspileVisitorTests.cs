@@ -312,7 +312,7 @@ namespace XYZ
         {
             return new List<object> {
                 new Dictionary<int, string> { { 1, ""test"" } },
-                new TestClass() { Value = 5 }
+                new TestClass() { Value = true ? 5 : 4 }
             };
         }
     }
@@ -333,6 +333,177 @@ namespace XYZ
 
             // TODO: Indexer initializer syntax "[0] = ..." parses and serializes correctly but I can't
             // find a test scenario which actually works in Roslyn.
+        }
+
+        [Test]
+        public void Compile_MethodIndexerInitializer()
+        {
+            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+using System.Collections.Generic;
+using System.Linq;
+
+namespace XYZ 
+{
+    public class MyClass 
+    {
+        public int MyMethod()
+        {
+            var list = new MyList { [0] = 5 };
+            return list[0];
+        }
+    }
+
+
+    private class MyList
+    {
+        List<int> Items;
+        public MyList() { Items = new List<int>(); }
+        c#{
+            public int this[int i] 
+            {
+                get { return Items[i]; }
+                set { Items.Insert(i, value); }
+            }
+        }
+    }
+}");
+            var assembly = TestCompiler.Compile(ast);
+            var type = assembly.ExportedTypes.First();
+            var myObj = Activator.CreateInstance(type);
+            var method = type.GetMethod("MyMethod");
+            var result = (int)method.Invoke(myObj, new object[] { });
+            result.Should().Be(5);
+        }
+
+        [Test]
+        public void Compile_ArrayType()
+        {
+            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+using System.Collections.Generic;
+using System.Linq;
+
+namespace XYZ 
+{
+    public class MyClass 
+    {
+        private const int _two = 2;
+        public int[] MyMethod()
+        {
+            return new int[] { 1, _two, 3 }; 
+        }
+    }
+}");
+            var assembly = TestCompiler.Compile(ast);
+            var type = assembly.ExportedTypes.First();
+            var myObj = Activator.CreateInstance(type);
+            var method = type.GetMethod("MyMethod");
+            var result = (int[])method.Invoke(myObj, new object[] { });
+            result.Should().BeEquivalentTo(1, 2, 3);
+        }
+
+        [Test]
+        public void Compile_FlagsEnum()
+        {
+            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace XYZ 
+{
+    [Flags]
+    enum MyEnum
+    {
+        A, B = 1, C
+    }
+
+    public class MyClass 
+    {
+        public int MyMethod()
+        {
+            return (int)MyEnum.B;
+        }
+    }
+}");
+            var assembly = TestCompiler.Compile(ast);
+            var type = assembly.ExportedTypes.First();
+            var myObj = Activator.CreateInstance(type);
+            var method = type.GetMethod("MyMethod");
+            var result = (int)method.Invoke(myObj, new object[] { });
+            result.Should().Be(1);
+        }
+
+        [Test]
+        public void Compile_InterfaceInherit()
+        {
+            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace XYZ 
+{
+    public interface IMyInterface
+    {
+        int MyMethod();
+    }
+
+    public class MyClass : IMyInterface
+    {
+        public int MyMethod() => 1;
+    }
+}");
+            var assembly = TestCompiler.Compile(ast);
+            var type = assembly.ExportedTypes.First(t => t.Name == "MyClass");
+            type.GetInterface("IMyInterface").Should().NotBeNull();
+        }
+
+        [Test]
+        public void Compile_MethodParameters()
+        {
+            var ast = TestSuite.GetScoopGrammar().Classes.Parse(@"
+public class MyClass 
+{
+    public int MyMethod()
+    {
+        return PrivateMethod(4, c: 5);
+    }
+
+    private int PrivateMethod(int a = 0, int b = 1, int c = 2)
+    {
+        return (a * 100) + (b * 10) + c;
+    }
+}");
+
+            var assembly = TestCompiler.Compile(ast);
+            var type = assembly.ExportedTypes.First();
+            var myObj = Activator.CreateInstance(type);
+            var method = type.GetMethod("MyMethod");
+            var result = (int)method.Invoke(myObj, new object[0]);
+            result.Should().Be(415);
+        }
+
+        [Test]
+        public void Compile_ExpressionPrefixPostfix()
+        {
+            var ast = TestSuite.GetScoopGrammar().Classes.Parse(@"
+public class MyClass 
+{
+    public int MyMethod()
+    {
+        var x = 5;
+        var y = ++x;
+        x++;
+        return x * 10 + y;
+    }
+}");
+
+            var assembly = TestCompiler.Compile(ast);
+            var type = assembly.ExportedTypes.First();
+            var myObj = Activator.CreateInstance(type);
+            var method = type.GetMethod("MyMethod");
+            var result = (int)method.Invoke(myObj, new object[0]);
+            result.Should().Be(76);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
+using Scoop.Tokenization;
 using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop.Grammar
@@ -31,6 +32,7 @@ namespace Scoop.Grammar
             );
 
             var namespaceMembers = First<AstNode>(
+                Token(TokenType.CSharpLiteral, t => new CSharpNode(t)),
                 Deferred(() => Classes),
                 Deferred(() => Interfaces),
                 Deferred(() => Enums),

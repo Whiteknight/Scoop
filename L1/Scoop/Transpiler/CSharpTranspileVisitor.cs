@@ -74,6 +74,8 @@ namespace Scoop.Transpiler
             Visit(n.Name);
             Append(" = ");
             Visit(n.Value);
+            // TODO: This is ugly, VisitMethod will append a ";" to this already, but VisitClass won't.
+            Append(";");
             return n;
         }
 
@@ -172,6 +174,7 @@ namespace Scoop.Transpiler
 
         public AstNode VisitCompilationUnit(CompilationUnitNode n)
         {
+            // TODO: "#line" directives
             if (!string.IsNullOrEmpty(n.FileName))
                 AppendLineAndIndent($"// Source File: {n.FileName}");
             foreach (var ud in n.Members.OfType<UsingDirectiveNode>())
@@ -246,6 +249,7 @@ namespace Scoop.Transpiler
             foreach (var s in n.Statements.OrEmptyIfNull())
             {
                 Visit(s);
+                AppendLineAndIndent(";");
                 AppendLineAndIndent($"#line {s.Location.Line} \"{s.Location.FileName}\"");
                 AppendLineAndIndent();
             }
@@ -392,6 +396,7 @@ namespace Scoop.Transpiler
             Visit(n.Type);
             Append(" ");
             Visit(n.Name);
+            Append(";");
             return n;
         }
 
