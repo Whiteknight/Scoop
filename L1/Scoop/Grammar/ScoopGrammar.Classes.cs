@@ -4,7 +4,7 @@ using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 using static Scoop.Parsers.ScoopParsers;
 
-namespace Scoop
+namespace Scoop.Grammar
 {
     public partial class ScoopGrammar
     {
@@ -320,12 +320,5 @@ namespace Scoop
                 Error<ListNode<ParameterNode>>(false, Errors.MissingParameterList)
             ).Named("ParameterList");
         }
-
-        // Helper method to start parsing at the class level, mostly to simplify unit tests
-        public ClassNode ParseClass(string s) => Classes.Parse(new Tokenizer(s)).GetResult();
-
-        public AstNode ParseClassMember(string s) => ClassMembers.Parse(new Tokenizer(s)).GetResult();
-
-        public InterfaceNode ParseInterface(string s) => Interfaces.Parse(new Tokenizer(s)).GetResult();
     }
 }

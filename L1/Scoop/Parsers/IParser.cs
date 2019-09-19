@@ -1,7 +1,7 @@
 ﻿using System;
 using Scoop.Tokenization;
 
-namespace Scoop
+namespace Scoop.Parsers
 {
     public interface IParser<out TOutput>
     {
@@ -21,6 +21,12 @@ namespace Scoop
                     return ParseResult<TOutput>.Success(output, parser.ToString());
                 (window as WindowTokenizer)?.Rewind();
                 return ParseResult<TOutput>.Fail(parser.ToString());
+            }
+            catch (TokenizingException)
+            {
+                // Tokenizer exceptions indicate that there isn't a valid token to get. The parse cannot
+                // continue no matter what. We propagate those all the way up to the top
+                throw;
             }
             catch (Exception e)
             {

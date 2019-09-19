@@ -3,7 +3,7 @@ using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 using static Scoop.Parsers.ScoopParsers;
 
-namespace Scoop
+namespace Scoop.Grammar
 {
     public partial class ScoopGrammar
     {
@@ -99,8 +99,5 @@ namespace Scoop
                 ).Named("expressionStmt")
             ).Named("Statements");
         }
-
-        // Helper for testing
-        public AstNode ParseStatement(string s) => Statements.Parse(new Tokenizer(s)).GetResult();
     }
 }

@@ -4,7 +4,7 @@ using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using static Scoop.Parsers.ScoopParsers;
 
-namespace Scoop
+namespace Scoop.Grammar
 {
     public partial class ScoopGrammar
     {

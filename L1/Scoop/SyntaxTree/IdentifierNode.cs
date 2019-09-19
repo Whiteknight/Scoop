@@ -13,8 +13,6 @@ namespace Scoop.SyntaxTree
 
         public IdentifierNode(Token t)
         {
-            if (t.Type != TokenType.Identifier)
-                throw ParsingException.UnexpectedToken(TokenType.Identifier, t);
             Location = t.Location;
             Id = t.Value;
         }

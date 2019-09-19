@@ -11,7 +11,7 @@ namespace Scoop
             return _keywords.Contains(s);
         }
 
-        public static readonly HashSet<string> _keywords = new HashSet<string>
+        private static readonly HashSet<string> _keywords = new HashSet<string>
         {
             // C# Keywords which are still allowed
             // (type names like "int" are counted as types not keywords for these purposes)

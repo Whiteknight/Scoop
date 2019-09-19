@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using Scoop.Parsers;
 using Scoop.SyntaxTree;
 
 namespace Scoop.Tests.Validation

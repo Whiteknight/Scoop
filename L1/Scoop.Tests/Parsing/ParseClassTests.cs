@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -11,7 +12,7 @@ namespace Scoop.Tests.Parsing
         public void ParseClass_Test()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass("public class MyClass { }");
+            var result = target.Classes.Parse("public class MyClass { }");
             result.Should().MatchAst(
                 new ClassNode
                 {
@@ -27,7 +28,7 @@ namespace Scoop.Tests.Parsing
         public void ParseClass_CtorAndMethod()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 {
     // default parameterless constructor
@@ -71,7 +72,7 @@ public class MyClass
         public void ParseClass_CtorThis()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 {
     public MyClass() : this(1) { }
@@ -150,7 +151,7 @@ public class MyClass
         public void ParseClass_MethodReturnNumber()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 {
     public int MyMethod() 
@@ -192,7 +193,7 @@ public class MyClass
         public void ParseClass_LambdaMethodReturnNumber()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 {
     public int MyMethod() => 5;
@@ -231,7 +232,7 @@ public class MyClass
         public void ParseClass_MethodReturnInfixExpression()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 {
     public int MyMethod() 
@@ -278,7 +279,7 @@ public class MyClass
         public void ParseClass_MethodDeclareThenAssignReturn()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 {
     public int MyMethod() 
@@ -332,7 +333,7 @@ public class MyClass
         public void ParseClass_MethodDeclareAssignReturn()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 {
     public int MyMethod() 
@@ -381,7 +382,7 @@ public class MyClass
         public void ParseClass_MethodStringLiteralProperty()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 {
     public int MyMethod() 
@@ -428,7 +429,7 @@ public class MyClass
         public void ParseClass_MethodIntegerMethod()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 {
     public string MyMethod() 
@@ -479,7 +480,7 @@ public class MyClass
         public void ParseClass_GenericClassAndMethod()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass<TA> 
 {
     public TB MyMethod<TB, TC>() 
@@ -537,7 +538,7 @@ public class MyClass<TA>
         public void ParseClass_GenericClassAndMethodConstraints()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass<TA> 
     where TA : class, new()
 {
@@ -630,7 +631,7 @@ public class MyClass<TA>
         public void ParseClass_NestedClass()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 { 
     public class ChildClass { }
@@ -659,7 +660,7 @@ public class MyClass
         public void ParseClass_NestedInterface()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 { 
     public interface ChildIFace { }
@@ -687,7 +688,7 @@ public class MyClass
         public void ParseClass_InheritInterfaces()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass("public class MyClass : IFaceA, IFaceB { }");
+            var result = target.Classes.Parse("public class MyClass : IFaceA, IFaceB { }");
             result.Should().MatchAst(
                 new ClassNode
                 {
@@ -715,7 +716,7 @@ public class MyClass
         public void ParseClass_Struct()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass("public struct MyClass { }");
+            var result = target.Classes.Parse("public struct MyClass { }");
             result.Should().MatchAst(
                 new ClassNode
                 {
@@ -731,7 +732,7 @@ public class MyClass
         public void ParseClass_Partial()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass("public partial class MyClass { }");
+            var result = target.Classes.Parse("public partial class MyClass { }");
             result.Should().MatchAst(
                 new ClassNode
                 {
@@ -748,7 +749,7 @@ public class MyClass
         public void ParseClass_Const()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 {
     private const string test = ""value"";
@@ -777,7 +778,7 @@ public class MyClass
         public void ParseClass_Field()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 {
     string _test;

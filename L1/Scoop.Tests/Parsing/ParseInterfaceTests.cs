@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -11,7 +12,7 @@ namespace Scoop.Tests.Parsing
         public void ParseInterface_Test()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseInterface("public interface MyInterface { }");
+            var result = target.Interfaces.Parse("public interface MyInterface { }");
             result.Should().MatchAst(
                 new InterfaceNode
                 {
@@ -26,7 +27,7 @@ namespace Scoop.Tests.Parsing
         public void ParseInterface_MethodDeclares()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseInterface(@"
+            var result = target.Interfaces.Parse(@"
 public interface MyInterface 
 { 
     int Method1();
@@ -66,7 +67,7 @@ public interface MyInterface
         public void ParseInterface_MethodDeclaresParameters()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseInterface(@"
+            var result = target.Interfaces.Parse(@"
 public interface MyInterface 
 { 
     int Method1(int a, double b, string c);
@@ -123,7 +124,7 @@ public interface MyInterface
         public void ParseInterface_GenericInterfaceAndMethod()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseInterface(@"
+            var result = target.Interfaces.Parse(@"
 public interface MyInterface<TA> 
 {
     TB MyMethod<TB>();
@@ -163,7 +164,7 @@ public interface MyInterface<TA>
         public void ParseInterface_InheritInterfaces()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseInterface("public interface MyInterface : IFaceA, IFaceB { }");
+            var result = target.Interfaces.Parse("public interface MyInterface : IFaceA, IFaceB { }");
             result.Should().MatchAst(
                 new InterfaceNode
                 {
@@ -190,7 +191,7 @@ public interface MyInterface<TA>
         public void ParseInterface_GenericInterfaceAndMethodConstraints()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseInterface(@"
+            var result = target.Interfaces.Parse(@"
 public interface MyInterface<TA> 
     where TA : class, new()
 {

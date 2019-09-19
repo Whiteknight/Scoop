@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -11,7 +12,7 @@ namespace Scoop.Tests.Parsing
         public void Enum_Empty()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseEnum("public enum MyEnum { }");
+            var result = target.Enums.Parse("public enum MyEnum { }");
             result.Should().MatchAst(
                 new EnumNode
                 {
@@ -26,7 +27,7 @@ namespace Scoop.Tests.Parsing
         public void Enum_Values()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseEnum("public enum MyEnum { A = 0, B, C }");
+            var result = target.Enums.Parse("public enum MyEnum { A = 0, B, C }");
             result.Should().MatchAst(
                 new EnumNode
                 {

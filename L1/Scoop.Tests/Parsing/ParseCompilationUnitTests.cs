@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -11,7 +12,7 @@ namespace Scoop.Tests.Parsing
         public void ParseUnit_UsingDirective()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseUnit("using A.B.C;");
+            var result = target.CompilationUnits.Parse("using A.B.C;");
             result.Should().MatchAst(
                 new CompilationUnitNode
                 {
@@ -30,7 +31,7 @@ namespace Scoop.Tests.Parsing
         public void ParseUnit_Class()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseUnit("namespace A { public class MyClass { } }");
+            var result = target.CompilationUnits.Parse("namespace A { public class MyClass { } }");
             result.Should().MatchAst(
                 new CompilationUnitNode
                 {
@@ -59,7 +60,7 @@ namespace Scoop.Tests.Parsing
         public void Namespace_Class_Attribute()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseUnit(@"
+            var result = target.CompilationUnits.Parse(@"
 namespace A 
 { 
     [MyAttr]
@@ -101,10 +102,10 @@ namespace A
         
 
         [Test]
-        public void ParseInterface()
+        public void CompilationUnit_Interface()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseUnit("namespace A { public interface MyInterface { } }");
+            var result = target.CompilationUnits.Parse("namespace A { public interface MyInterface { } }");
             result.Should().MatchAst(
                 new CompilationUnitNode
                 {

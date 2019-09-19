@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -11,7 +12,7 @@ namespace Scoop.Tests.Parsing
         public void InvokeMethod_Args()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseStatement(@"myObj.Method(1, 'b');");
+            var result = target.Statements.Parse(@"myObj.Method(1, 'b');");
             result.Should().MatchAst(
                 new InvokeNode
                 {
@@ -35,7 +36,7 @@ namespace Scoop.Tests.Parsing
         public void InvokeMethod_NullInvoke()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseStatement(@"myObj?.Method();");
+            var result = target.Statements.Parse(@"myObj?.Method();");
             result.Should().MatchAst(
                 new InvokeNode
                 {
@@ -54,7 +55,7 @@ namespace Scoop.Tests.Parsing
         public void InvokeMethod_NamedArgs()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseStatement(@"func(test: 1);");
+            var result = target.Statements.Parse(@"func(test: 1);");
             result.Should().MatchAst(
                 new InvokeNode
                 {

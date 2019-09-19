@@ -20,7 +20,7 @@
         {
             var c = cs.GetNext();
             if (c != expected)
-                throw ParsingException.UnexpectedCharacter(expected, c, cs.GetLocation());
+                throw TokenizingException.UnexpectedCharacter(expected, c, cs.GetLocation());
             return c;
         }
     }

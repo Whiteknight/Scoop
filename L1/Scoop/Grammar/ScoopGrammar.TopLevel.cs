@@ -1,19 +1,27 @@
 ﻿using System.Linq;
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
-using Scoop.Tokenization;
 using static Scoop.Parsers.ScoopParsers;
 
-namespace Scoop
+namespace Scoop.Grammar
 {
     public partial class ScoopGrammar
     {
         private void InitializeTopLevel()
         {
+            var dottedIdentifier = Transform(
+                SeparatedList(
+                    _identifiers,
+                    new OperatorParser("."),
+                    items => new ListNode<IdentifierNode> { Items = items.ToList(), Separator = new OperatorNode(".") },
+                    atLeastOne: true
+                ),
+                items => new DottedIdentifierNode(items.Select(i => i.Id), items.Location)
+            );
             // "using" <namespaceName> ";"
             var parseUsingDirective = Sequence(
                 new KeywordParser("using"),
-                Required(new DottedIdentifierParser(), () => new DottedIdentifierNode(""), Errors.MissingNamespaceName),
+                Required(dottedIdentifier, () => new DottedIdentifierNode(""), Errors.MissingNamespaceName),
                 _requiredSemicolon,
                 (a, b, c) => new UsingDirectiveNode
                 {
@@ -48,7 +56,7 @@ namespace Scoop
             var parseNamespace = Sequence(
                 // TODO: assembly-level attributes
                 new KeywordParser("namespace"),
-                Required(new DottedIdentifierParser(), () => new DottedIdentifierNode(""), Errors.MissingNamespaceName),
+                Required(dottedIdentifier, () => new DottedIdentifierNode(""), Errors.MissingNamespaceName),
                 namespaceBody,
                 (ns, name, members) => new NamespaceNode
                 {
@@ -71,9 +79,6 @@ namespace Scoop
                 }
             );
         }
-
-        public CompilationUnitNode ParseUnit(string s) => CompilationUnits.Parse(new Tokenizer(s)).GetResult();
-        public EnumNode ParseEnum(string s) => Enums.Parse(new Tokenizer(s)).GetResult();
 
         private void InitializeEnums()
         {

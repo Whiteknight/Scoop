@@ -3,6 +3,7 @@
     public enum TokenType
     {
         EndOfInput,
+
         Whitespace,
         Comment,
         Identifier,

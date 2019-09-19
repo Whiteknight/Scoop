@@ -1,3 +1,4 @@
+using System;
 using FluentAssertions;
 using NUnit.Framework;
 using Scoop.Tests.Utility;
@@ -129,6 +130,20 @@ comment ");
         {
             var target = new TokenScanner("'\\x41'");
             target.ScanNext().Should().Match(TokenType.Character, "'\\x41'");
+        }
+
+        [Test]
+        public void ParseNext_UnknownBackslash()
+        {
+            Action act = () => new TokenScanner("\\").ScanNext();
+            act.Should().Throw<TokenizingException>();
+        }
+
+        [Test]
+        public void ParseNext_UnknownBacktick()
+        {
+            Action act = () => new TokenScanner("`").ScanNext();
+            act.Should().Throw<TokenizingException>();
         }
     }
 }

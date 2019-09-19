@@ -4,7 +4,7 @@ using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 using static Scoop.Parsers.ScoopParsers;
 
-namespace Scoop
+namespace Scoop.Grammar
 {
     public partial class ScoopGrammar
     {
@@ -81,7 +81,5 @@ namespace Scoop
                 n => n is EmptyNode ? ListNode<AttributeNode>.Default() : n as ListNode<AttributeNode>
             );
         }
-
-        public ListNode<AttributeNode> ParseAttributes(string s) => Attributes.Parse(new Tokenizer(s)).GetResult();
     }
 }

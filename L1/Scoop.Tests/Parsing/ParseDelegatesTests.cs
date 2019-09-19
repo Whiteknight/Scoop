@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -11,7 +12,7 @@ namespace Scoop.Tests.Parsing
         public void Delegate_Namespace()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseUnit("namespace A { public delegate int MyDelegate(string x); }");
+            var result = target.CompilationUnits.Parse("namespace A { public delegate int MyDelegate(string x); }");
             result.Should().MatchAst(
                 new CompilationUnitNode
                 {
@@ -48,7 +49,7 @@ namespace Scoop.Tests.Parsing
         public void Delegate_Class()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 {
      public delegate int MyDelegate(string x);

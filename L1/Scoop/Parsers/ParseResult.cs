@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Scoop
+namespace Scoop.Parsers
 {
     public struct ParseResult<TOutput>
     {

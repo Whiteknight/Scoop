@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Scoop.Tokenization
 {
@@ -103,7 +102,8 @@ namespace Scoop.Tokenization
             if (char.IsPunctuation(c) || char.IsSymbol(c))
                 return ReadOperator();
 
-            throw new Exception($"Unexpected character '{c}'");
+            // Advance so the next call to ScanNext can return something new
+            throw TokenizingException.UnexpectedCharacter(_chars.GetNext(), _chars.GetLocation());
         }
 
         private Token ReadCSharpCodeLiteral()
@@ -122,7 +122,7 @@ namespace Scoop.Tokenization
             {
                 var c = _chars.GetNext();
                 if (c == '\0')
-                    ParsingException.UnexpectedEndOfInput(l);
+                    TokenizingException.UnexpectedEndOfInput(l);
                 if (c == '\'')
                 {
                     buffer.Add(c);
@@ -151,7 +151,7 @@ namespace Scoop.Tokenization
                     {
                         c = _chars.GetNext();
                         if (c == '\0')
-                            ParsingException.UnexpectedEndOfInput(l);
+                            TokenizingException.UnexpectedEndOfInput(l);
                         if (c == '"')
                             break;
                         if (c == '\\')
@@ -172,7 +172,7 @@ namespace Scoop.Tokenization
                     {
                         c = _chars.GetNext();
                         if (c == '\0')
-                            ParsingException.UnexpectedEndOfInput(l);
+                            TokenizingException.UnexpectedEndOfInput(l);
                         if (c == '"')
                         {
                             if (_chars.Peek() != '"')
@@ -406,6 +406,8 @@ namespace Scoop.Tokenization
         {
             var l = _chars.GetLocation();
             var op = ReadOperator(_operators);
+            if (string.IsNullOrEmpty(op))
+                throw TokenizingException.UnexpectedCharacter(_chars.GetNext(), l);
             return Token.Operator(op, l);
         }
 
@@ -424,11 +426,7 @@ namespace Scoop.Tokenization
                 return op.Operator;
             }
 
-            var recurse = ReadOperator(nextOp);
-            if (recurse != null)
-                return recurse;
-
-            throw ParsingException.UnexpectedCharacter(x, _chars.GetLocation());
+            return ReadOperator(nextOp);
         }
     }
 }

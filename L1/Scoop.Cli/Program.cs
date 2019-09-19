@@ -1,8 +1,5 @@
-﻿using System.IO;
+﻿using System;
 using System.Linq;
-using System.Text;
-using Scoop.Tokenization;
-using Scoop.Transpiler;
 
 namespace Scoop.Cli
 {
@@ -14,16 +11,20 @@ namespace Scoop.Cli
             // TODO: Option to dump to console instead of write to outfile?
             // TODO: Option to read from console?
             // TODO: compile all args, and handle wildcards?
-            var fileName = args.First();
-            var source = new StreamCharacterSequence(fileName, Encoding.UTF8);
-            var tokenizer = new Tokenizer(new TokenScanner(source));
-            var ast = new ScoopGrammar().CompilationUnits.Parse(tokenizer).GetResult();
-            var outFile = fileName + ".cs";
-            var outStream = new StreamWriter(outFile, false);
-            new CSharpTranspileVisitor(outStream).Visit(ast);
-            outStream.Flush();
-            outStream.Dispose();
-            source.Dispose();
+            // TODO: Prepend each file with a header to warn about code being generated
+            if (args.Length == 0)
+            {
+                Console.WriteLine("At least one input file expected");
+                return;
+            }
+
+            var result = ScoopTranspiler.TranspileFile(args.First());
+            if (!result.IsSuccess)
+            {
+                foreach (var error in result.Diagnostics)
+                    Console.WriteLine(error);
+                return;
+            }
         }
     }
 }

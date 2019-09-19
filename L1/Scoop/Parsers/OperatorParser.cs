@@ -19,7 +19,7 @@ namespace Scoop.Parsers
         {
             if (!t.Peek().IsOperator(_operators))
                 return null;
-            return new OperatorNode(t.Expect(TokenType.Operator, _operators));
+            return new OperatorNode(t.GetNext());
         }
 
         public string Name { get; set; }

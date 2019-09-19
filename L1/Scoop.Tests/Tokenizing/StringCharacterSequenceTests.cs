@@ -61,7 +61,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var target = new StringCharacterSequence("abc");
             Action act = () => target.Expect('x');
-            act.Should().Throw<ParsingException>();
+            act.Should().Throw<TokenizingException>();
         }
     }
 }

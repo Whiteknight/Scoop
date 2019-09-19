@@ -10,8 +10,6 @@ namespace Scoop.SyntaxTree
 
         public KeywordNode(Token t)
         {
-            if (t.Type != TokenType.Keyword)
-                throw ParsingException.UnexpectedToken(TokenType.Keyword, t);
             Keyword = t.Value;
             Location = t.Location;
         }

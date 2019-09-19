@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using NUnit.Framework;
+using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 
@@ -13,7 +13,7 @@ namespace Scoop.Tests.Parsing
         public void Attribute_NoArgs()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseAttributes(@"[MyAttr]").First();
+            var result = target.Attributes.Parse(@"[MyAttr]").First();
             result.Should().MatchAst(
                 new AttributeNode
                 {
@@ -26,7 +26,7 @@ namespace Scoop.Tests.Parsing
         public void Attribute_3NoArgs()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseAttributes(@"
+            var result = target.Attributes.Parse(@"
 [MyAttrA]
 [MyAttrB,MyAttrC]
 [return:MyAttrD]");
@@ -59,7 +59,7 @@ namespace Scoop.Tests.Parsing
         public void Attribute_NoArgsTarget()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseAttributes(@"[return:MyAttr]").First();
+            var result = target.Attributes.Parse(@"[return:MyAttr]").First();
             result.Should().MatchAst(
                 new AttributeNode
                 {
@@ -73,7 +73,7 @@ namespace Scoop.Tests.Parsing
         public void Attribute_NoArgsParens()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseAttributes(@"[MyAttr()]").First();
+            var result = target.Attributes.Parse(@"[MyAttr()]").First();
             result.Should().MatchAst(
                 new AttributeNode
                 {
@@ -87,7 +87,7 @@ namespace Scoop.Tests.Parsing
         public void Attribute_PositionalArgs()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseAttributes(@"[MyAttr(1, 2, 3)]").First();
+            var result = target.Attributes.Parse(@"[MyAttr(1, 2, 3)]").First();
             result.Should().MatchAst(
                 new AttributeNode
                 {
@@ -107,7 +107,7 @@ namespace Scoop.Tests.Parsing
         public void Attribute_NamedArgs()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseAttributes(@"[MyAttr(test = 1)]").First();
+            var result = target.Attributes.Parse(@"[MyAttr(test = 1)]").First();
             result.Should().MatchAst(
                 new AttributeNode
                 {
@@ -130,7 +130,7 @@ namespace Scoop.Tests.Parsing
         public void Attribute_OnClass()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 [MyAttr]
 public class MyClass 
 { 
@@ -157,7 +157,7 @@ public class MyClass
         public void Attribute_OnClassMethod()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClass(@"
+            var result = target.Classes.Parse(@"
 public class MyClass 
 {
     [MyAttrA]
@@ -213,7 +213,7 @@ public class MyClass
         public void Attribute_OnInterface()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseInterface(@"
+            var result = target.Interfaces.Parse(@"
 [MyAttr]
 public interface MyInterface 
 { 
@@ -239,7 +239,7 @@ public interface MyInterface
         public void Attribute_OnMethodParameter()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseClassMember(@"
+            var result = target.ClassMembers.Parse(@"
 public void MyMethod([MyAttr] int x)
 {
 }");
@@ -274,7 +274,7 @@ public void MyMethod([MyAttr] int x)
         public void Attribute_OnEnum()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseEnum("[MyAttr] public enum MyEnum { }");
+            var result = target.Enums.Parse("[MyAttr] public enum MyEnum { }");
             result.Should().MatchAst(
                 new EnumNode
                 {
@@ -296,7 +296,7 @@ public void MyMethod([MyAttr] int x)
         public void Attribute_OnEnumMember()
         {
             var target = TestSuite.GetScoopGrammar();
-            var result = target.ParseEnum(@" 
+            var result = target.Enums.Parse(@" 
 public enum MyEnum 
 {
     [MyAttr]

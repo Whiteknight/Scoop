@@ -48,7 +48,7 @@ namespace Scoop.Tokenization
                 return;
             }
 
-            throw ParsingException.UnexpectedCharacter('"', c, _chars.GetLocation());
+            throw TokenizingException.UnexpectedCharacter('"', c, _chars.GetLocation());
         }
 
         private enum StringReadState
@@ -87,7 +87,7 @@ namespace Scoop.Tokenization
                     return;
                 var c = _chars.GetNext();
                 if (c == '\0')
-                    throw ParsingException.UnexpectedEndOfInput(l);
+                    throw TokenizingException.UnexpectedEndOfInput(l);
                 chars.Add(c);
 
                 switch (current)

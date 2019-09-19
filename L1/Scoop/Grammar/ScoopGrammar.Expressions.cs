@@ -5,7 +5,7 @@ using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 using static Scoop.Parsers.ScoopParsers;
 
-namespace Scoop
+namespace Scoop.Grammar
 {
     public partial class ScoopGrammar
     {
