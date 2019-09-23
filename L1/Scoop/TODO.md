@@ -1,27 +1,29 @@
 ﻿# TODO
 
-
-## Items we might want in L1
-
-These items we do want to have, though it's not clear whether to put them in L1
-or save them for after L2 cutover
-
-1. Multi-dimensional array types
-1. partial methods?
-1. "try"/"catch"/"when"/"finally"/re"throw;" (If we want these as-is, put them in L1. Otherwise, put a replacement in L2)
-1. "in"/"out" generic type param modifiers
-1. "yield" enumerable methods?
-
 ## L2 Items
 
 These items are planned for L2
 
+### C# Syntax Features
+
+These are items from basic C# syntax we might want to recreate:
+
+1. Multi-dimensional array types
+1. partial methods?
+1. "in"/"out" generic type param modifiers
+1. "yield" enumerable methods?
+
+### Transpiler Infrastructure
+
 1. Validation visitor
-1. In-place tree updating for visitors
-1. Syntax for easy explicit typing of variable declarations
-1. Syntax for easy casting
+2. 1. In-place tree updating for visitors
+
+### New Scoop Syntax
+
+1. "try"/"catch"/"when"/"finally"/re"throw;" replacement
 1. factory/filter/strategy methods
 1. Named constructors
+1. New extension method syntax?
 
 ## Probably not going to do
 
