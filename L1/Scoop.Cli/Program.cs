@@ -3,11 +3,11 @@ using System.IO;
 
 namespace Scoop.Cli
 {
-    class Program
+    public static class Program
     {
         private const string _extension = ".scl1";
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             // TODO: Option to invoke roslyn and generate the .dll or .exe?
             // TODO: Option to dump to console instead of write to outfile?
@@ -22,7 +22,7 @@ namespace Scoop.Cli
                 TranspileFile(file);
         }
 
-        static void SearchFilesRecursively(DirectoryInfo currentDirectory)
+        private static void SearchFilesRecursively(DirectoryInfo currentDirectory)
         {
             foreach (var file in currentDirectory.EnumerateFiles("*" + _extension))
                 TranspileFile(file.FullName);
@@ -34,7 +34,7 @@ namespace Scoop.Cli
             }
         }
 
-        static void TranspileFile(string fileName)
+        private static void TranspileFile(string fileName)
         {
             Console.WriteLine(fileName);
             var result = ScoopTranspiler.TranspileFile(fileName);

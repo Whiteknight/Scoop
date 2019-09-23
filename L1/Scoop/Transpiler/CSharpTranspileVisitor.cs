@@ -9,7 +9,7 @@ namespace Scoop.Transpiler
         public AstNode VisitIndexerInitializer(IndexerInitializerNode n)
         {
             Append("[");
-            Visit(n.Arguments.First());
+            Visit(n.Arguments[0]);
             foreach (var a in n.Arguments.Skip(1))
             {
                 Append(", ");
@@ -40,7 +40,7 @@ namespace Scoop.Transpiler
             if (!n.Arguments.IsNullOrEmpty())
             {
                 Append("(");
-                Visit(n.Arguments.First());
+                Visit(n.Arguments[0]);
                 foreach (var a in n.Arguments.Skip(1))
                 {
                     Append(", ");
@@ -102,10 +102,10 @@ namespace Scoop.Transpiler
             Append("sealed");
             if (n.Modifiers != null)
             {
-                for (int i = 0; i < n.Modifiers.Count; i++)
+                foreach (var mod in n.Modifiers)
                 {
                     Append(" ");
-                    Visit(n.Modifiers[i]);
+                    Visit(mod);
                 }
             }
 
@@ -117,7 +117,7 @@ namespace Scoop.Transpiler
             {
                 Append("<");
                 Visit(n.GenericTypeParameters[0]);
-                for (int i = 1; i < n.GenericTypeParameters.Count; i++)
+                for (var i = 1; i < n.GenericTypeParameters.Count; i++)
                 {
                     Append(", ");
                     Visit(n.GenericTypeParameters[i]);
@@ -130,7 +130,7 @@ namespace Scoop.Transpiler
             {
                 Append(": ");
                 Visit(n.Interfaces[0]);
-                for (int i = 1; i < n.Interfaces.Count; i++)
+                for (var i = 1; i < n.Interfaces.Count; i++)
                 {
                     Append(", ");
                     Visit(n.Interfaces[i]);
@@ -141,7 +141,7 @@ namespace Scoop.Transpiler
             {
                 IncreaseIndent();
                 AppendLineAndIndent();
-                Visit(n.TypeConstraints.First());
+                Visit(n.TypeConstraints[0]);
                 foreach (var tc in n.TypeConstraints.Skip(1))
                 {
                     AppendLineAndIndent();
@@ -159,8 +159,9 @@ namespace Scoop.Transpiler
             {
                 AppendLineAndIndent();
                 Visit(n.Members[0]);
-                for (int i = 1; i < n.Members.Count; i++)
+                for (var i = 1; i < n.Members.Count; i++)
                 {
+                    AppendLine();
                     AppendLineAndIndent();
                     Visit(n.Members[i]);
                 }
@@ -216,7 +217,7 @@ namespace Scoop.Transpiler
             if (!n.Parameters.IsNullOrEmpty())
             {
                 Visit(n.Parameters[0]);
-                for (int i = 1; i < n.Parameters.Count; i++)
+                for (var i = 1; i < n.Parameters.Count; i++)
                 {
                     Append(", ");
                     Visit(n.Parameters[i]);
@@ -229,7 +230,7 @@ namespace Scoop.Transpiler
                 IncreaseIndent();
                 AppendLineAndIndent();
                 Append(": this(");
-                Visit(n.ThisArgs.First());
+                Visit(n.ThisArgs[0]);
                 foreach (var a in n.ThisArgs.Skip(1))
                 {
                     Append(", ");
@@ -289,7 +290,7 @@ namespace Scoop.Transpiler
             {
                 Append("<");
                 Visit(n.GenericTypeParameters[0]);
-                for (int i = 1; i < n.GenericTypeParameters.Count; i++)
+                for (var i = 1; i < n.GenericTypeParameters.Count; i++)
                 {
                     Append(", ");
                     Visit(n.GenericTypeParameters[i]);
@@ -301,7 +302,7 @@ namespace Scoop.Transpiler
             if (!n.Parameters.IsNullOrEmpty())
             {
                 Visit(n.Parameters[0]);
-                for (int i = 1; i < n.Parameters.Count; i++)
+                for (var i = 1; i < n.Parameters.Count; i++)
                 {
                     Append(", ");
                     Visit(n.Parameters[i]);
@@ -313,7 +314,7 @@ namespace Scoop.Transpiler
             {
                 IncreaseIndent();
                 AppendLineAndIndent();
-                Visit(n.TypeConstraints.First());
+                Visit(n.TypeConstraints[0]);
                 foreach (var tc in n.TypeConstraints.Skip(1))
                 {
                     AppendLineAndIndent();
@@ -358,9 +359,9 @@ namespace Scoop.Transpiler
             Visit(n.Name);
             Append("{");
             IncreaseIndent();
-            if (n.Members.Any())
+            if (n.Members.Count > 0)
             {
-                Visit(n.Members.First());
+                Visit(n.Members[0]);
                 foreach (var m in n.Members.Skip(1))
                 {
                     AppendLineAndIndent(",");
@@ -417,7 +418,7 @@ namespace Scoop.Transpiler
             Visit(n.Instance);
             Append("[");
             Visit(n.Arguments[0]);
-            for (int i = 1; i < n.Arguments.Count; i++)
+            for (var i = 1; i < n.Arguments.Count; i++)
             {
                 Append(", ");
                 Visit(n.Arguments[i]);
@@ -456,7 +457,7 @@ namespace Scoop.Transpiler
             {
                 Append("<");
                 Visit(n.GenericTypeParameters[0]);
-                for (int i = 1; i < n.GenericTypeParameters.Count; i++)
+                for (var i = 1; i < n.GenericTypeParameters.Count; i++)
                 {
                     Append(", ");
                     Visit(n.GenericTypeParameters[i]);
@@ -469,7 +470,7 @@ namespace Scoop.Transpiler
             {
                 Append(": ");
                 Visit(n.Interfaces[0]);
-                for (int i = 1; i < n.Interfaces.Count; i++)
+                for (var i = 1; i < n.Interfaces.Count; i++)
                 {
                     Append(", ");
                     Visit(n.Interfaces[i]);
@@ -479,7 +480,7 @@ namespace Scoop.Transpiler
             {
                 IncreaseIndent();
                 AppendLineAndIndent();
-                Visit(n.TypeConstraints.First());
+                Visit(n.TypeConstraints[0]);
                 foreach (var tc in n.TypeConstraints.Skip(1))
                 {
                     AppendLineAndIndent();
@@ -510,10 +511,10 @@ namespace Scoop.Transpiler
         {
             Visit(n.Instance);
             Append("(");
-            if (n.Arguments != null && n.Arguments.Any())
+            if (!n.Arguments.IsNullOrEmpty())
             {
                 Visit(n.Arguments[0]);
-                for (int i = 1; i < n.Arguments.Count; i++)
+                for (var i = 1; i < n.Arguments.Count; i++)
                 {
                     Append(", ");
                     Visit(n.Arguments[i]);
@@ -527,7 +528,7 @@ namespace Scoop.Transpiler
         public AstNode VisitAddInitializer(AddInitializerNode n)
         {
             Append("{");
-            Visit(n.Arguments.First());
+            Visit(n.Arguments[0]);
             foreach (var a in n.Arguments.Skip(1))
             {
                 Append(", ");
@@ -546,9 +547,9 @@ namespace Scoop.Transpiler
         public AstNode VisitLambda(LambdaNode n)
         {
             Append("((");
-            if (n.Parameters.Any())
+            if (n.Parameters.Count > 0)
             {
-                Visit(n.Parameters.First());
+                Visit(n.Parameters[0]);
                 foreach (var p in n.Parameters.Skip(1))
                 {
                     Append(", ");
@@ -557,7 +558,7 @@ namespace Scoop.Transpiler
             }
 
             Append(") => ");
-            if (n.Statements == null || !n.Statements.Any())
+            if (n.Statements == null || n.Statements.Count == 0)
                 Append("{}");
             else if (n.Statements.Count == 1)
                 Visit(n.Statements[0]);
@@ -565,7 +566,7 @@ namespace Scoop.Transpiler
             {
                 Append("{");
                 IncreaseIndent();
-                
+
                 foreach (var statement in n.Statements)
                 {
                     AppendLineAndIndent();
@@ -585,10 +586,10 @@ namespace Scoop.Transpiler
         public AstNode VisitList<TNode>(ListNode<TNode> n)
             where TNode : AstNode
         {
-            if (n.Any())
+            if (n.Count > 0)
             {
                 Visit(n[0]);
-                for (int i = 1; i < n.Count; i++)
+                for (var i = 1; i < n.Count; i++)
                 {
                     Visit(n.Separator);
                     Visit(n[i]);
@@ -613,7 +614,7 @@ namespace Scoop.Transpiler
             {
                 Append("<");
                 Visit(n.GenericArguments[0]);
-                for (int i = 1; i < n.GenericArguments.Count; i++)
+                for (var i = 1; i < n.GenericArguments.Count; i++)
                 {
                     Append(", ");
                     Visit(n.GenericArguments[i]);
@@ -640,7 +641,7 @@ namespace Scoop.Transpiler
             {
                 Append("<");
                 Visit(n.GenericTypeParameters[0]);
-                for (int i = 1; i < n.GenericTypeParameters.Count; i++)
+                for (var i = 1; i < n.GenericTypeParameters.Count; i++)
                 {
                     Append(", ");
                     Visit(n.GenericTypeParameters[i]);
@@ -653,7 +654,7 @@ namespace Scoop.Transpiler
             if (!n.Parameters.IsNullOrEmpty())
             {
                 Visit(n.Parameters[0]);
-                for (int i = 1; i < n.Parameters.Count; i++)
+                for (var i = 1; i < n.Parameters.Count; i++)
                 {
                     Append(", ");
                     Visit(n.Parameters[i]);
@@ -665,7 +666,7 @@ namespace Scoop.Transpiler
             {
                 IncreaseIndent();
                 AppendLineAndIndent();
-                Visit(n.TypeConstraints.First());
+                Visit(n.TypeConstraints[0]);
                 foreach (var tc in n.TypeConstraints.Skip(1))
                 {
                     AppendLineAndIndent();
@@ -702,7 +703,7 @@ namespace Scoop.Transpiler
             {
                 Append("<");
                 Visit(n.GenericTypeParameters[0]);
-                for (int i = 1; i < n.GenericTypeParameters.Count; i++)
+                for (var i = 1; i < n.GenericTypeParameters.Count; i++)
                 {
                     Append(", ");
                     Visit(n.GenericTypeParameters[i]);
@@ -714,7 +715,7 @@ namespace Scoop.Transpiler
             if (!n.Parameters.IsNullOrEmpty())
             {
                 Visit(n.Parameters[0]);
-                for (int i = 1; i < n.Parameters.Count; i++)
+                for (var i = 1; i < n.Parameters.Count; i++)
                 {
                     Append(", ");
                     Visit(n.Parameters[i]);
@@ -726,7 +727,7 @@ namespace Scoop.Transpiler
             {
                 IncreaseIndent();
                 AppendLineAndIndent();
-                Visit(n.TypeConstraints.First());
+                Visit(n.TypeConstraints[0]);
                 foreach (var tc in n.TypeConstraints.Skip(1))
                 {
                     AppendLineAndIndent();
@@ -761,7 +762,7 @@ namespace Scoop.Transpiler
             if (!n.Declarations.IsNullOrEmpty())
             {
                 Visit(n.Declarations[0]);
-                for (int i = 1; i < n.Declarations.Count; i++)
+                for (var i = 1; i < n.Declarations.Count; i++)
                 {
                     AppendLine();
                     AppendLineAndIndent();
@@ -792,10 +793,10 @@ namespace Scoop.Transpiler
                 if (!n.Arguments.IsNullOrEmpty() || n.Initializers.IsNullOrEmpty())
                 {
                     Append("(");
-                    if (n.Arguments != null && n.Arguments.Any())
+                    if (!n.Arguments.IsNullOrEmpty())
                     {
                         Visit(n.Arguments[0]);
-                        for (int i = 1; i < n.Arguments.Count; i++)
+                        for (var i = 1; i < n.Arguments.Count; i++)
                         {
                             Append(", ");
                             Visit(n.Arguments[i]);
@@ -812,7 +813,7 @@ namespace Scoop.Transpiler
                 IncreaseIndent();
                 AppendLineAndIndent();
                 Visit(n.Initializers[0]);
-                for (int i = 1; i < n.Initializers.Count; i++)
+                for (var i = 1; i < n.Initializers.Count; i++)
                 {
                     AppendLineAndIndent(",");
                     Visit(n.Initializers[i]);
@@ -824,7 +825,6 @@ namespace Scoop.Transpiler
 
             return n;
         }
-
 
         public AstNode VisitOperator(OperatorNode n)
         {
@@ -896,11 +896,11 @@ namespace Scoop.Transpiler
         public AstNode VisitType(TypeNode n)
         {
             Visit(n.Name);
-            if (n.GenericArguments != null && n.GenericArguments.Any())
+            if (!n.GenericArguments.IsNullOrEmpty())
             {
                 Append("<");
                 Visit(n.GenericArguments[0]);
-                for (int i = 1; i < n.GenericArguments.Count; i++)
+                for (var i = 1; i < n.GenericArguments.Count; i++)
                 {
                     Append(", ");
                     Visit(n.GenericArguments[i]);
@@ -940,7 +940,7 @@ namespace Scoop.Transpiler
             Append("where ");
             Visit(n.Type);
             Append(" : ");
-            Visit(n.Constraints.First());
+            Visit(n.Constraints[0]);
             foreach (var c in n.Constraints.Skip(1))
             {
                 Append(", ");
