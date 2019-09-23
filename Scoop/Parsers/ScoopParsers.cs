@@ -64,6 +64,11 @@ namespace Scoop.Parsers
             return new InfixOperatorParser(left, operatorParser, right, producer);
         }
 
+        public static IParser<KeywordNode> Keyword(params string[] keywords)
+        {
+            return new KeywordParser(keywords);
+        }
+
         /// <summary>
         /// Parse a list of zero or more items.
         /// </summary>
@@ -76,6 +81,11 @@ namespace Scoop.Parsers
             where TOutput : AstNode
         {
             return new ListParser<TOutput, TItem>(p, produce);
+        }
+
+        public static IParser<OperatorNode> Operator(params string[] operators)
+        {
+            return new OperatorParser(operators);
         }
 
         /// <summary>

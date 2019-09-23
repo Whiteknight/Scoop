@@ -9,11 +9,11 @@ namespace Scoop.Grammar
         IParser<TypeNode> Types { get; }
         IParser<AstNode> Expressions { get; }
         IParser<AstNode> Statements { get; }
-        IParser<ListNode<AttributeNode>> Attributes { get; set; }
-        IParser<DelegateNode> Delegates { get; set; }
-        IParser<EnumNode> Enums { get; set; }
-        IParser<ClassNode> Classes { get; set; }
-        IParser<AstNode> ClassMembers { get; set; }
-        IParser<InterfaceNode> Interfaces { get; set; }
+        IParser<ListNode<AttributeNode>> Attributes { get; }
+        IParser<DelegateNode> Delegates { get; }
+        IParser<EnumNode> Enums { get; }
+        IParser<ClassNode> Classes { get; }
+        IParser<AstNode> ClassMembers { get; }
+        IParser<InterfaceNode> Interfaces { get; }
     }
 }

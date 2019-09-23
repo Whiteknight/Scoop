@@ -19,12 +19,12 @@ namespace Scoop.Grammar
         public IParser<AstNode> Expressions { get; private set; }
         public IParser<ListNode<AstNode>> ExpressionList { get; private set; }
         public IParser<AstNode> Statements { get; private set; }
-        public IParser<ListNode<AttributeNode>> Attributes { get; set; }
-        public IParser<DelegateNode> Delegates { get; set; }
-        public IParser<EnumNode> Enums { get; set; }
-        public IParser<ClassNode> Classes { get; set; }
-        public IParser<AstNode> ClassMembers { get; set; }
-        public IParser<InterfaceNode> Interfaces { get; set; }
+        public IParser<ListNode<AttributeNode>> Attributes { get; private set; }
+        public IParser<DelegateNode> Delegates { get; private set; }
+        public IParser<EnumNode> Enums { get; private set; }
+        public IParser<ClassNode> Classes { get; private set; }
+        public IParser<AstNode> ClassMembers { get; private set; }
+        public IParser<InterfaceNode> Interfaces { get; private set; }
 
 
         private IParser<AstNode> _accessModifiers;
@@ -57,26 +57,27 @@ namespace Scoop.Grammar
 
         private void Initialize()
         {
-            // Setup some parsers by reference to avoid circular references
+            // Setup some parsers by reference to avoid circular references and null-refs
+            Types = Deferred(() => _types).Named("Types");
             Expressions = Deferred(() => _expressions).Named("Expressions");
 
             // Setup some commonly-used parsers
             _identifiers = new IdentifierParser().Named("_identifiers");
             _accessModifiers = Optional(
-                new KeywordParser("public", "private")
+                Keyword("public", "private")
             ).Named("accessModifiers");
 
             // Setup some parsers for requiring operators or communicating helpful errors
-            _requiredSemicolon = Required(new OperatorParser(";"), Errors.MissingSemicolon);
-            _requiredOpenBracket = Required(new OperatorParser("{"), Errors.MissingOpenBracket);
-            _requiredCloseBracket = Required(new OperatorParser("}"), Errors.MissingCloseBracket);
-            _requiredOpenParen = Required(new OperatorParser("("), Errors.MissingOpenParen);
-            _requiredCloseParen = Required(new OperatorParser(")"), Errors.MissingCloseParen);
-            _requiredColon = Required(new OperatorParser(":"), Errors.MissingColon);
-            _requiredCloseBrace = Required(new OperatorParser("]"), Errors.MissingCloseBrace);
-            _requiredCloseAngle = Required(new OperatorParser(">"), Errors.MissingCloseAngle);
-            _requiredIdentifier = Required(new IdentifierParser(), Errors.MissingIdentifier);
-            _requiredEquals = Required(new OperatorParser("="), Errors.MissingEquals);
+            _requiredSemicolon = Required(Operator(";"), Errors.MissingSemicolon);
+            _requiredOpenBracket = Required(Operator("{"), Errors.MissingOpenBracket);
+            _requiredCloseBracket = Required(Operator("}"), Errors.MissingCloseBracket);
+            _requiredOpenParen = Required(Operator("("), Errors.MissingOpenParen);
+            _requiredCloseParen = Required(Operator(")"), Errors.MissingCloseParen);
+            _requiredColon = Required(Operator(":"), Errors.MissingColon);
+            _requiredCloseBrace = Required(Operator("]"), Errors.MissingCloseBrace);
+            _requiredCloseAngle = Required(Operator(">"), Errors.MissingCloseAngle);
+            _requiredIdentifier = Required(_identifiers, Errors.MissingIdentifier);
+            _requiredEquals = Required(Operator("="), Errors.MissingEquals);
 
             // Parsers to require certain productions or add a helpful error
             _requiredType = Required(Types, Errors.MissingType);
@@ -105,8 +106,8 @@ namespace Scoop.Grammar
             var argumentParser = First(
                 // (<identifier> "=" <expr>) | <expr>
                 Sequence(
-                    new IdentifierParser(),
-                    new OperatorParser("="),
+                    _identifiers,
+                    Operator("="),
                     // TODO: I think these expressions can only be terminals or member accesses (consts or enums, etc)
                     Expressions,
                     (name, s, expr) => new NamedArgumentNode { Name = name, Separator = s, Value = expr }
@@ -118,15 +119,15 @@ namespace Scoop.Grammar
                 // (("(" ")") | ("(" <argumentList> ")"))?
                 First(
                     Sequence(
-                        new OperatorParser("("),
-                        new OperatorParser(")"),
+                        Operator("("),
+                        Operator(")"),
                         (a, b) => ListNode<AstNode>.Default()
                     ),
                     Sequence(
-                        new OperatorParser("("),
+                        Operator("("),
                         SeparatedList(
                             argumentParser,
-                            new OperatorParser(","),
+                            Operator(","),
                             items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") }
                         ),
                         _requiredCloseParen,
@@ -139,7 +140,7 @@ namespace Scoop.Grammar
                     // (<keyword> ":")? <type> <argumentList>
                     Optional(
                         Sequence(
-                            new KeywordParser(),
+                            Keyword(),
                             _requiredColon,
                             (target, o) => target.WithUnused(o)
                         )
@@ -154,7 +155,7 @@ namespace Scoop.Grammar
                         Arguments = args as ListNode<AstNode>
                     }
                 ).Named("attribute"),
-                new OperatorParser(","),
+                Operator(","),
                 list => new ListNode<AttributeNode> { Items = list.ToList(), Separator = new OperatorNode(",") }
             ).Named("attributeList");
             Attributes = Transform(
@@ -162,7 +163,7 @@ namespace Scoop.Grammar
                     List(
                         Sequence(
                             // "[" <attributeList> "]"
-                            new OperatorParser("["),
+                            Operator("["),
                             attrParser,
                             _requiredCloseBrace,
                             (a, attrs, b) => attrs.WithUnused(a, b)
@@ -179,7 +180,7 @@ namespace Scoop.Grammar
             _dottedIdentifiers = Transform(
                 SeparatedList(
                     _identifiers,
-                    new OperatorParser("."),
+                    Operator("."),
                     items => new ListNode<IdentifierNode> { Items = items.ToList(), Separator = new OperatorNode(".") },
                     atLeastOne: true
                 ),
@@ -187,7 +188,7 @@ namespace Scoop.Grammar
             );
             // "using" <namespaceName> ";"
             var parseUsingDirective = Sequence(
-                new KeywordParser("using"),
+                Keyword("using"),
                 Required(_dottedIdentifiers, () => new DottedIdentifierNode(""), Errors.MissingNamespaceName),
                 _requiredSemicolon,
                 (a, b, c) => new UsingDirectiveNode
@@ -206,12 +207,12 @@ namespace Scoop.Grammar
             );
             var namespaceBody = First(
                 Sequence(
-                    new OperatorParser("{"),
-                    new OperatorParser("}"),
+                    Operator("{"),
+                    Operator("}"),
                     (a, b) => new ListNode<AstNode>()
                 ),
                 Sequence(
-                    new OperatorParser("{"),
+                    Operator("{"),
                     List(
                         namespaceMembers,
                         members => new ListNode<AstNode> { Items = members.ToList() }
@@ -223,7 +224,7 @@ namespace Scoop.Grammar
             );
             var parseNamespace = Sequence(
                 // TODO: assembly-level attributes
-                new KeywordParser("namespace"),
+                Keyword("namespace"),
                 Required(_dottedIdentifiers, () => new DottedIdentifierNode(""), Errors.MissingNamespaceName),
                 namespaceBody,
                 (ns, name, members) => new NamespaceNode
@@ -255,7 +256,7 @@ namespace Scoop.Grammar
                 new IdentifierParser(),
                 Optional(
                     Sequence(
-                        new OperatorParser("="),
+                        Operator("="),
                         _requiredExpression,
                         (e, expr) => expr.WithUnused(e)
                     )
@@ -272,12 +273,12 @@ namespace Scoop.Grammar
             Enums = Sequence(
                 Attributes,
                 _accessModifiers,
-                new KeywordParser("enum"),
+                Keyword("enum"),
                 _requiredIdentifier,
                 _requiredOpenBracket,
                 SeparatedList(
                     enumMember,
-                    new OperatorParser(","),
+                    Operator(","),
                     members => new ListNode<EnumMemberNode> { Items = members.ToList(), Separator = new OperatorNode(",") }
                 ),
                 _requiredCloseBracket,
@@ -298,7 +299,7 @@ namespace Scoop.Grammar
                 // <attributes> <accessModifier>? "delegate" <type> <identifier> <genericParameters>? <parameters> <typeConstraints> ";"
                 Deferred(() => Attributes),
                 _accessModifiers,
-                new KeywordParser("delegate"),
+                Keyword("delegate"),
                 _requiredType,
                 _requiredIdentifier,
                 _genericTypeParameters,
@@ -324,11 +325,11 @@ namespace Scoop.Grammar
             var inheritanceList = Optional(
                 // ":" <commaSeparatedType+>
                 Sequence(
-                    new OperatorParser(":"),
+                    Operator(":"),
                     Required(
                         SeparatedList(
                             Types,
-                            new OperatorParser(","),
+                            Operator(","),
                             types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") },
                             atLeastOne: true
                         ),
@@ -357,12 +358,12 @@ namespace Scoop.Grammar
 
             var interfaceBody = First(
                 Sequence(
-                    new OperatorParser("{"),
-                    new OperatorParser("}"),
+                    Operator("{"),
+                    Operator("}"),
                     (a, b) => new ListNode<MethodDeclareNode>().WithUnused(a, b)
                 ),
                 Sequence(
-                    new OperatorParser("{"),
+                    Operator("{"),
                     List(
                         interfaceMember,
                         members => new ListNode<MethodDeclareNode> { Items = members.ToList() }
@@ -376,7 +377,7 @@ namespace Scoop.Grammar
             Interfaces = Sequence(
                 Attributes,
                 _accessModifiers,
-                new KeywordParser("interface"),
+                Keyword("interface"),
                 _requiredIdentifier,
                 _genericTypeParameters,
                 inheritanceList,
@@ -397,7 +398,7 @@ namespace Scoop.Grammar
 
             var constants = Sequence(
                 _accessModifiers,
-                new KeywordParser("const"),
+                Keyword("const"),
                 _requiredType,
                 _requiredIdentifier,
                 _requiredEquals,
@@ -414,15 +415,15 @@ namespace Scoop.Grammar
             ).Named("constants");
 
             var exprMethodBody = Sequence(
-                new OperatorParser("=>"),
+                Operator("=>"),
                 First(
                     Sequence(
-                        new OperatorParser("{"),
-                        new OperatorParser("}"),
+                        Operator("{"),
+                        Operator("}"),
                         (a, b) => new ListNode<AstNode>().WithUnused(a, b)
                     ),
                     Sequence(
-                        new OperatorParser("{"),
+                        Operator("{"),
                         List(
                             Statements,
                             stmts => new ListNode<AstNode> { Items = stmts.ToList() }
@@ -442,12 +443,12 @@ namespace Scoop.Grammar
 
             _normalMethodBody = First(
                 Sequence(
-                    new OperatorParser("{"),
-                    new OperatorParser("}"),
+                    Operator("{"),
+                    Operator("}"),
                     (a, b) => new ListNode<AstNode>().WithUnused(a, b)
                 ),
                 Sequence(
-                    new OperatorParser("{"),
+                    Operator("{"),
                     List(
                         Statements,
                         stmts => new ListNode<AstNode> { Items = stmts.ToList() }
@@ -470,7 +471,7 @@ namespace Scoop.Grammar
                 _parameterLists,
                 Optional(
                     Sequence(
-                        new OperatorParser(":"),
+                        Operator(":"),
                         Required(new IdentifierParser("this"), Errors.MissingThis),
                         _argumentLists,
                         (a, b, args) => args.WithUnused(a, b)
@@ -494,7 +495,7 @@ namespace Scoop.Grammar
                 Attributes,
                 _accessModifiers,
                 // TODO: If we see "async" it must be a method and we should require everything else. No backtracking after that
-                Optional(new KeywordParser("async")),
+                Optional(Keyword("async")),
                 Types,
                 _identifiers,
                 _genericTypeParameters,
@@ -545,12 +546,12 @@ namespace Scoop.Grammar
 
             var classBody = First(
                 Sequence(
-                    new OperatorParser("{"),
-                    new OperatorParser("}"),
+                    Operator("{"),
+                    Operator("}"),
                     (a, b) => new ListNode<AstNode>().WithUnused(a, b)
                 ).Named("classBody.EmptyBrackets"),
                 Sequence(
-                    new OperatorParser("{"),
+                    Operator("{"),
                     List(
                         ClassMembers,
                         members => new ListNode<AstNode> { Items = members.ToList() }
@@ -564,8 +565,8 @@ namespace Scoop.Grammar
             Classes = Sequence(
                 Attributes,
                 _accessModifiers,
-                Optional(new KeywordParser("partial")),
-                new KeywordParser("class", "struct"),
+                Optional(Keyword("partial")),
+                Keyword("class", "struct"),
                 _requiredIdentifier,
                 _genericTypeParameters,
                 inheritanceList,
@@ -591,12 +592,12 @@ namespace Scoop.Grammar
             var parameter = Sequence(
                 // <attributes> "params"? <type> <ident> ("=" <expr>)?
                 Attributes,
-                Optional(new KeywordParser("params")),
+                Optional(Keyword("params")),
                 Types,
                 _requiredIdentifier,
                 Optional(
                     Sequence(
-                        new OperatorParser("="),
+                        Operator("="),
                         _requiredExpression,
                         (op, expr) => expr.WithUnused(op)
                     )
@@ -615,15 +616,15 @@ namespace Scoop.Grammar
             _parameterLists = First(
                 //("(" ")") | ("(" <commaSeparatedParameterList> ")")
                 Sequence(
-                    new OperatorParser("("),
-                    new OperatorParser(")"),
+                    Operator("("),
+                    Operator(")"),
                     (a, b) => ListNode<ParameterNode>.Default().WithUnused(a, b)
                 ),
                 Sequence(
                     _requiredOpenParen,
                     SeparatedList(
                         parameter,
-                        new OperatorParser(","),
+                        Operator(","),
                         parameters => new ListNode<ParameterNode> { Items = parameters.ToList(), Separator = new OperatorNode(",") }
                     ),
                     _requiredCloseParen,
@@ -638,7 +639,7 @@ namespace Scoop.Grammar
             var arguments = First(
                 Sequence(
                     new IdentifierParser(),
-                    new OperatorParser(":"),
+                    Operator(":"),
                     _requiredExpression,
                     (name, s, expr) => new NamedArgumentNode { Name = name, Separator = s, Value = expr }
                 ),
@@ -649,15 +650,15 @@ namespace Scoop.Grammar
                 // A required argument list
                 // "(" <commaSeparatedArgs>? ")"
                 Sequence(
-                    new OperatorParser("("),
-                    new OperatorParser(")"),
+                    Operator("("),
+                    Operator(")"),
                     (a, b) => ListNode<AstNode>.Default()
                 ),
                 Sequence(
                     _requiredOpenParen,
                     SeparatedList(
                         arguments,
-                        new OperatorParser(","),
+                        Operator(","),
                         items => new ListNode<AstNode>
                         {
                             Items = items.ToList(),
@@ -673,15 +674,15 @@ namespace Scoop.Grammar
                 // An optional argument list, is able to fail without diagnostics
                 // "(" <commaSeparatedArgs>? ")"
                 Sequence(
-                    new OperatorParser("("),
-                    new OperatorParser(")"),
+                    Operator("("),
+                    Operator(")"),
                     (a, b) => ListNode<AstNode>.Default()
                 ),
                 Sequence(
-                    new OperatorParser("("),
+                    Operator("("),
                     SeparatedList(
                         arguments,
-                        new OperatorParser(","),
+                        Operator(","),
                         items => new ListNode<AstNode>
                         {
                             Items = items.ToList(),
@@ -698,7 +699,7 @@ namespace Scoop.Grammar
         {
             var constStmtParser = Sequence(
                 // "const" <type> <ident> "=" <expression> ";"
-                new KeywordParser("const"),
+                Keyword("const"),
                 _requiredType,
                 _requiredIdentifier,
                 _requiredEquals,
@@ -716,10 +717,10 @@ namespace Scoop.Grammar
             var varDeclareParser = Sequence(
                 // <type> <ident> ("=" <expression>)? ";"
                 _declareTypes,
-                new IdentifierParser(),
+                _identifiers,
                 Optional(
                     Sequence(
-                        new OperatorParser("="),
+                        Operator("="),
                         Expressions,
                         (op, expr) => expr.WithUnused(op)
                     )
@@ -740,7 +741,7 @@ namespace Scoop.Grammar
 
             var returnStmtParser = Sequence(
                 // "return" <expression>? ";"
-                new KeywordParser("return"),
+                Keyword("return"),
                 Optional(Expressions),
                 _requiredSemicolon,
                 (r, expr, s) => new ReturnNode
@@ -752,7 +753,7 @@ namespace Scoop.Grammar
 
             var usingStmtParser = Sequence(
                 // "using" "(" <varDeclare> | <expr> ")" <statement>
-                new KeywordParser("using"),
+                Keyword("using"),
                 _requiredOpenParen,
                 First(
                     varDeclareParser,
@@ -773,7 +774,7 @@ namespace Scoop.Grammar
                 // ";" | <returnStatement> | <declaration> | <constDeclaration> | <expression>
                 // <csharpLiteral> | <usingStatement>
                 Transform(
-                    new OperatorParser(";"),
+                    Operator(";"),
                     o => new EmptyNode().WithUnused(o)
                 ).Named("emptyStmt"),
                 Token(TokenType.CSharpLiteral, x => new CSharpNode(x)),
@@ -789,21 +790,23 @@ namespace Scoop.Grammar
             ).Named("Statements");
         }
 
+        private IParser<TypeNode> _types;
+
         private void InitializeTypes()
         {
             // <typeName> ("<" <typeArray> ("," <typeArray>)* ">")?
             var typeName = Transform(
-                new IdentifierParser(),
+                _identifiers,
                 id => new TypeNode(id)
             ).Named("typeName");
 
             var genericType = First(
                 Sequence(
                     typeName,
-                    new OperatorParser("<"),
+                    Operator("<"),
                     SeparatedList(
                         Types,
-                        new OperatorParser(","),
+                        Operator(","),
                         list =>
                         {
                             var typeList = new ListNode<TypeNode>
@@ -826,16 +829,16 @@ namespace Scoop.Grammar
 
             var subtype = SeparatedList(
                 genericType,
-                new OperatorParser("."),
+                Operator("."),
                 t => new ListNode<TypeNode> { Items = t.ToList(), Separator = new OperatorNode(".") }
             ).Named("subtype");
 
             // <subtype> ("[" "]")*
-            var types = Sequence(
+            _types = Sequence(
                 subtype,
                 List(
                     Sequence(
-                        new OperatorParser("["),
+                        Operator("["),
                         // TODO: Should be able to support multi-dimensional arrays here
                         _requiredCloseBrace,
                         (a, b) => new ArrayTypeNode { Location = a.Location }.WithUnused(a, b)
@@ -862,19 +865,17 @@ namespace Scoop.Grammar
                     a[0].ArrayTypes = b.Count == 0 ? null : b;
                     return a[0];
                 }).Named("_types");
-
-            Types = Deferred(() => types).Named("Types");
         }
 
         private void InitializeDeclareTypes()
         {
             _declareTypes = First(
                 Transform(
-                    new KeywordParser("var"),
+                    Keyword("var"),
                     k => new TypeNode { Name = new IdentifierNode(k.Keyword), Location = k.Location }
                 ),
                 Transform(
-                    new KeywordParser("dynamic"),
+                    Keyword("dynamic"),
                     k => new TypeNode { Name = new IdentifierNode(k.Keyword), Location = k.Location }
                 ),
                 Types
@@ -885,10 +886,10 @@ namespace Scoop.Grammar
         {
             // TODO: Can we remove this?
             var requiredGenericTypeArguments = Sequence(
-                new OperatorParser("<"),
+                Operator("<"),
                 SeparatedList(
                     Types,
-                    new OperatorParser(","),
+                    Operator(","),
                     types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") },
                     atLeastOne: true
                 ),
@@ -898,14 +899,14 @@ namespace Scoop.Grammar
 
             _optionalGenericTypeArguments = Optional(
                 Sequence(
-                    new OperatorParser("<"),
+                    Operator("<"),
                     SeparatedList(
                         Types,
-                        new OperatorParser(","),
+                        Operator(","),
                         types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") },
                         atLeastOne: true
                     ),
-                    new OperatorParser(">"),
+                    Operator(">"),
                     (a, types, b) => types.WithUnused(a, b)
                 )
             ).Named("_optionalGenericTypeArguments");
@@ -927,10 +928,10 @@ namespace Scoop.Grammar
 
             _genericTypeParameters = First(
                 Sequence(
-                    new OperatorParser("<"),
+                    Operator("<"),
                     SeparatedList(
                         new IdentifierParser(),
-                        new OperatorParser(","),
+                        Operator(","),
                         ProduceGenericTypeParameterList),
                     _requiredCloseAngle,
                     (a, types, b) => types.WithUnused(a, b)
@@ -943,22 +944,22 @@ namespace Scoop.Grammar
         {
             var constraintList = SeparatedList(
                 First<AstNode>(
-                    new KeywordParser("class"),
+                    Keyword("class"),
                     Sequence(
-                        new KeywordParser("new"),
+                        Keyword("new"),
                         _requiredOpenParen,
                         _requiredCloseParen,
                         (n, a, b) => new KeywordNode { Keyword = "new()", Location = n.Location }.WithUnused(a, b)
                     ).Named("newConstraint"),
                     Types
                 ),
-                new OperatorParser(","),
+                Operator(","),
                 constraints => new ListNode<AstNode> { Items = constraints.ToList(), Separator = new OperatorNode(",") }
             ).Named("constraintList");
 
             _typeConstraints = List(
                 Sequence(
-                    new KeywordParser("where"),
+                    Keyword("where"),
                     _requiredIdentifier,
                     _requiredColon,
                     constraintList,
@@ -979,7 +980,7 @@ namespace Scoop.Grammar
                 Sequence(
                     // <ident> "=" <Expression>
                     _identifiers,
-                    new OperatorParser("="),
+                    Operator("="),
                     Expressions,
                     (name, e, expr) => new PropertyInitializerNode
                     {
@@ -990,18 +991,18 @@ namespace Scoop.Grammar
                 ),
                 Sequence(
                     // "[" <args> "]" "=" <Expression>
-                    new OperatorParser("["),
+                    Operator("["),
                     SeparatedList(
                         Expressions,
-                        new OperatorParser(","),
+                        Operator(","),
                         items => new ListNode<AstNode>
                         {
                             Items = items.ToList(),
                             Separator = new OperatorNode(",")
                         }
                     ),
-                    new OperatorParser("]"),
-                    new OperatorParser("="),
+                    Operator("]"),
+                    Operator("="),
                     Expressions,
                     (o, args, c, e, value) => new IndexerInitializerNode
                     {
@@ -1012,17 +1013,17 @@ namespace Scoop.Grammar
                 ),
                 Sequence(
                     // "{" <args> "}" 
-                    new OperatorParser("{"),
+                    Operator("{"),
                     SeparatedList(
                         Expressions,
-                        new OperatorParser(","),
+                        Operator(","),
                         items => new ListNode<AstNode>
                         {
                             Items = items.ToList(),
                             Separator = new OperatorNode(",")
                         }
                     ),
-                    new OperatorParser("}"),
+                    Operator("}"),
                     (o, args, c) => new AddInitializerNode
                     {
                         Location = o.Location,
@@ -1031,11 +1032,11 @@ namespace Scoop.Grammar
                 )
             );
             var initializers = Sequence(
-                new OperatorParser("{"),
+                Operator("{"),
                 First(
                     SeparatedList(
                         nonCollectionInitializer,
-                        new OperatorParser(","),
+                        Operator(","),
                         items => new ListNode<AstNode>
                         {
                             Items = items.ToList(),
@@ -1045,7 +1046,7 @@ namespace Scoop.Grammar
                     ),
                     SeparatedList(
                         Expressions,
-                        new OperatorParser(","),
+                        Operator(","),
                         items => new ListNode<AstNode>
                         {
                             Items = items.ToList(),
@@ -1054,13 +1055,13 @@ namespace Scoop.Grammar
                     ).Named("initializers.Collection"),
                     Produce(() => ListNode<AstNode>.Default()).Named("initializers.Empty")
                 ),
-                new OperatorParser("}"),
+                Operator("}"),
                 (a, inits, b) => inits.WithUnused(a, b)
             );
             _newParser = First(
                 // "new" "{" <initializers> "}"
                 Sequence(
-                    new KeywordParser("new"),
+                    Keyword("new"),
                     initializers,
                     (n, inits) => new NewNode
                     {
@@ -1070,7 +1071,7 @@ namespace Scoop.Grammar
                 ),
                 // "new" <type> "{" <initializers> "}"
                 Sequence(
-                    new KeywordParser("new"),
+                    Keyword("new"),
                     Types,
                     initializers,
                     (n, type, inits) => new NewNode
@@ -1082,7 +1083,7 @@ namespace Scoop.Grammar
                 ),
                 // "new" <type> <arguments> ("{" <initializers> "}")?
                 Sequence(
-                    new KeywordParser("new"),
+                    Keyword("new"),
                     Types,
                     _argumentLists,
                     Optional(initializers),
@@ -1105,8 +1106,8 @@ namespace Scoop.Grammar
                 // Some of these "terminal" values may themselves be productions, but
                 // are treated as a single value for the purposes of the expression parser
                 // "true" | "false" | "null" | <Identifier> | <String> | <Number> | <new> | "(" <Expression> ")"
-                new KeywordParser("true", "false", "null"),
-                new IdentifierParser(),
+                Keyword("true", "false", "null"),
+                _identifiers,
                 Token(TokenType.String, x => new StringNode(x)),
                 Token(TokenType.Character, x => new CharNode(x)),
                 Token(TokenType.Integer, x => new IntegerNode(x)),
@@ -1118,7 +1119,7 @@ namespace Scoop.Grammar
                 Token(TokenType.Double, x => new DoubleNode(x)),
                 _newParser,
                 Sequence<OperatorNode, AstNode, OperatorNode, AstNode>(
-                    new OperatorParser("("),
+                    Operator("("),
                     Deferred(() => ExpressionList),
                     _requiredCloseParen,
                     (a, expr, b) => expr.WithUnused(a, b)
@@ -1126,10 +1127,10 @@ namespace Scoop.Grammar
             ).Named("terminal");
 
             var indexers = Sequence(
-                new OperatorParser("["),
+                Operator("["),
                 SeparatedList(
                     Expressions,
-                    new OperatorParser(","),
+                    Operator(","),
                     items => new ListNode<AstNode>
                     {
                         Items = items.ToList(),
@@ -1146,7 +1147,7 @@ namespace Scoop.Grammar
                     Sequence(
                         // <terminal> ("++" | "--")
                         init,
-                        new OperatorParser("++", "--"),
+                        Operator("++", "--"),
                         (left, op) => new PostfixOperationNode
                         {
                             Location = left.Location,
@@ -1158,7 +1159,7 @@ namespace Scoop.Grammar
                         // Method Invoke
                         // <terminal> ("." | "?.") <identifier> <GenericTypeArgs>? <ArgumentList>
                         init,
-                        new OperatorParser(".", "?."),
+                        Operator(".", "?."),
                         _identifiers,
                         _optionalGenericTypeArguments,
                         _maybeArgumentLists,
@@ -1180,7 +1181,7 @@ namespace Scoop.Grammar
                         // property access
                         // <terminal> ("." | "?.") <identifier>
                         init,
-                        new OperatorParser(".", "?."),
+                        Operator(".", "?."),
                         _requiredIdentifier,
                         (left, op, name) => new MemberAccessNode
                         {
@@ -1220,7 +1221,7 @@ namespace Scoop.Grammar
             var expressionUnary = First(
                 // ("-" | "+" | "~", etc) <Unary>
                 Sequence(
-                    new OperatorParser("-", "+", "++", "--", "!", "~"),
+                    Operator("-", "+", "++", "--", "!", "~"),
                     Deferred(() => _expressionUnary),
                     (op, expr) => new PrefixOperationNode
                     {
@@ -1232,7 +1233,7 @@ namespace Scoop.Grammar
                 // "await" | "throw" <Unary>
                 Sequence(
                     Transform(
-                        new KeywordParser("await", "throw"),
+                        Keyword("await", "throw"),
                         k => new OperatorNode
                         {
                             Location = k.Location,
@@ -1249,9 +1250,9 @@ namespace Scoop.Grammar
                 ),
                 // "(" <type> ")" <Unary>
                 Sequence(
-                    new OperatorParser("("),
+                    Operator("("),
                     Types,
-                    new OperatorParser(")"),
+                    Operator(")"),
                     Deferred(() => _expressionUnary),
                     (o, type, c, expr) => new CastNode
                     {
@@ -1269,7 +1270,7 @@ namespace Scoop.Grammar
                 // Operators with * / % precidence
                 // <Unary> (<op> <Unary>)+
                 expressionUnary,
-                new OperatorParser("*", "/", "%"),
+                Operator("*", "/", "%"),
                 Required(expressionUnary, () => new EmptyNode(), Errors.MissingExpression),
                 (left, op, right) => new InfixOperationNode
                 {
@@ -1284,7 +1285,7 @@ namespace Scoop.Grammar
                 // Operators with + - precidence
                 // <multiplicative> (<op> <multiplicative>)+
                 expressionMultiplicative,
-                new OperatorParser("+", "-"),
+                Operator("+", "-"),
                 Required(expressionMultiplicative, () => new EmptyNode(), Errors.MissingExpression),
                 (left, op, right) => new InfixOperationNode
                 {
@@ -1302,7 +1303,7 @@ namespace Scoop.Grammar
                 additive =>
                     Sequence(
                         additive,
-                        new OperatorParser("as", "is"),
+                        Operator("as", "is"),
                         _requiredType,
                         Optional(_identifiers),
                         (left, op, type, name) => new TypeCoerceNode
@@ -1319,7 +1320,7 @@ namespace Scoop.Grammar
                 // Equality/comparison operators
                 // <typeCoerce> (<op> <typeCoerce>)+
                 expressionTypeCoerce,
-                new OperatorParser("==", "!=", ">=", "<=", "<", ">"),
+                Operator("==", "!=", ">=", "<=", "<", ">"),
                 Required(expressionTypeCoerce, () => new EmptyNode(), Errors.MissingExpression),
                 (left, op, right) => new InfixOperationNode
                 {
@@ -1334,7 +1335,7 @@ namespace Scoop.Grammar
                 // Bitwise operators
                 // <equality> (<op> <equality>)+
                 expressionEquality,
-                new OperatorParser("&", "^", "|"),
+                Operator("&", "^", "|"),
                 Required(expressionEquality, () => new EmptyNode(), Errors.MissingExpression),
                 (left, op, right) => new InfixOperationNode
                 {
@@ -1349,7 +1350,7 @@ namespace Scoop.Grammar
                 // Logical operators
                 // <bitwise> (<op> <bitwise>)+
                 expressionBitwise,
-                new OperatorParser("&&", "||"),
+                Operator("&&", "||"),
                 Required(expressionBitwise, () => new EmptyNode(), Errors.MissingExpression),
                 (left, op, right) => new InfixOperationNode
                 {
@@ -1364,7 +1365,7 @@ namespace Scoop.Grammar
                 // null-coalesce operator
                 // <logical> (<op> <local>)+
                 expressionLogical,
-                new OperatorParser("??"),
+                Operator("??"),
                 Required(expressionLogical, () => new EmptyNode(), Errors.MissingExpression),
                 (left, op, right) => new InfixOperationNode
                 {
@@ -1381,7 +1382,7 @@ namespace Scoop.Grammar
                 init =>
                     Sequence(
                         init,
-                        new OperatorParser("?"),
+                        Operator("?"),
                         Required(
                             Deferred(() => _expressionConditional),
                             () => new EmptyNode(),
@@ -1408,7 +1409,7 @@ namespace Scoop.Grammar
                 // <logical> (<op> <local>)+
                 // TODO: assignment operators are right associative, so this rule does chained assignments backwards
                 _expressionConditional,
-                new OperatorParser("=", "+=", "-=", "/=", "%="),
+                Operator("=", "+=", "-=", "/=", "%="),
                 _expressionConditional,
                 (left, op, right) => new InfixOperationNode
                 {
@@ -1431,22 +1432,22 @@ namespace Scoop.Grammar
                             id => new ListNode<IdentifierNode> { Separator = new OperatorNode(","), [0] = id }
                         ),
                         Sequence(
-                            new OperatorParser("("),
-                            new OperatorParser(")"),
+                            Operator("("),
+                            Operator(")"),
                             (a, b) => new ListNode<IdentifierNode> { Separator = new OperatorNode(","), Items = new List<IdentifierNode>() }
                         ),
                         Sequence(
-                            new OperatorParser("("),
+                            Operator("("),
                             SeparatedList(
                                 new IdentifierParser(),
-                                new OperatorParser(","),
+                                Operator(","),
                                 args => new ListNode<IdentifierNode> { Items = args.ToList(), Separator = new OperatorNode(",") }
                             ),
-                            new OperatorParser(")"),
+                            Operator(")"),
                             (a, items, c) => new ListNode<IdentifierNode> { Separator = new OperatorNode(","), Items = items.ToList() }
                         )
                     ),
-                    new OperatorParser("=>"),
+                    Operator("=>"),
                     First(
                         Deferred(() => _normalMethodBody),
                         Transform(
@@ -1470,7 +1471,7 @@ namespace Scoop.Grammar
 
             ExpressionList = SeparatedList(
                 Expressions,
-                new OperatorParser(","),
+                Operator(","),
                 items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") },
                 atLeastOne: true
             ).Named("ExpressionList");
