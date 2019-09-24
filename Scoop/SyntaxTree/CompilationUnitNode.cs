@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Scoop.SyntaxTree.Visiting;
 
 namespace Scoop.SyntaxTree
 {

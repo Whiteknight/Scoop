@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using Scoop.Parsers.Visiting;
 using Scoop.Tokenization;
 
 namespace Scoop.Parsers
@@ -22,8 +24,19 @@ namespace Scoop.Parsers
 
         public string Name
         {
-            get { return _name ?? _getParser().Name; }
-            set { _name = value; }
+            get => _name ?? _getParser().Name;
+            set => _name = value;
+        }
+
+        public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitDeferred(this);
+
+        public IEnumerable<IParser> GetChildren() => new IParser[] { _getParser() };
+
+        public IParser ReplaceChild(IParser find, IParser replace)
+        {
+            if (find == _getParser() && replace is IParser<TOutput> realReplace)
+                return new DeferredParser<TOutput>(() => realReplace);
+            return this;
         }
 
         public override string ToString()

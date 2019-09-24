@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using Scoop.SyntaxTree;
 using System.Linq;
+using Scoop.SyntaxTree.Visiting;
 
 namespace Scoop.Transpiler
 {

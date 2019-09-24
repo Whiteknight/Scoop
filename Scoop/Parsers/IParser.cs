@@ -1,12 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
+using Scoop.Parsers.Visiting;
 using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
-    public interface IParser<out TOutput>
+    public interface IParser
+    {
+        string Name { get; set; }
+        IParser Accept(IParserVisitorImplementation visitor);
+        IEnumerable<IParser> GetChildren();
+        IParser ReplaceChild(IParser find, IParser replace);
+    }
+
+    public interface IParser<out TOutput> : IParser
     {
         TOutput TryParse(ITokenizer t);
-        string Name { get; set; }
     }
 
     public static class ParserExtensions
@@ -41,6 +50,11 @@ namespace Scoop.Parsers
         {
             parser.Name = name;
             return parser;
+        }
+
+        public static IParser<TOutput> Replace<TOutput>(this IParser<TOutput> root, Func<IParser, bool> predicate, IParser replacement)
+        {
+            return new ReplaceParserVisitor(predicate, replacement).Visit(root) as IParser<TOutput>;
         }
     }
 }

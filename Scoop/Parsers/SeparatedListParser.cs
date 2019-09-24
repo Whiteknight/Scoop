@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Scoop.Parsers.Visiting;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
@@ -47,6 +48,20 @@ namespace Scoop.Parsers
         }
 
         public string Name { get; set; }
+
+        public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitSeparatedList(this);
+
+        public IEnumerable<IParser> GetChildren() => new[] { _itemParser, _separatorParser };
+
+        public IParser ReplaceChild(IParser find, IParser replace)
+        {
+            if (find == _itemParser && replace is IParser<TItem> itemReplace)
+                return new SeparatedListParser<TOutput, TItem>(itemReplace, _separatorParser, _produce, _atLeastOne);
+            if (find == _separatorParser && replace is IParser<AstNode> separatorReplace)
+                return new SeparatedListParser<TOutput, TItem>(_itemParser, separatorReplace, _produce, _atLeastOne);
+            return this;
+        }
+
         public override string ToString()
         {
             var typeName = this.GetType().Name;

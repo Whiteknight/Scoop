@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using Scoop.Parsers.Visiting;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
@@ -41,6 +43,21 @@ namespace Scoop.Parsers
         }
 
         public string Name { get; set; }
+
+        public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitInfix(this);
+
+        public IEnumerable<IParser> GetChildren() => new[] { _left, _operatorParser, _right };
+
+        public IParser ReplaceChild(IParser find, IParser replace)
+        {
+            if (_left == find)
+                return new InfixOperatorParser(replace as IParser<AstNode>, _operatorParser, _right, _producer);
+            if (_operatorParser == find && replace is IParser<OperatorNode> realOperator)
+                return new InfixOperatorParser(_left, realOperator, _right, _producer);
+            if (_right == find)
+                return new InfixOperatorParser(_left, _operatorParser, replace as IParser<AstNode>, _producer);
+            return this;
+        }
 
         public override string ToString()
         {

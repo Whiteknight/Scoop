@@ -1,4 +1,6 @@
-﻿namespace Scoop.SyntaxTree
+﻿using Scoop.SyntaxTree.Visiting;
+
+namespace Scoop.SyntaxTree
 {
     public class CastNode : AstNode
     {

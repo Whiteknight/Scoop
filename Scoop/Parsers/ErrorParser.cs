@@ -1,4 +1,7 @@
-﻿using Scoop.SyntaxTree;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Scoop.Parsers.Visiting;
+using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
 namespace Scoop.Parsers
@@ -27,5 +30,10 @@ namespace Scoop.Parsers
         }
 
         public string Name { get; set; }
+        public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitError(this);
+
+        public IEnumerable<IParser> GetChildren() => Enumerable.Empty<IParser>();
+
+        public IParser ReplaceChild(IParser find, IParser replace) => this;
     }
 }

@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Scoop.Parsers.Visiting;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
@@ -7,12 +10,12 @@ namespace Scoop.Parsers
     public class ApplyPostfixParser : IParser<AstNode>
     {
         private readonly IParser<AstNode> _initial;
-        private readonly Func<IParser<AstNode>, IParser<AstNode>> _produce;
+        private readonly Func<IParser<AstNode>, IParser<AstNode>> _getRight;
 
-        public ApplyPostfixParser(IParser<AstNode> initial, Func<IParser<AstNode>, IParser<AstNode>> produce)
+        public ApplyPostfixParser(IParser<AstNode> initial, Func<IParser<AstNode>, IParser<AstNode>> getRight)
         {
             _initial = initial;
-            _produce = produce;
+            _getRight = getRight;
         }
 
         public AstNode TryParse(ITokenizer t)
@@ -23,7 +26,7 @@ namespace Scoop.Parsers
             var left = new LeftParser(current);
             while (true)
             {
-                var right = _produce(left);
+                var right = _getRight(left);
                 var rhs = right.TryParse(t);
                 if (rhs == null)
                     return current;
@@ -34,6 +37,24 @@ namespace Scoop.Parsers
         }
 
         public string Name { get; set; }
+
+        public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitApplyPostfix(this);
+
+        public IEnumerable<IParser> GetChildren()
+        {
+            var left = new LeftParser(null);
+            var right = _getRight(left);
+            return new IParser[] { _initial, right };
+        }
+
+        public IParser ReplaceChild(IParser find, IParser replace)
+        {
+            if (_initial == find)
+                return new ApplyPostfixParser(find as IParser<AstNode>, _getRight);
+
+            // TODO: We need to be able to replace the right as well?
+            return this;
+        }
 
         public override string ToString()
         {
@@ -56,6 +77,11 @@ namespace Scoop.Parsers
             }
 
             public string Name { get; set; }
+            public IParser Accept(IParserVisitor visitor) => this;
+
+            public IEnumerable<IParser> GetChildren() => Enumerable.Empty<IParser>();
+
+            public IParser ReplaceChild(IParser find, IParser replace) => this;
         }
     }
 }

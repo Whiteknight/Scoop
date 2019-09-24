@@ -1,4 +1,5 @@
 ﻿using Scoop.SyntaxTree;
+using Scoop.SyntaxTree.Visiting;
 
 namespace Scoop.Transpiler
 {

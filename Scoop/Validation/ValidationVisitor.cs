@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Scoop.SyntaxTree;
+using Scoop.SyntaxTree.Visiting;
 
 namespace Scoop.Validation
 {

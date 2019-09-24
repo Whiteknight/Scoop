@@ -1,4 +1,4 @@
-﻿namespace Scoop.SyntaxTree
+﻿namespace Scoop
 {
     public class Diagnostic
     {

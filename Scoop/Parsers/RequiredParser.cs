@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using Scoop.Parsers.Visiting;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
@@ -34,6 +36,17 @@ namespace Scoop.Parsers
         }
 
         public string Name { get; set; }
+
+        public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitRequired(this);
+
+        public IEnumerable<IParser> GetChildren() => new[] { _inner };
+
+        public IParser ReplaceChild(IParser find, IParser replace)
+        {
+            if (_inner == find && replace is IParser<TOutput> realReplace)
+                return new RequiredParser<TOutput>(realReplace, _otherwise);
+            return this;
+        }
 
         public override string ToString()
         {

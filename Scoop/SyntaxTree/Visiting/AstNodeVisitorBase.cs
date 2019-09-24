@@ -1,4 +1,4 @@
-﻿namespace Scoop.SyntaxTree
+﻿namespace Scoop.SyntaxTree.Visiting
 {
     public abstract class AstNodeVisitorBase : IAstNodeVisitor, IAstNodeVisitorImplementation
     {
