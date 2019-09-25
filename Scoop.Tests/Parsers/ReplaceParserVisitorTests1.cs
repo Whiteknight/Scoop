@@ -16,17 +16,17 @@ namespace Scoop.Tests.Parsers
         {
             var parser = Sequence(
                 Operator("("),
-                Keyword("class").Named("ClassKeyword"),
+                Operator("*").Named("Star"),
                 Operator(")"),
                 (a, c, b) => c
             );
 
-            var find = parser.FindNamed("ClassKeyword");
-            var replacement = Keyword("interface");
+            var find = parser.FindNamed("Star");
+            var replacement = Operator("+");
             parser = parser.Replace(find, replacement);
-            var result = parser.Parse("(interface)");
+            var result = parser.Parse("(+)");
             result.Should().MatchAst(
-                new KeywordNode("interface")
+                new OperatorNode("+")
             );
         }
 
@@ -34,17 +34,17 @@ namespace Scoop.Tests.Parsers
         public void Replace_First()
         {
             var parser = First(
-                Keyword("struct"),
-                Keyword("class").Named("ClassKeyword"),
-                Keyword("namespace")
+                Operator("+"),
+                Operator("-").Named("Minus"),
+                Operator("*")
             );
 
-            var find = parser.FindNamed("ClassKeyword");
-            var replacement = Keyword("interface");
+            var find = parser.FindNamed("Minus");
+            var replacement = Operator("/");
             parser = parser.Replace(find, replacement);
-            var result = parser.Parse("interface");
+            var result = parser.Parse("/");
             result.Should().MatchAst(
-                new KeywordNode("interface")
+                new OperatorNode("/")
             );
         }
 

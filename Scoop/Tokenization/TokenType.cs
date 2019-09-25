@@ -6,8 +6,9 @@
 
         Whitespace,
         Comment,
-        Identifier,
-        Keyword,
+
+        // Word can be either Identifier or Keyword, depending on what is needed
+        Word,
         Operator,
         String,
         Character,

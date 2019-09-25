@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
@@ -16,6 +14,36 @@ namespace Scoop.Grammar
             Initialize();
         }
 
+        private static readonly HashSet<string> Keywords = new HashSet<string>
+        {
+            // C# Keywords which are still allowed
+            // (type names like "int" are counted as types not keywords for these purposes)
+            // This list is mostly used to help filter out valid identifiers
+            "async",
+            "await",
+            "class",
+            "const",
+            "delegate",
+            "dynamic",
+            "enum",
+            "false",
+            "interface",
+            "namespace",
+            "new",
+            "null",
+            "params",
+            "partial",
+            "private",
+            "public",
+            "return",
+            "struct",
+            "throw",
+            "true",
+            "using",
+            "var",
+            "where"
+        };
+        
         public IParser<CompilationUnitNode> CompilationUnits { get; private set; }
         public IParser<TypeNode> Types { get; private set; }
         public IParser<AstNode> Expressions { get; private set; }
@@ -27,7 +55,6 @@ namespace Scoop.Grammar
         public IParser<ClassNode> Classes { get; private set; }
         public IParser<AstNode> ClassMembers { get; private set; }
         public IParser<InterfaceNode> Interfaces { get; private set; }
-
 
         private IParser<AstNode> _accessModifiers;
         private IParser<IdentifierNode> _identifiers;
@@ -63,7 +90,7 @@ namespace Scoop.Grammar
             Expressions = Deferred(() => _expressions).Named("Expressions");
 
             // Setup some commonly-used parsers
-            _identifiers = new IdentifierParser().Named("_identifiers");
+            _identifiers = new IdentifierParser(Keywords).Named("_identifiers");
             _accessModifiers = Optional(
                 Keyword("public", "private")
             ).Named("accessModifiers");
@@ -143,7 +170,8 @@ namespace Scoop.Grammar
                     // (<keyword> ":")? <type> <argumentList>
                     Optional(
                         Sequence(
-                            Keyword(),
+                            // TODO: Review this list, we probably don't want all these
+                            Keyword("assembly", "module", "field", "event", "method", "param", "property", "return", "type"),
                             _requiredColon,
                             (target, o) => target.WithUnused(o)
                         )
@@ -258,7 +286,7 @@ namespace Scoop.Grammar
         {
             var enumMember = Sequence(
                 Attributes,
-                new IdentifierParser(),
+                _identifiers,
                 Optional(
                     Sequence(
                         Operator("="),
@@ -477,7 +505,7 @@ namespace Scoop.Grammar
                 Optional(
                     Sequence(
                         Operator(":"),
-                        Required(new IdentifierParser("this"), Errors.MissingThis),
+                        Required(new IdentifierParser(Keywords, "this"), Errors.MissingThis),
                         _argumentLists,
                         (a, b, args) => args.WithUnused(a, b)
                     )
@@ -643,7 +671,7 @@ namespace Scoop.Grammar
         {
             var arguments = First(
                 Sequence(
-                    new IdentifierParser(),
+                    _identifiers,
                     Operator(":"),
                     _requiredExpression,
                     (name, s, expr) => new NamedArgumentNode { Name = name, Separator = s, Value = expr }
@@ -935,7 +963,7 @@ namespace Scoop.Grammar
                 Sequence(
                     Operator("<"),
                     SeparatedList(
-                        new IdentifierParser(),
+                        _identifiers,
                         Operator(","),
                         ProduceGenericTypeParameterList),
                     _requiredCloseAngle,
@@ -1111,7 +1139,7 @@ namespace Scoop.Grammar
                 // Some of these "terminal" values may themselves be productions, but
                 // are treated as a single value for the purposes of the expression parser
                 // "true" | "false" | "null" | <Identifier> | <String> | <Number> | <new> | "(" <Expression> ")"
-                Keyword("true", "false", "null"),
+                Keyword("true", "false", "null", "this"),
                 _newParser,
                 _identifiers,
                 Token(TokenType.String, x => new StringNode(x)),
@@ -1449,7 +1477,7 @@ namespace Scoop.Grammar
                 Sequence(
                     First(
                         Transform(
-                            new IdentifierParser(),
+                            _identifiers,
                             id => new ListNode<IdentifierNode> { Separator = new OperatorNode(","), [0] = id }
                         ),
                         Sequence(
@@ -1460,7 +1488,7 @@ namespace Scoop.Grammar
                         Sequence(
                             Operator("("),
                             SeparatedList(
-                                new IdentifierParser(),
+                                _identifiers,
                                 Operator(","),
                                 args => new ListNode<IdentifierNode> { Items = args.ToList(), Separator = new OperatorNode(",") }
                             ),
@@ -1496,6 +1524,11 @@ namespace Scoop.Grammar
                 items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") },
                 atLeastOne: true
             ).Named("ExpressionList");
+        }
+
+        private static IParser<KeywordNode> Keyword(params string[] keywords)
+        {
+            return new KeywordParser(keywords);
         }
     }
 }

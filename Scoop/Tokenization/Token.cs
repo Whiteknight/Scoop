@@ -21,12 +21,7 @@ namespace Scoop.Tokenization
 
         public static Token Comment(string s, Location l) => new Token(s, TokenType.Comment, l);
 
-        public static Token Word(string s, Location l)
-        {
-            if (Keywords.IsKeyword(s))
-                return new Token(s, TokenType.Keyword, l);
-            return new Token(s, TokenType.Identifier, l);
-        }
+        public static Token Word(string s, Location l) => new Token(s, TokenType.Word, l);
 
         public static Token String(string s, Location l) => new Token(s, TokenType.String, l);
 
@@ -39,21 +34,6 @@ namespace Scoop.Tokenization
         public bool IsType(params TokenType[] types) => types.Any(t => Type == t);
 
         public bool Is(TokenType type, string value) => Type == type && Value == value;
-
-        public bool IsKeyword(params string[] keywords)
-        {
-            if (Type != TokenType.Keyword)
-                return false;
-            if (keywords == null || keywords.Length == 0)
-                return true;
-            foreach (var keyword in keywords)
-            {
-                if (keyword == Value)
-                    return true;
-            }
-
-            return false;
-        }
 
         public bool IsOperator(params string[] operators)
         {

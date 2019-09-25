@@ -11,17 +11,20 @@ namespace Scoop.Parsers
     /// </summary>
     public class IdentifierParser : IParser<IdentifierNode>
     {
+        private readonly HashSet<string> _keywords;
         private readonly string[] _identifiers;
 
-        public IdentifierParser(params string[] identifiers)
+        public IdentifierParser(HashSet<string> keywords, params string[] identifiers)
         {
+            _keywords = keywords;
             _identifiers = identifiers;
         }
 
         public IdentifierNode TryParse(ITokenizer t)
         {
             var id = t.Peek();
-            if (!id.IsType(TokenType.Identifier))
+            // If it's not a Word or if the value isn't a keyword, fail
+            if (!id.IsType(TokenType.Word) || _keywords.Contains(id.Value))
                 return null;
 
             if (_identifiers == null || _identifiers.Length <= 0)

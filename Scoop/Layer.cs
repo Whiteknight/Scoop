@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Scoop.Grammar;
 
 namespace Scoop

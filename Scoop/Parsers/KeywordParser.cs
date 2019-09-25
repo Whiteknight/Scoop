@@ -11,18 +11,30 @@ namespace Scoop.Parsers
     /// </summary>
     public class KeywordParser : IParser<KeywordNode>
     {
-        private readonly string[] _keywords;
+        private readonly string[] _expected;
 
-        public KeywordParser(params string[] keywords)
+        public KeywordParser(params string[] expected)
         {
-            _keywords = keywords;
+            _expected = expected;
         }
 
         public KeywordNode TryParse(ITokenizer t)
         {
-            if (!t.Peek().IsKeyword(_keywords))
+            var word = t.GetNext();
+            // It must be a keyword and it must be one of the keywords we're looking for
+            if (!word.IsType(TokenType.Word))
+            {
+                t.PutBack(word);
                 return null;
-            return new KeywordNode(t.GetNext());
+            }
+
+            if (_expected.Any() && !_expected.Contains(word.Value))
+            {
+                t.PutBack(word);
+                return null;
+            }
+
+            return new KeywordNode(word);
         }
 
         public string Name { get; set; }
