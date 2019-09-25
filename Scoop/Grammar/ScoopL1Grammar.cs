@@ -7,12 +7,14 @@ using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop.Grammar
 {
-    public class ScoopL1Grammar : IScoopGrammar
+    public class ScoopL1Grammar 
     {
         public ScoopL1Grammar()
         {
             Initialize();
         }
+
+        public static readonly ScoopL1Grammar Instance = new ScoopL1Grammar();
 
         private static readonly HashSet<string> Keywords = new HashSet<string>
         {

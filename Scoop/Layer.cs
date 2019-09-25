@@ -1,32 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
-using Scoop.Grammar;
+using Scoop.SyntaxTree;
+using Scoop.Tokenization;
 
 namespace Scoop
 {
     public class Layer
     {
-        private readonly Func<IScoopGrammar> _createGrammar;
-        private IScoopGrammar _grammar;
+        private readonly Func<ITokenizer, CompilationUnitNode> _parseFile;
 
-        public Layer(LayerType type, string name, string extension, Func<IScoopGrammar> createGrammar)
+        public Layer(LayerType type, string name, string extension, Func<ITokenizer, CompilationUnitNode> parseFile)
         {
+            _parseFile = parseFile;
             Type = type;
             Name = name;
             FileExtension = extension;
-            _createGrammar = createGrammar;
         }
 
         public LayerType Type { get; set; }
         public string Name { get; set; }
         public string FileExtension { get; set; }
 
-        public IScoopGrammar GetGrammar()
+        public CompilationUnitNode ParseFile(ITokenizer tokenizer)
         {
-            if (_grammar != null)
-                return _grammar;
-            _grammar = _createGrammar();
-            return _grammar;
+            return _parseFile(tokenizer);
         }
     }
 }

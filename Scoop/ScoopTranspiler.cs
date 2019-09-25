@@ -14,8 +14,8 @@ namespace Scoop
     {
         private static readonly IReadOnlyDictionary<LayerType, Layer> _layers = new Dictionary<LayerType, Layer>
         {
-            { LayerType.Layer1, new Layer(LayerType.Layer1, "Scoop L1", ".scl1", () => new ScoopL1Grammar()) },
-            { LayerType.Layer2, new Layer(LayerType.Layer2, "Scoop L2", ".scl2", () => new ScoopL1Grammar()) }
+            { LayerType.Layer1, new Layer(LayerType.Layer1, "Scoop L1", ".scl1", t => ScoopL1Grammar.Instance.CompilationUnits.Parse(t).GetResult()) },
+            //{ LayerType.Layer2, new Layer(LayerType.Layer2, "Scoop L2", ".scl2", () => new ScoopL1Grammar()) }
         };
 
         public static Layer GetLayer(LayerType layerType) => _layers[layerType];
@@ -27,7 +27,7 @@ namespace Scoop
             using (var source = new StreamCharacterSequence(inputFileName, Encoding.UTF8))
             {
                 var tokenizer = new Tokenizer(new TokenScanner(source));
-                ast = layer.GetGrammar().CompilationUnits.Parse(tokenizer).GetResult();
+                ast = layer.ParseFile(tokenizer);
                 ast.FileName = inputFileName;
             }
             var validateResults = ast.Validate();
