@@ -35,7 +35,7 @@ namespace Scoop.Parsers
         public IParser ReplaceChild(IParser find, IParser replace)
         {
             if (find == _getParser() && replace is IParser<TOutput> realReplace)
-                return new DeferredParser<TOutput>(() => realReplace);
+                return realReplace;
             return this;
         }
 

@@ -52,9 +52,12 @@ namespace Scoop.Parsers
             return parser;
         }
 
-        public static IParser<TOutput> Replace<TOutput>(this IParser<TOutput> root, Func<IParser, bool> predicate, IParser replacement)
-        {
-            return new ReplaceParserVisitor(predicate, replacement).Visit(root) as IParser<TOutput>;
-        }
+        public static IParser<TOutput> Replace<TOutput>(this IParser<TOutput> root, Func<IParser, bool> predicate, IParser replacement) 
+            => new ReplaceParserVisitor(predicate, replacement).Visit(root) as IParser<TOutput>;
+
+        public static IParser FindNamed(this IParser root, string name) => FindParserVisitor.Named(name, root);
+
+        public static IParser<TOutput> Replace<TOutput>(this IParser<TOutput> root, IParser find, IParser replace) 
+            => new ReplaceParserVisitor(p => p == find, replace).Visit(root) as IParser<TOutput>;
     }
 }

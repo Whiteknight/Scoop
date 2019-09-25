@@ -9,6 +9,7 @@ namespace Scoop.Parsers.Visiting
         private readonly Func<IParser, bool> _predicate;
         private readonly bool _justOne;
         private readonly List<IParser> _found;
+        private readonly HashSet<IParser> _seen;
         private bool _canStop;
 
         private FindParserVisitor(List<IParser> found, Func<IParser, bool> predicate, bool justOne)
@@ -17,12 +18,14 @@ namespace Scoop.Parsers.Visiting
             _justOne = justOne;
             _canStop = false;
             _found = found;
+            _seen = new HashSet<IParser>();
         }
 
         public static IParser Named(string name, IParser root)
         {
             var found = new List<IParser>();
-            new FindParserVisitor(found, p => p.Name == name, true).Visit(root);
+            new FindParserVisitor(found, 
+                p => p.Name == name, true).Visit(root);
             return found.FirstOrDefault();
         }
 
@@ -36,9 +39,10 @@ namespace Scoop.Parsers.Visiting
 
         public IParser Visit(IParser parser)
         {
-            if (_canStop)
+            if (_canStop || _seen.Contains(parser))
                 return parser;
 
+            _seen.Add(parser);
             if (_predicate(parser))
             {
                 _found.Add(parser);

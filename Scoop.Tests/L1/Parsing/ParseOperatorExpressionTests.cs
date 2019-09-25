@@ -261,19 +261,15 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void Unary_Multiple()
         {
-            var result = TestSuite.GetScoopGrammar().Expressions.Parse("(a)++--b");
+            var result = TestSuite.GetScoopGrammar().Expressions.Parse("(a)-b");
             result.Should().MatchAst(
                 new CastNode
                 {
                     Type = new TypeNode("a"),
                     Right = new PrefixOperationNode
                     {
-                        Operator = new OperatorNode("++"),
-                        Right = new PrefixOperationNode
-                        {
-                            Operator = new OperatorNode("--"),
-                            Right = new IdentifierNode("b")
-                        }
+                        Operator = new OperatorNode("-"),
+                        Right =  new IdentifierNode("b")
                     }
                 }
             );

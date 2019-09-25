@@ -37,9 +37,15 @@ namespace Scoop.Parsers
 
         public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitTransform(this);
 
-        public IEnumerable<IParser> GetChildren() => Enumerable.Empty<IParser>();
+        public IEnumerable<IParser> GetChildren() => new[] { _parser };
 
-        public IParser ReplaceChild(IParser find, IParser replace) => this;
+        public IParser ReplaceChild(IParser find, IParser replace)
+        {
+            if (find == _parser && replace is IParser<TInput> realReplace)
+                return new TransformParser<TOutput, TInput>(realReplace, _transform);
+            return this;
+        }
+
 
         public override string ToString()
         {

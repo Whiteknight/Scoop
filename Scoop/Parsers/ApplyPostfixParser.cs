@@ -10,12 +10,21 @@ namespace Scoop.Parsers
     public class ApplyPostfixParser : IParser<AstNode>
     {
         private readonly IParser<AstNode> _initial;
-        private readonly Func<IParser<AstNode>, IParser<AstNode>> _getRight;
+        private readonly IParser<AstNode> _right;
+        private readonly LeftParser _left;
 
         public ApplyPostfixParser(IParser<AstNode> initial, Func<IParser<AstNode>, IParser<AstNode>> getRight)
         {
             _initial = initial;
-            _getRight = getRight;
+            _left = new LeftParser();
+            _right = getRight(_left);
+        }
+
+        private ApplyPostfixParser(IParser<AstNode> initial, LeftParser left, IParser<AstNode> right)
+        {
+            _initial = initial;
+            _left = left;
+            _right = right;
         }
 
         public AstNode TryParse(ITokenizer t)
@@ -23,16 +32,16 @@ namespace Scoop.Parsers
             var current = _initial.TryParse(t);
             if (current == null)
                 return null;
-            var left = new LeftParser(current);
+
+            _left.Value = current;
             while (true)
             {
-                var right = _getRight(left);
-                var rhs = right.TryParse(t);
+                var rhs = _right.TryParse(t);
                 if (rhs == null)
                     return current;
 
                 current = rhs;
-                left = new LeftParser(current);
+                _left.Value = current;
             }
         }
 
@@ -40,19 +49,15 @@ namespace Scoop.Parsers
 
         public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitApplyPostfix(this);
 
-        public IEnumerable<IParser> GetChildren()
-        {
-            var left = new LeftParser(null);
-            var right = _getRight(left);
-            return new IParser[] { _initial, right };
-        }
+        public IEnumerable<IParser> GetChildren() => new IParser[] { _initial, _right };
 
         public IParser ReplaceChild(IParser find, IParser replace)
         {
             if (_initial == find)
-                return new ApplyPostfixParser(find as IParser<AstNode>, _getRight);
+                return new ApplyPostfixParser(replace as IParser<AstNode>, _left, _right);
+            if (_right == find)
+                return new ApplyPostfixParser(_initial, _left, replace as IParser<AstNode>);
 
-            // TODO: We need to be able to replace the right as well?
             return this;
         }
 
@@ -64,20 +69,16 @@ namespace Scoop.Parsers
 
         private class LeftParser : IParser<AstNode>
         {
-            private readonly AstNode _left;
-
-            public LeftParser(AstNode left)
-            {
-                _left = left;
-            }
+            public AstNode Value;
 
             public AstNode TryParse(ITokenizer t)
             {
-                return _left;
+                return Value;
             }
 
             public string Name { get; set; }
-            public IParser Accept(IParserVisitor visitor) => this;
+
+            public IParser Accept(IParserVisitorImplementation visitor) => this;
 
             public IEnumerable<IParser> GetChildren() => Enumerable.Empty<IParser>();
 

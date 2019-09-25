@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
@@ -53,7 +55,6 @@ namespace Scoop.Grammar
         private IParser<DottedIdentifierNode> _dottedIdentifiers;
         private IParser<AstNode> _expressions;
         private IParser<AstNode> _expressionConditional;
-        private IParser<AstNode> _expressionUnary;
 
         private void Initialize()
         {
@@ -115,6 +116,7 @@ namespace Scoop.Grammar
                 // TODO: I think these expressions can only be terminals or member accesses (consts or enums, etc)
                 Expressions
             ).Named("attributeArgument");
+
             var argumentListParser = Optional(
                 // (("(" ")") | ("(" <argumentList> ")"))?
                 First(
@@ -135,6 +137,7 @@ namespace Scoop.Grammar
                     )
                 ).Named("attributeArgumentList")
             );
+
             var attrParser = SeparatedList(
                 Sequence(
                     // (<keyword> ":")? <type> <argumentList>
@@ -158,6 +161,7 @@ namespace Scoop.Grammar
                 Operator(","),
                 list => new ListNode<AttributeNode> { Items = list.ToList(), Separator = new OperatorNode(",") }
             ).Named("attributeList");
+
             Attributes = Transform(
                 Optional(
                     List(
@@ -172,7 +176,7 @@ namespace Scoop.Grammar
                     ).Named("attributeTagList")
                 ),
                 n => n is EmptyNode ? ListNode<AttributeNode>.Default() : n as ListNode<AttributeNode>
-            );
+            ).Named("Attributes");
         }
 
         private void InitializeTopLevel()
@@ -185,9 +189,10 @@ namespace Scoop.Grammar
                     atLeastOne: true
                 ),
                 items => new DottedIdentifierNode(items.Select(i => i.Id), items.Location)
-            );
-            // "using" <namespaceName> ";"
-            var parseUsingDirective = Sequence(
+            ).Named("_dottedIdentifiers");
+
+            var usingDirectives = Sequence(
+                // "using" <namespaceName> ";"
                 Keyword("using"),
                 Required(_dottedIdentifiers, () => new DottedIdentifierNode(""), Errors.MissingNamespaceName),
                 _requiredSemicolon,
@@ -196,7 +201,7 @@ namespace Scoop.Grammar
                     Location = a.Location,
                     Namespace = b
                 }.WithUnused(a, c)
-            );
+            ).Named("usingDirectives");
 
             var namespaceMembers = First<AstNode>(
                 Token(TokenType.CSharpLiteral, t => new CSharpNode(t)),
@@ -222,7 +227,7 @@ namespace Scoop.Grammar
                 ),
                 Error<ListNode<AstNode>>(false, Errors.MissingOpenBracket)
             );
-            var parseNamespace = Sequence(
+            var namespaces = Sequence(
                 // TODO: assembly-level attributes
                 Keyword("namespace"),
                 Required(_dottedIdentifiers, () => new DottedIdentifierNode(""), Errors.MissingNamespaceName),
@@ -233,12 +238,12 @@ namespace Scoop.Grammar
                     Name = name,
                     Declarations = members
                 }.WithUnused(ns)
-            );
+            ).Named("namespaces");
             CompilationUnits = Transform(
                 List(
                     First<AstNode>(
-                        parseUsingDirective,
-                        parseNamespace
+                        usingDirectives,
+                        namespaces
                     ),
                     items => new ListNode<AstNode> { Items = items.ToList() }
                 ),
@@ -246,7 +251,7 @@ namespace Scoop.Grammar
                 {
                     Members = list
                 }
-            );
+            ).Named("CompilationUnits");
         }
 
         private void InitializeEnums()
@@ -1107,6 +1112,7 @@ namespace Scoop.Grammar
                 // are treated as a single value for the purposes of the expression parser
                 // "true" | "false" | "null" | <Identifier> | <String> | <Number> | <new> | "(" <Expression> ")"
                 Keyword("true", "false", "null"),
+                _newParser,
                 _identifiers,
                 Token(TokenType.String, x => new StringNode(x)),
                 Token(TokenType.Character, x => new CharNode(x)),
@@ -1117,7 +1123,6 @@ namespace Scoop.Grammar
                 Token(TokenType.Decimal, x => new DecimalNode(x)),
                 Token(TokenType.Float, x => new FloatNode(x)),
                 Token(TokenType.Double, x => new DoubleNode(x)),
-                _newParser,
                 Sequence<OperatorNode, AstNode, OperatorNode, AstNode>(
                     Operator("("),
                     Deferred(() => ExpressionList),
@@ -1219,10 +1224,10 @@ namespace Scoop.Grammar
             ).Named("postfix");
 
             var expressionUnary = First(
-                // ("-" | "+" | "~", etc) <Unary>
+                // prefix ++ and -- cannot be combined with other prefix operators
                 Sequence(
-                    Operator("-", "+", "++", "--", "!", "~"),
-                    Deferred(() => _expressionUnary),
+                    Operator("++", "--"),
+                    expressionPostfix,
                     (op, expr) => new PrefixOperationNode
                     {
                         Location = op.Location,
@@ -1230,41 +1235,57 @@ namespace Scoop.Grammar
                         Right = expr
                     }
                 ),
-                // "await" | "throw" <Unary>
+                // ("-" | "+" | "~" | "!" | "await" | "throw" | <cast>)* <postfix>
                 Sequence(
-                    Transform(
-                        Keyword("await", "throw"),
-                        k => new OperatorNode
-                        {
-                            Location = k.Location,
-                            Operator = k.Keyword
-                        }
+                    List(
+                        First<AstNode>(
+                            Operator("-", "+", "!", "~"),
+                            Transform(
+                                Keyword("await", "throw"),
+                                k => new OperatorNode(k.Keyword, k.Location)
+                            ),
+                            Sequence(
+                                Operator("("),
+                                Types,
+                                Operator(")"),
+                                (a, type, b) => type
+                            )
+                        ),
+                        ops => new ListNode<AstNode> { Items = ops.ToList() }
                     ),
-                    Deferred(() => _expressionUnary),
-                    (op, expr) => new PrefixOperationNode
+                    expressionPostfix,
+                    (ops, expr) =>
                     {
-                        Location = op.Location,
-                        Operator = op,
-                        Right = expr
+                        var current = expr;
+                        for (int i = ops.Items.Count - 1; i >= 0; i--)
+                        {
+                            var prefix = ops[i];
+                            if (prefix is OperatorNode op)
+                            {
+                                current = new PrefixOperationNode
+                                {
+                                    Location = op.Location,
+                                    Operator = op,
+                                    Right = current
+                                };
+                            }
+                            else if (prefix is TypeNode type)
+                            {
+                                current = new CastNode
+                                {
+                                    Location = type.Location,
+                                    Type = type,
+                                    Right = current
+                                };
+                            }
+                        }
+
+                        return current;
                     }
-                ),
-                // "(" <type> ")" <Unary>
-                Sequence(
-                    Operator("("),
-                    Types,
-                    Operator(")"),
-                    Deferred(() => _expressionUnary),
-                    (o, type, c, expr) => new CastNode
-                    {
-                        Location = o.Location,
-                        Type = type,
-                        Right = expr
-                    }.WithUnused(o, c)
                 ),
                 // <postfix>
                 expressionPostfix
             ).Named("unary");
-            _expressionUnary = expressionUnary;
 
             var expressionMultiplicative = Infix(
                 // Operators with * / % precidence
