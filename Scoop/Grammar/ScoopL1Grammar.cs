@@ -576,7 +576,11 @@ namespace Scoop.Grammar
                 constants,
                 fields,
                 methods,
-                constructors
+                Replaceable(Fail<AstNode>()).Named("Method1"),
+                Replaceable(Fail<AstNode>()).Named("Method2"),
+                constructors,
+                Replaceable(Fail<AstNode>()).Named("Constructor1"),
+                Replaceable(Fail<AstNode>()).Named("Constructor2")
             ).Named("ClassMembers");
 
             var classBody = First(
@@ -1093,42 +1097,46 @@ namespace Scoop.Grammar
                 Operator("}"),
                 (a, inits, b) => inits.WithUnused(a, b)
             );
-            _newParser = First(
-                // "new" "{" <initializers> "}"
-                Sequence(
-                    Keyword("new"),
-                    initializers,
-                    (n, inits) => new NewNode
-                    {
-                        Location = n.Location,
-                        Initializers = inits
-                    }
-                ),
-                // "new" <type> "{" <initializers> "}"
-                Sequence(
-                    Keyword("new"),
-                    Types,
-                    initializers,
-                    (n, type, inits) => new NewNode
-                    {
-                        Location = n.Location,
-                        Type = type,
-                        Initializers = inits
-                    }
-                ),
-                // "new" <type> <arguments> ("{" <initializers> "}")?
-                Sequence(
-                    Keyword("new"),
-                    Types,
-                    _argumentLists,
-                    Optional(initializers),
-                    (n, type, args, inits) => new NewNode
-                    {
-                        Location = n.Location,
-                        Type = type,
-                        Arguments = args,
-                        Initializers = inits as ListNode<AstNode>
-                    }
+            _newParser = Replaceable(
+                First(
+                    // "new" "{" <initializers> "}"
+                    Sequence(
+                        Keyword("new"),
+                        initializers,
+                        (n, inits) => new NewNode
+                        {
+                            Location = n.Location,
+                            Initializers = inits
+                        }
+                    ),
+                    // "new" <type> "{" <initializers> "}"
+                    Sequence(
+                        Keyword("new"),
+                        Types,
+                        initializers,
+                        (n, type, inits) => new NewNode
+                        {
+                            Location = n.Location,
+                            Type = type,
+                            Initializers = inits
+                        }
+                    ),
+                    // "new" <type> <arguments> ("{" <initializers> "}")?
+                    Sequence(
+                        Keyword("new"),
+                        Types,
+                        _argumentLists,
+                        Optional(initializers),
+                        (n, type, args, inits) => new NewNode
+                        {
+                            Location = n.Location,
+                            Type = type,
+                            Arguments = args,
+                            Initializers = inits as ListNode<AstNode>
+                        }
+                    ),
+                    Replaceable(Fail<NewNode>()).Named("New1"),
+                    Replaceable(Fail<NewNode>()).Named("New2")
                 )
             ).Named("new");
         }

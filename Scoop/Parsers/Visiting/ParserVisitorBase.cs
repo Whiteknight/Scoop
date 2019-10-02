@@ -75,6 +75,11 @@ namespace Scoop.Parsers.Visiting
             return p;
         }
 
+        public virtual IParser<TOutput> VisitReplaceable<TOutput>(ReplaceableParser<TOutput> p)
+        {
+            return p;
+        }
+
         public virtual IParser<TOutput> VisitRequired<TOutput>(RequiredParser<TOutput> p) 
             where TOutput : AstNode
         {

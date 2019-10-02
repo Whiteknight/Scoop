@@ -25,6 +25,7 @@ namespace Scoop.Parsers.Visiting
         IParser<OperatorNode> VisitOperator(OperatorParser p);
         IParser<AstNode> VisitOptional(OptionalParser p);
         IParser<TOutput> VisitProduce<TOutput>(ProduceParser<TOutput> p);
+        IParser<TOutput> VisitReplaceable<TOutput>(ReplaceableParser<TOutput> p);
         IParser<TOutput> VisitRequired<TOutput>(RequiredParser<TOutput> p) 
             where TOutput : AstNode;
 

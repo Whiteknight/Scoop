@@ -25,7 +25,8 @@ namespace Scoop.Parsers
         }
 
         /// <summary>
-        /// Return a node which represents an error in the parse
+        /// Return a node which represents an error in the parse. Returns a synthetic node
+        /// with diagnostic information about the underlying syntax being missing
         /// </summary>
         /// <typeparam name="TOutput"></typeparam>
         /// <param name="consumeOne"></param>
@@ -35,6 +36,17 @@ namespace Scoop.Parsers
             where TOutput : AstNode, new()
         {
             return new ErrorParser<TOutput>(consumeOne, errorMessage);
+        }
+
+        /// <summary>
+        /// Always returns null/failure. Useful to create a placeholder in the tree where
+        /// we may want to make a replacement later
+        /// </summary>
+        /// <typeparam name="TOutput"></typeparam>
+        /// <returns></returns>
+        public static IParser<TOutput> Fail<TOutput>()
+        {
+            return new ProduceParser<TOutput>(() => default(TOutput));
         }
 
         /// <summary>
@@ -103,6 +115,11 @@ namespace Scoop.Parsers
         public static IParser<TOutput> Produce<TOutput>(Func<TOutput> produce)
         {
             return new ProduceParser<TOutput>(produce);
+        }
+
+        public static IParser<TOutput> Replaceable<TOutput>(IParser<TOutput> defaultValue)
+        {
+            return new ReplaceableParser<TOutput>(defaultValue);
         }
 
         /// <summary>
