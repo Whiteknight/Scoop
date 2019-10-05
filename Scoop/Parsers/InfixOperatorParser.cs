@@ -26,18 +26,18 @@ namespace Scoop.Parsers
             _producer = producer;
         }
 
-        public AstNode TryParse(ITokenizer t)
+        public AstNode Parse(ITokenizer t)
         {
-            var left = _left.TryParse(t);
+            var left = _left.Parse(t);
             if (left == null)
                 return null;
 
             while (true)
             {
-                var op = _operatorParser.TryParse(t);
+                var op = _operatorParser.Parse(t);
                 if (op == null)
                     return left;
-                var right = _right.TryParse(t) ?? new EmptyNode().WithDiagnostics(t.Peek().Location, "Missing right-hand expression for operator " + op.Operator);
+                var right = _right.Parse(t) ?? new EmptyNode().WithDiagnostics(t.Peek().Location, "Missing right-hand expression for operator " + op.Operator);
                 left = _producer(left, op, right);
             }
         }

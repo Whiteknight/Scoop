@@ -18,15 +18,9 @@ namespace Scoop.Parsers
             _getParser = getParser;
         }
 
-        public TOutput TryParse(ITokenizer t) => _getParser().TryParse(t);
+        public TOutput Parse(ITokenizer t) => _getParser().Parse(t);
 
-        private string _name;
-
-        public string Name
-        {
-            get => _name ?? _getParser().Name;
-            set => _name = value;
-        }
+        public string Name { get; set; }
 
         public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitDeferred(this);
 

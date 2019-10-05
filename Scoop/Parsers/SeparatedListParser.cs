@@ -29,17 +29,17 @@ namespace Scoop.Parsers
             _atLeastOne = atLeastOne;
         }
 
-        public ListNode<TOutput> TryParse(ITokenizer t)
+        public ListNode<TOutput> Parse(ITokenizer t)
         {
             var items = new List<TItem>();
-            var result = _itemParser.TryParse(t);
+            var result = _itemParser.Parse(t);
             if (result == null)
                 return _atLeastOne ? null : _produce(items);
             items.Add(result);
 
-            while (_separatorParser.TryParse(t) != null)
+            while (_separatorParser.Parse(t) != null)
             {
-                result = _itemParser.TryParse(t);
+                result = _itemParser.Parse(t);
                 if (result == null)
                     return null;
                 items.Add(result);

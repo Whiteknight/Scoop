@@ -20,7 +20,7 @@ namespace Scoop.Parsers
             _produce = produce;
         }
 
-        public TOutput TryParse(ITokenizer t)
+        public TOutput Parse(ITokenizer t)
         {
             return _produce();
         }

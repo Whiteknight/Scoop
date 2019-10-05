@@ -22,15 +22,20 @@ namespace Scoop.Parsers
             _produce = produce;
         }
 
-        public TOutput TryParse(ITokenizer t)
+        public TOutput Parse(ITokenizer t)
         {
+            t = t.Mark();
             var outputs = new AstNode[_parsers.Count];
             for (int i = 0; i < _parsers.Count; i++)
             {
                 var result = _parsers[i].Parse(t);
-                if (!result.IsSuccess)
+                if (result == null)
+                {
+                    (t as WindowTokenizer)?.Rewind();
                     return default;
-                outputs[i] = result.GetResult();
+                }
+
+                outputs[i] = result;
             }
             return _produce(outputs);
         }

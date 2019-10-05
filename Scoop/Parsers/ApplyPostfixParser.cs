@@ -27,16 +27,16 @@ namespace Scoop.Parsers
             _right = right;
         }
 
-        public AstNode TryParse(ITokenizer t)
+        public AstNode Parse(ITokenizer t)
         {
-            var current = _initial.TryParse(t);
+            var current = _initial.Parse(t);
             if (current == null)
                 return null;
 
             _left.Value = current;
             while (true)
             {
-                var rhs = _right.TryParse(t);
+                var rhs = _right.Parse(t);
                 if (rhs == null)
                     return current;
 
@@ -71,7 +71,7 @@ namespace Scoop.Parsers
         {
             public AstNode Value;
 
-            public AstNode TryParse(ITokenizer t)
+            public AstNode Parse(ITokenizer t)
             {
                 return Value;
             }

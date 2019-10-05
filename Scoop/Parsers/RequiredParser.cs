@@ -24,12 +24,11 @@ namespace Scoop.Parsers
             _otherwise = otherwise;
         }
 
-        public TOutput TryParse(ITokenizer t)
+        public TOutput Parse(ITokenizer t)
         {
-            // .Parse() here so _inner rewinds on failure
             var result = _inner.Parse(t);
-            if (result.IsSuccess)
-                return result.Value;
+            if (result != null)
+                return result;
 
             // Otherwise, create the fallback production at the location where _inner would have started
             return _otherwise(t.Peek().Location);

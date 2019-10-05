@@ -21,25 +21,17 @@ namespace Scoop.Parsers
             _getDefault = getDefault ?? (() => new EmptyNode());
         }
 
-        public AstNode TryParse(ITokenizer t)
+        public AstNode Parse(ITokenizer t)
         {
-            try
-            {
-                var result = _parser.Parse(t);
-                return result.IsSuccess ? result.GetResult() : _getDefault();
-            }
-            catch
-            {
-                return _getDefault();
-            }
+            var result = _parser.Parse(t);
+            return result ?? _getDefault();
         }
 
         public string Name { get; set; }
 
         public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitOptional(this);
 
-        public IEnumerable<IParser> GetChildren() => 
-            new[] { _parser };
+        public IEnumerable<IParser> GetChildren() => new[] { _parser };
 
         public IParser ReplaceChild(IParser find, IParser replace)
         {

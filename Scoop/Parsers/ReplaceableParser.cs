@@ -17,8 +17,7 @@ namespace Scoop.Parsers
             _value = defaultValue;
         }
 
-        public TOutput TryParse(ITokenizer t) => 
-            _value.TryParse(t);
+        public TOutput Parse(ITokenizer t) => _value.Parse(t);
 
         public string Name { get; set; }
 

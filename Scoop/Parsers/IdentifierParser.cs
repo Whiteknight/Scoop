@@ -20,14 +20,14 @@ namespace Scoop.Parsers
             _identifiers = identifiers;
         }
 
-        public IdentifierNode TryParse(ITokenizer t)
+        public IdentifierNode Parse(ITokenizer t)
         {
             var id = t.Peek();
             // If it's not a Word or if the value isn't a keyword, fail
             if (!id.IsType(TokenType.Word) || _keywords.Contains(id.Value))
                 return null;
 
-            if (_identifiers == null || _identifiers.Length <= 0)
+            if (_identifiers == null || _identifiers.Length == 0)
                 return new IdentifierNode(t.GetNext());
 
             if (_identifiers.Any(identifier => identifier == id.Value))
@@ -37,6 +37,7 @@ namespace Scoop.Parsers
         }
 
         public string Name { get; set; }
+
         public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitIdentifier(this);
 
         public IEnumerable<IParser> GetChildren() => Enumerable.Empty<IParser>();

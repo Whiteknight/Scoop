@@ -23,11 +23,11 @@ namespace Scoop.Parsers
             _produce = produce;
         }
 
-        public TOutput TryParse(ITokenizer t)
+        public TOutput Parse(ITokenizer t)
         {
             if (t.Peek().IsType(_type))
                 return _produce(t.GetNext());
-            return null as TOutput;
+            return null;
         }
 
         public string Name { get; set; }

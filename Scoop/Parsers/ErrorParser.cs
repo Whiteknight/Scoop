@@ -22,7 +22,7 @@ namespace Scoop.Parsers
             _errorMessage = errorMessage;
         }
 
-        public TOutput TryParse(ITokenizer t)
+        public TOutput Parse(ITokenizer t)
         {
             if (_consumeOne)
                 t.Advance();
@@ -30,6 +30,7 @@ namespace Scoop.Parsers
         }
 
         public string Name { get; set; }
+
         public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitError(this);
 
         public IEnumerable<IParser> GetChildren() => Enumerable.Empty<IParser>();

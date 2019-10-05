@@ -18,7 +18,7 @@ namespace Scoop.Parsers
             _operators = operators;
         }
 
-        public OperatorNode TryParse(ITokenizer t)
+        public OperatorNode Parse(ITokenizer t)
         {
             if (!t.Peek().IsOperator(_operators))
                 return null;

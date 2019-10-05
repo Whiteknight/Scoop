@@ -18,23 +18,16 @@ namespace Scoop.Parsers
             _expected = expected;
         }
 
-        public KeywordNode TryParse(ITokenizer t)
+        public KeywordNode Parse(ITokenizer t)
         {
-            var word = t.GetNext();
-            // It must be a keyword and it must be one of the keywords we're looking for
+            var word = t.Peek();
             if (!word.IsType(TokenType.Word))
-            {
-                t.PutBack(word);
                 return null;
-            }
 
             if (_expected.Any() && !_expected.Contains(word.Value))
-            {
-                t.PutBack(word);
                 return null;
-            }
 
-            return new KeywordNode(word);
+            return new KeywordNode(t.GetNext());
         }
 
         public string Name { get; set; }

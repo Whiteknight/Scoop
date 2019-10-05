@@ -24,12 +24,12 @@ namespace Scoop.Parsers
             _produce = produce;
         }
 
-        public ListNode<TOutput> TryParse(ITokenizer t)
+        public ListNode<TOutput> Parse(ITokenizer t)
         {
             var items = new List<TItem>();
             while (true)
             {
-                var result = _parser.TryParse(t);
+                var result = _parser.Parse(t);
                 if (result == null)
                     break;
                 items.Add(result);

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Scoop.Parsers.Visiting;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
@@ -25,12 +24,12 @@ namespace Scoop.Parsers
             _transform = transform;
         }
 
-        public TOutput TryParse(ITokenizer t)
+        public TOutput Parse(ITokenizer t)
         {
             var result = _parser.Parse(t);
-            if (!result.IsSuccess)
+            if (result == null)
                 return default;
-            return _transform(result.Value);
+            return _transform(result);
         }
 
         public string Name { get; set; }

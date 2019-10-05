@@ -22,19 +22,21 @@ namespace Scoop.Parsers
             _parsers = parsers;
         }
 
-        public TOutput TryParse(ITokenizer t)
+        public TOutput Parse(ITokenizer t)
         {
             for (int i = 0; i < _parsers.Count; i++)
             {
-                var result = _parsers[i].Parse(t);
-                if (result.IsSuccess)
-                    return result.Value as TOutput;
+                var parser = _parsers[i];
+                var result = parser.Parse(t);
+                if (result != null)
+                    return result as TOutput;
             }
 
             return null;
         }
 
         public string Name { get; set; }
+
         public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitFirst(this);
 
         public IEnumerable<IParser> GetChildren() => _parsers;
