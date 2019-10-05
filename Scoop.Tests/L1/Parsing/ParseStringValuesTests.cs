@@ -11,7 +11,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void String_Test()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse("\"test\"");
             result.Should().MatchAst(
                 new StringNode("\"test\"")
@@ -21,7 +21,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void String_EscapedQuote()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse("\"test\\\"\"");
             result.Should().MatchAst(
                 new StringNode("\"test\\\"\"")
@@ -31,7 +31,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void BlockString_Test()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse("@\"test\"");
             result.Should().MatchAst(
                 new StringNode("@\"test\"")
@@ -41,7 +41,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void BlockString_Quote()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse("@\"test\"\"\"");
             result.Should().MatchAst(
                 new StringNode("@\"test\"\"\"")
@@ -51,7 +51,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void InterpolatedString_Test()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse("$\"test\"");
             result.Should().MatchAst(
                 new StringNode("$\"test\"")
@@ -61,7 +61,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void InterpolatedString_EscapedQuote()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse("$\"test\\\"\"");
             result.Should().MatchAst(
                 new StringNode("$\"test\\\"\"")
@@ -71,7 +71,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void InterpolatedString_Int()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse("$\"{5}\"");
             result.Should().MatchAst(
                 new StringNode("$\"{5}\"")
@@ -81,7 +81,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void InterpolatedString_NestedString()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse("$\"{\"test\"}\"");
             result.Should().MatchAst(
                 new StringNode("$\"{\"test\"}\"")
@@ -91,7 +91,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void InterpolatedString_NestedBlock()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse("$\"{@\"test\"}\"");
             result.Should().MatchAst(
                 new StringNode("$\"{@\"test\"}\"")
@@ -101,7 +101,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void InterpolatedString_NestedInterpBlock()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse("$\"{$@\"test\"}\"");
             result.Should().MatchAst(
                 new StringNode("$\"{$@\"test\"}\"")
@@ -111,7 +111,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void InterpolatedString_NestedInterp()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse("$\"{$\"test\"}\"");
             result.Should().MatchAst(
                 new StringNode("$\"{$\"test\"}\"")
@@ -121,7 +121,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void InterpolatedBlockString_Test()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse("$@\"test\"");
             result.Should().MatchAst(
                 new StringNode("$@\"test\"")
@@ -131,7 +131,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void InterpolatedBlockString_Quote()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse("$@\"test\"\"\"");
             result.Should().MatchAst(
                 new StringNode("$@\"test\"\"\"")
@@ -141,7 +141,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void InterpolatedBlockString_NestedInteger()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse("$@\"{5}\"");
             result.Should().MatchAst(
                 new StringNode("$@\"{5}\"")

@@ -11,7 +11,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void MemberInvoke_GenericArguments()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse(@"a.b<c>()");
             result.Should().MatchAst(
                 new InvokeNode
@@ -35,7 +35,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void MemberInvoke_GenericMethodChain()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse(@"e.First<List<int>>().First<int>()");
             result.Should().MatchAst(
                 new InvokeNode
@@ -83,7 +83,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void Member_LessThan()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Expressions.Parse(@"a.b<c");
             result.Should().MatchAst(
                 new InfixOperationNode

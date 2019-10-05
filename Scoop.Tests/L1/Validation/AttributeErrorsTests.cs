@@ -13,7 +13,7 @@ namespace Scoop.Tests.L1.Validation
         {
             const string syntax = @"
 [return MyAttr]";
-            var ast = TestSuite.GetScoopGrammar().Attributes.Parse(syntax);
+            var ast = TestSuite.GetGrammar().Attributes.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingColon);
@@ -24,7 +24,7 @@ namespace Scoop.Tests.L1.Validation
         {
             const string syntax = @"
 [MyAttr(]";
-            var ast = TestSuite.GetScoopGrammar().Attributes.Parse(syntax);
+            var ast = TestSuite.GetGrammar().Attributes.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseParen);
@@ -35,7 +35,7 @@ namespace Scoop.Tests.L1.Validation
         {
             const string syntax = @"
 [MyAttr";
-            var ast = TestSuite.GetScoopGrammar().Attributes.Parse(syntax);
+            var ast = TestSuite.GetGrammar().Attributes.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseBrace);

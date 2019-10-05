@@ -11,7 +11,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void ParseInterface_Test()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Interfaces.Parse("public interface MyInterface { }");
             result.Should().MatchAst(
                 new InterfaceNode
@@ -26,7 +26,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void ParseInterface_MethodDeclares()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Interfaces.Parse(@"
 public interface MyInterface 
 { 
@@ -66,7 +66,7 @@ public interface MyInterface
         [Test]
         public void ParseInterface_MethodDeclaresParameters()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Interfaces.Parse(@"
 public interface MyInterface 
 { 
@@ -123,7 +123,7 @@ public interface MyInterface
         [Test]
         public void ParseInterface_GenericInterfaceAndMethod()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Interfaces.Parse(@"
 public interface MyInterface<TA> 
 {
@@ -163,7 +163,7 @@ public interface MyInterface<TA>
         [Test]
         public void ParseInterface_InheritInterfaces()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Interfaces.Parse("public interface MyInterface : IFaceA, IFaceB { }");
             result.Should().MatchAst(
                 new InterfaceNode
@@ -190,7 +190,7 @@ public interface MyInterface<TA>
         [Test]
         public void ParseInterface_GenericInterfaceAndMethodConstraints()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Interfaces.Parse(@"
 public interface MyInterface<TA> 
     where TA : class, new()

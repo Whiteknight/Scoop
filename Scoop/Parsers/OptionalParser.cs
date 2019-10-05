@@ -38,7 +38,8 @@ namespace Scoop.Parsers
 
         public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitOptional(this);
 
-        public IEnumerable<IParser> GetChildren() => new[] { _parser };
+        public IEnumerable<IParser> GetChildren() => 
+            new[] { _parser };
 
         public IParser ReplaceChild(IParser find, IParser replace)
         {

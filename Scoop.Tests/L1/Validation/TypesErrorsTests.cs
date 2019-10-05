@@ -12,7 +12,7 @@ namespace Scoop.Tests.L1.Validation
         public void Types_EmptyGenericTypeList()
         {
             const string syntax = @"a<>";
-            var ast = TestSuite.GetScoopGrammar().Types.Parse(syntax);
+            var ast = TestSuite.GetGrammar().Types.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingType);
@@ -22,7 +22,7 @@ namespace Scoop.Tests.L1.Validation
         public void Types_MissingCloseAngle()
         {
             const string syntax = @"a<b";
-            var ast = TestSuite.GetScoopGrammar().Types.Parse(syntax);
+            var ast = TestSuite.GetGrammar().Types.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseAngle);
@@ -32,7 +32,7 @@ namespace Scoop.Tests.L1.Validation
         public void Types_MisingCloseBrace()
         {
             const string syntax = @"a[";
-            var ast = TestSuite.GetScoopGrammar().Types.Parse(syntax);
+            var ast = TestSuite.GetGrammar().Types.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseBrace);
@@ -42,7 +42,7 @@ namespace Scoop.Tests.L1.Validation
         public void GenericTypeArguments_MissingCloseAngle()
         {
             const string syntax = @"public int x<b(){}";
-            var ast = TestSuite.GetScoopGrammar().ClassMembers.Parse(syntax);
+            var ast = TestSuite.GetGrammar().ClassMembers.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseAngle);

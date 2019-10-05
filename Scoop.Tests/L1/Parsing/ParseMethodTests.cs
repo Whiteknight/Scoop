@@ -11,7 +11,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void ParseMethod_NewListOfMyClass()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.ClassMembers.Parse(@"
 public List<int[]> GetListOfIntArrays()
 {
@@ -70,7 +70,7 @@ public List<int[]> GetListOfIntArrays()
         [Test]
         public void ParseMethod_UsingStatementAssignment()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.ClassMembers.Parse(@"
 public void MyMethod()
 {
@@ -117,7 +117,7 @@ public void MyMethod()
         [Test]
         public void ParseMethod_UsingStatementExpression()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.ClassMembers.Parse(@"
 public void MyMethod()
 {
@@ -159,7 +159,7 @@ public void MyMethod()
         [Test]
         public void ParseMethod_Parameters()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.ClassMembers.Parse(@"
 public void TestMethod(int a, double b, string c)
 {
@@ -209,7 +209,7 @@ public void TestMethod(int a, double b, string c)
         [Test]
         public void ParseMethod_DefaultParameter()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.ClassMembers.Parse(@"
 public void TestMethod(int a = 5)
 {
@@ -244,7 +244,7 @@ public void TestMethod(int a = 5)
         [Test]
         public void ParseMethod_Params()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.ClassMembers.Parse(@"
 public void TestMethod(params int[] a)
 {
@@ -279,7 +279,7 @@ public void TestMethod(params int[] a)
         [Test]
         public void ParseMethod_AsyncAwait()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.ClassMembers.Parse(@"
 public async Task TestMethod(Task t)
 {
@@ -319,7 +319,7 @@ public async Task TestMethod(Task t)
         [Test]
         public void ParseMethod_Const()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.ClassMembers.Parse(@"
 public int TestMethod()
 {

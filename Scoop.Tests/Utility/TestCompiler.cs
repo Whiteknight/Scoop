@@ -11,7 +11,7 @@ using NUnit.Framework;
 using Scoop.SyntaxTree;
 using Scoop.Transpiler;
 
-namespace Scoop.Tests.L1.Transpiling
+namespace Scoop.Tests.Utility
 {
     // Class to compile AST -> C# -> Assembly for test purposes only
     public static class TestCompiler
@@ -33,6 +33,8 @@ namespace Scoop.Tests.L1.Transpiling
                     }
                 }
             };
+            var errors = unit.Validate();
+            errors.Count.Should().Be(0);
             var code = CSharpTranspileVisitor.ToString(unit);
             return Compile(code, testAssemblyName);
         }

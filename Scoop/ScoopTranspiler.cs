@@ -14,7 +14,7 @@ namespace Scoop
     {
         private static readonly IReadOnlyDictionary<LayerType, Layer> _layers = new Dictionary<LayerType, Layer>
         {
-            { LayerType.Layer1, new Layer(LayerType.Layer1, "Scoop L1", ".scl1", t => ScoopL1Grammar.Instance.CompilationUnits.Parse(t).GetResult()) },
+            { LayerType.Layer1, new Layer(LayerType.Layer1, "Scoop L1", ".scl1", t => ScoopGrammar.Instance.CompilationUnits.Parse(t).GetResult()) },
             //{ LayerType.Layer2, new Layer(LayerType.Layer2, "Scoop L2", ".scl2", () => new ScoopL1Grammar()) }
         };
 

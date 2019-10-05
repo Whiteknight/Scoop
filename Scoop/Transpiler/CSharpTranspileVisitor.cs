@@ -206,59 +206,7 @@ namespace Scoop.Transpiler
 
         public AstNode VisitConstructor(ConstructorNode n)
         {
-            if (!n.Attributes.IsNullOrEmpty())
-            {
-                foreach (var a in n.Attributes)
-                    Visit(a);
-            }
-            Visit(n.AccessModifier ?? new KeywordNode("private"));
-            Append(" ");
-            Visit(n.ClassName);
-            Append("(");
-            if (!n.Parameters.IsNullOrEmpty())
-            {
-                Visit(n.Parameters[0]);
-                for (var i = 1; i < n.Parameters.Count; i++)
-                {
-                    Append(", ");
-                    Visit(n.Parameters[i]);
-                }
-            }
-
-            Append(")");
-            if (!n.ThisArgs.IsNullOrEmpty())
-            {
-                IncreaseIndent();
-                AppendLineAndIndent();
-                Append(": this(");
-                Visit(n.ThisArgs[0]);
-                foreach (var a in n.ThisArgs.Skip(1))
-                {
-                    Append(", ");
-                    Visit(a);
-                }
-                Append(")");
-                DecreaseIndent();
-            }
-
-            AppendLineAndIndent();
-            Append("{");
-            IncreaseIndent();
-            AppendLineAndIndent();
-            AppendLineAndIndent("// Do not allow concrete inheritance");
-            AppendLineAndIndent("System.Diagnostics.Debug.Assert(GetType().BaseType == typeof(object));");
-
-            foreach (var s in n.Statements.OrEmptyIfNull())
-            {
-                Visit(s);
-                AppendLineAndIndent(";");
-                AppendLineAndIndent($"#line {s.Location.Line} \"{s.Location.FileName}\"");
-                AppendLineAndIndent();
-            }
-
-            DecreaseIndent();
-            AppendLineAndIndent();
-            Append("}");
+            new ConstructorNodeRenderer(this, _renderer).Render(n);
             return n;
         }
 
@@ -779,51 +727,7 @@ namespace Scoop.Transpiler
 
         public AstNode VisitNew(NewNode n)
         {
-            Append("new");
-            // Tries to output one of the following forms:
-            // new {+}
-            // new MyType(*)
-            // new MyType(+) {+}
-            // new MyType {+}
-            if (n.Type != null)
-            {
-                Append(" ");
-                Visit(n.Type);
-                // If we have arguments, output parens
-                // If we have no arguments AND we have no initializers, output empty parens
-                if (!n.Arguments.IsNullOrEmpty() || n.Initializers.IsNullOrEmpty())
-                {
-                    Append("(");
-                    if (!n.Arguments.IsNullOrEmpty())
-                    {
-                        Visit(n.Arguments[0]);
-                        for (var i = 1; i < n.Arguments.Count; i++)
-                        {
-                            Append(", ");
-                            Visit(n.Arguments[i]);
-                        }
-                    }
-
-                    Append(")");
-                }
-            }
-
-            if (!n.Initializers.IsNullOrEmpty())
-            {
-                Append(" {");
-                IncreaseIndent();
-                AppendLineAndIndent();
-                Visit(n.Initializers[0]);
-                for (var i = 1; i < n.Initializers.Count; i++)
-                {
-                    AppendLineAndIndent(",");
-                    Visit(n.Initializers[i]);
-                }
-                DecreaseIndent();
-                AppendLineAndIndent();
-                Append("}");
-            }
-
+            new NewNodeRenderer(this, _renderer).Render(n);
             return n;
         }
 

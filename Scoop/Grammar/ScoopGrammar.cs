@@ -7,14 +7,14 @@ using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop.Grammar
 {
-    public class ScoopL1Grammar 
+    public class ScoopGrammar 
     {
-        public ScoopL1Grammar()
+        public ScoopGrammar()
         {
             Initialize();
         }
 
-        public static readonly ScoopL1Grammar Instance = new ScoopL1Grammar();
+        public static readonly ScoopGrammar Instance = new ScoopGrammar();
 
         private static readonly HashSet<string> Keywords = new HashSet<string>
         {
@@ -499,30 +499,33 @@ namespace Scoop.Grammar
                 Error<ListNode<AstNode>>(false, Errors.MissingOpenBracket)
             ).Named("methodBody");
 
-            var constructors = Sequence(
-                Attributes,
-                _accessModifiers,
-                _identifiers,
-                _parameterLists,
-                Optional(
-                    Sequence(
-                        Operator(":"),
-                        Required(new IdentifierParser(Keywords, "this"), Errors.MissingThis),
-                        _argumentLists,
-                        (a, b, args) => args.WithUnused(a, b)
-                    )
-                ).Named("thisArgs"),
-                methodBody,
-                (attrs, vis, name, param, targs, body) => new ConstructorNode
-                {
-                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
-                    Location = name.Location,
-                    AccessModifier = vis as KeywordNode,
-                    ClassName = name,
-                    Parameters = param,
-                    ThisArgs = targs as ListNode<AstNode>,
-                    Statements = body
-                }
+            var constructors = First(
+                Replaceable(Fail<ConstructorNode>()).Named("constructorNamedStub"),
+                Sequence(
+                    Attributes,
+                    _accessModifiers,
+                    _identifiers,
+                    _parameterLists,
+                    Optional(
+                        Sequence(
+                            Operator(":"),
+                            Required(Keyword("this"), Errors.MissingThis),
+                            _argumentLists,
+                            (a, b, args) => args.WithUnused(a, b)
+                        )
+                    ).Named("thisArgs"),
+                    methodBody,
+                    (attrs, vis, name, param, targs, body) => new ConstructorNode
+                    {
+                        Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                        Location = name.Location,
+                        AccessModifier = vis as KeywordNode,
+                        ClassName = name,
+                        Parameters = param,
+                        ThisArgs = targs as ListNode<AstNode>,
+                        Statements = body
+                    }
+                ).Named("constructorNormal")
             ).Named("constructors");
 
             var methods = Sequence(
@@ -576,11 +579,9 @@ namespace Scoop.Grammar
                 constants,
                 fields,
                 methods,
-                Replaceable(Fail<AstNode>()).Named("Method1"),
-                Replaceable(Fail<AstNode>()).Named("Method2"),
-                constructors,
-                Replaceable(Fail<AstNode>()).Named("Constructor1"),
-                Replaceable(Fail<AstNode>()).Named("Constructor2")
+                Replaceable(Fail<MethodNode>()).Named("Method1"),
+                Replaceable(Fail<MethodNode>()).Named("Method2"),
+                constructors
             ).Named("ClassMembers");
 
             var classBody = First(
@@ -1096,20 +1097,21 @@ namespace Scoop.Grammar
                 ),
                 Operator("}"),
                 (a, inits, b) => inits.WithUnused(a, b)
-            );
-            _newParser = Replaceable(
-                First(
-                    // "new" "{" <initializers> "}"
-                    Sequence(
-                        Keyword("new"),
-                        initializers,
-                        (n, inits) => new NewNode
-                        {
-                            Location = n.Location,
-                            Initializers = inits
-                        }
-                    ),
-                    // "new" <type> "{" <initializers> "}"
+            ).Named("initializers");
+
+            _newParser = First(
+                // "new" "{" <initializers> "}"
+                Sequence(
+                    Keyword("new"),
+                    initializers,
+                    (n, inits) => new NewNode
+                    {
+                        Location = n.Location,
+                        Initializers = inits
+                    }
+                ),
+                // "new" <type> "{" <initializers> "}"
+                Replaceable(
                     Sequence(
                         Keyword("new"),
                         Types,
@@ -1120,8 +1122,11 @@ namespace Scoop.Grammar
                             Type = type,
                             Initializers = inits
                         }
-                    ),
-                    // "new" <type> <arguments> ("{" <initializers> "}")?
+                    )
+                ).Named("newInits"),
+                Replaceable(Fail<NewNode>()).Named("newNamedArgsInitsStub"),
+                // "new" <type> <arguments> <initializers>?
+                Replaceable(
                     Sequence(
                         Keyword("new"),
                         Types,
@@ -1134,10 +1139,8 @@ namespace Scoop.Grammar
                             Arguments = args,
                             Initializers = inits as ListNode<AstNode>
                         }
-                    ),
-                    Replaceable(Fail<NewNode>()).Named("New1"),
-                    Replaceable(Fail<NewNode>()).Named("New2")
-                )
+                    )
+                ).Named("newArgsInits")
             ).Named("new");
         }
 
@@ -1534,11 +1537,6 @@ namespace Scoop.Grammar
                 items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") },
                 atLeastOne: true
             ).Named("ExpressionList");
-        }
-
-        private static IParser<KeywordNode> Keyword(params string[] keywords)
-        {
-            return new KeywordParser(keywords);
         }
     }
 }

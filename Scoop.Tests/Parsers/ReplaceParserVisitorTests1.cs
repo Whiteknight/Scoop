@@ -52,7 +52,7 @@ namespace Scoop.Tests.Parsers
         public void Replace_Expressions_New()
         {
             // Replace the "new(..)" parser with an Operator("."), then parse an expression with dots as terminals
-            var parser = new ScoopL1Grammar().Expressions.FindNamed("Expressions") as IParser<AstNode>;
+            var parser = new ScoopGrammar().Expressions.FindNamed("Expressions") as IParser<AstNode>;
 
             var find = parser.FindNamed("new");
             var replacement = Operator(".");

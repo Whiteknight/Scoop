@@ -11,7 +11,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void InvokeMethod_Args()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Statements.Parse(@"myObj.Method(1, 'b');");
             result.Should().MatchAst(
                 new InvokeNode
@@ -35,7 +35,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void InvokeMethod_NullInvoke()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Statements.Parse(@"myObj?.Method();");
             result.Should().MatchAst(
                 new InvokeNode
@@ -54,7 +54,7 @@ namespace Scoop.Tests.L1.Parsing
         [Test]
         public void InvokeMethod_NamedArgs()
         {
-            var target = TestSuite.GetScoopGrammar();
+            var target = TestSuite.GetGrammar();
             var result = target.Statements.Parse(@"func(test: 1);");
             result.Should().MatchAst(
                 new InvokeNode

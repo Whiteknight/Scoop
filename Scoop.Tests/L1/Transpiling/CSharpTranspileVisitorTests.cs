@@ -4,6 +4,7 @@ using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
 using Scoop.Parsers;
+using Scoop.Tests.Utility;
 
 namespace Scoop.Tests.L1.Transpiling
 {
@@ -13,7 +14,7 @@ namespace Scoop.Tests.L1.Transpiling
         [Test]
         public void Compile_EmptyNamespace()
         {
-            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+            var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 namespace XYZ
 {
     public class MyClass { }
@@ -26,7 +27,7 @@ namespace XYZ
         [Test]
         public void Compile_ClassCtorAndMethod()
         {
-            var ast = TestSuite.GetScoopGrammar().Classes.Parse(@"
+            var ast = TestSuite.GetGrammar().Classes.Parse(@"
 
 public class MyClass 
 {
@@ -56,7 +57,7 @@ public class MyClass
         [Test]
         public void Compile_ClassMethodReturnValue()
         {
-            var ast = TestSuite.GetScoopGrammar().Classes.Parse(@"
+            var ast = TestSuite.GetGrammar().Classes.Parse(@"
 public class MyClass 
 {
     public int MyMethod()
@@ -76,7 +77,7 @@ public class MyClass
         [Test]
         public void Compile_ClassMethodReturnExpression()
         {
-            var ast = TestSuite.GetScoopGrammar().Classes.Parse(@"
+            var ast = TestSuite.GetGrammar().Classes.Parse(@"
 public class MyClass 
 {
     public string MyMethod()
@@ -96,7 +97,7 @@ public class MyClass
         [Test]
         public void Compile_MethodReturnListOfInt()
         {
-            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+            var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System.Collections.Generic;
 
 namespace XYZ 
@@ -121,7 +122,7 @@ namespace XYZ
         [Test]
         public void Compile_MethodReturnListOfInt_Add()
         {
-            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+            var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System.Collections.Generic;
 
 namespace XYZ 
@@ -153,7 +154,7 @@ namespace XYZ
         [Test]
         public void Compile_MethodAddToListIndex()
         {
-            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+            var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System.Collections.Generic;
 
 namespace XYZ 
@@ -181,7 +182,7 @@ namespace XYZ
         [Test]
         public void Compile_MethodReturnNullInvokeCoalesce()
         {
-            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+            var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System.Collections.Generic;
 
 namespace XYZ 
@@ -205,7 +206,7 @@ namespace XYZ
         [Test]
         public void Compile_MethodReturnLambdaInvoke()
         {
-            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+            var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System;
 using System.Collections.Generic;
 
@@ -232,7 +233,7 @@ namespace XYZ
         [Test]
         public void Compile_CSharpCodeLiterals()
         {
-            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+            var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System.Collections.Generic;
 
 namespace XYZ 
@@ -268,7 +269,7 @@ namespace XYZ
         [Test]
         public void Compile_MethodGenericExtensionMethod()
         {
-            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+            var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System.Collections.Generic;
 using System.Linq;
 
@@ -293,7 +294,7 @@ namespace XYZ
         [Test]
         public void Compile_Initializers()
         {
-            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+            var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System.Collections.Generic;
 using System.Linq;
 
@@ -337,7 +338,7 @@ namespace XYZ
         [Test]
         public void Compile_MethodIndexerInitializer()
         {
-            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+            var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System.Collections.Generic;
 using System.Linq;
 
@@ -377,7 +378,7 @@ namespace XYZ
         [Test]
         public void Compile_ArrayType()
         {
-            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+            var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System.Collections.Generic;
 using System.Linq;
 
@@ -403,7 +404,7 @@ namespace XYZ
         [Test]
         public void Compile_FlagsEnum()
         {
-            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+            var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -435,7 +436,7 @@ namespace XYZ
         [Test]
         public void Compile_InterfaceInherit()
         {
-            var ast = TestSuite.GetScoopGrammar().CompilationUnits.Parse(@"
+            var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -460,7 +461,7 @@ namespace XYZ
         [Test]
         public void Compile_MethodParameters()
         {
-            var ast = TestSuite.GetScoopGrammar().Classes.Parse(@"
+            var ast = TestSuite.GetGrammar().Classes.Parse(@"
 public class MyClass 
 {
     public int MyMethod()
@@ -485,7 +486,7 @@ public class MyClass
         [Test]
         public void Compile_ExpressionPrefixPostfix()
         {
-            var ast = TestSuite.GetScoopGrammar().Classes.Parse(@"
+            var ast = TestSuite.GetGrammar().Classes.Parse(@"
 public class MyClass 
 {
     public int MyMethod()

@@ -6,19 +6,17 @@ namespace Scoop.Transpiler
 {
     public partial class CSharpTranspileVisitor
     {
-        private readonly TextWriter _tw;
-        private int _indent;
+        private readonly OutputRenderer _renderer;
 
         public CSharpTranspileVisitor(StringBuilder sb)
         {
-            _tw = new StringWriter(sb);
-            _indent = 0;
+            var tw = new StringWriter(sb);
+            _renderer = new OutputRenderer(tw);
         }
 
         public CSharpTranspileVisitor(TextWriter writer)
         {
-            _tw = writer;
-            _indent = 0;
+            _renderer = new OutputRenderer(writer);
         }
 
         public static string ToString(AstNode n)
@@ -28,23 +26,18 @@ namespace Scoop.Transpiler
             return sb.ToString();
         }
 
-        public void Append(string s) => _tw.Write(s);
+        // A couple methods here to delegate to OutputRenderer cleanly
 
-        public void AppendLine(string s = "") => _tw.WriteLine(s);
+        public void Append(string s) => _renderer.Append(s);
 
-        public void AppendLineAndIndent(string s = "")
-        {
-            AppendLine(s);
-            AppendIndent();
-        }
+        public void AppendLine(string s = "") => _renderer.AppendLine(s);
 
-        public void DecreaseIndent() => _indent--;
-        public void IncreaseIndent() => _indent++;
-        public void AppendIndent()
-        {
-            if (_indent <= 0)
-                return;
-            _tw.Write(new string(' ', _indent * 4));
-        }
+        public void AppendLineAndIndent(string s = "") => _renderer.AppendLineAndIndent(s);
+
+        public void DecreaseIndent() => _renderer.DecreaseIndent();
+
+        public void IncreaseIndent() => _renderer.IncreaseIndent();
+
+        public void AppendIndent() => _renderer.AppendIndent();
     }
 }

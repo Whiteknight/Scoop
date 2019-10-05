@@ -17,7 +17,8 @@ namespace Scoop.Parsers
             _value = defaultValue;
         }
 
-        public TOutput TryParse(ITokenizer t) => _value.TryParse(t);
+        public TOutput TryParse(ITokenizer t) => 
+            _value.TryParse(t);
 
         public string Name { get; set; }
 
@@ -32,7 +33,7 @@ namespace Scoop.Parsers
             return this;
         }
 
-        public void SetChild(IParser<TOutput> parser)
+        public void SetParser(IParser<TOutput> parser)
         {
             _value = parser;
         }

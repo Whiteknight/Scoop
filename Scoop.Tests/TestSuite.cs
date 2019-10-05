@@ -10,18 +10,18 @@ namespace Scoop.Tests
     {
         private static string _testRunId;
         //private static DirectoryInfo _testDirectory;
-        private static ScoopL1Grammar _scoopGrammar;
+        private static ScoopGrammar _scoopGrammar;
 
         public static string GetTestRunId() => _testRunId;
         //public static string GetTestDirectoryPath() => _testDirectory.FullName;
-        public static ScoopL1Grammar GetScoopGrammar() => _scoopGrammar ?? (_scoopGrammar = new ScoopL1Grammar());
+        public static ScoopGrammar GetGrammar() => _scoopGrammar ?? (_scoopGrammar = new ScoopGrammar());
 
         [OneTimeSetUp]
         public void GlobalSetup()
         {
             _testRunId = Guid.NewGuid().ToString("N");
             //Directory.CreateDirectory(_testRunId);
-            _scoopGrammar = new ScoopL1Grammar();
+            _scoopGrammar = new ScoopGrammar();
         }
 
         [OneTimeTearDown]

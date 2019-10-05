@@ -7,6 +7,7 @@ namespace Scoop.SyntaxTree
         // Represents a constructor, a special case of method
         public ListNode<AttributeNode> Attributes { get; set; }
         public IdentifierNode ClassName { get; set; }
+        public IdentifierNode Name { get; set; }
         public KeywordNode AccessModifier { get; set; }
         public ListNode<ParameterNode> Parameters { get; set; }
         public ListNode<AstNode> ThisArgs { get; set; }

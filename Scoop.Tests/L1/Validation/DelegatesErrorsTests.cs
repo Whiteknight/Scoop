@@ -13,7 +13,7 @@ namespace Scoop.Tests.L1.Validation
         {
             const string syntax = @"
 delegate ";
-            var ast = TestSuite.GetScoopGrammar().Delegates.Parse(syntax);
+            var ast = TestSuite.GetGrammar().Delegates.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(5);
             // Semicolon is an unused member, it's hard to order those with respect to the used members
@@ -31,7 +31,7 @@ delegate ";
             // Missing the return type and missing the identifier are syntactically the same thing
             const string syntax = @"
 delegate int (string x, double y);";
-            var ast = TestSuite.GetScoopGrammar().Delegates.Parse(syntax);
+            var ast = TestSuite.GetGrammar().Delegates.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingIdentifier);
@@ -42,7 +42,7 @@ delegate int (string x, double y);";
         {
             const string syntax = @"
 delegate int MyDelegate string x, double y);";
-            var ast = TestSuite.GetScoopGrammar().Delegates.Parse(syntax);
+            var ast = TestSuite.GetGrammar().Delegates.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingOpenParen);
@@ -53,7 +53,7 @@ delegate int MyDelegate string x, double y);";
         {
             const string syntax = @"
 delegate int MyDelegate(string x, double y;";
-            var ast = TestSuite.GetScoopGrammar().Delegates.Parse(syntax);
+            var ast = TestSuite.GetGrammar().Delegates.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseParen);
@@ -64,7 +64,7 @@ delegate int MyDelegate(string x, double y;";
         {
             const string syntax = @"
 delegate int MyDelegate(string x, double y)";
-            var ast = TestSuite.GetScoopGrammar().Delegates.Parse(syntax);
+            var ast = TestSuite.GetGrammar().Delegates.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingSemicolon);
