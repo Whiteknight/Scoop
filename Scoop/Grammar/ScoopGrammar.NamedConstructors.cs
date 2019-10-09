@@ -8,6 +8,9 @@ namespace Scoop.Grammar
     {
         public static ScoopGrammar WithNamedConstructors(this ScoopGrammar l1)
         {
+            // TODO: Check if we've already added this feature to the grammar and don't
+            // try to add it again.
+
             var compilationUnits = l1.CompilationUnits;
 
             // named constructors

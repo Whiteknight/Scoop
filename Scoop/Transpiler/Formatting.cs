@@ -1,4 +1,4 @@
-﻿namespace Scoop
+﻿namespace Scoop.Transpiler
 {
     public static class Formatting
     {
@@ -12,7 +12,7 @@
 //-----------------------------------------------------------------------------
 ";
 
-        public static string GetPreamble(string compiler, string file)
+        public static string GetGeneratedFilePreamble(string compiler, string file)
         {
             return string.Format(GeneratedPreamble, compiler, file);
         }

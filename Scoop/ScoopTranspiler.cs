@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -10,24 +11,30 @@ using Scoop.Transpiler;
 
 namespace Scoop
 {
-    public static class ScoopTranspiler
+    public class ScoopTranspiler
     {
-        private static readonly IReadOnlyDictionary<LayerType, Layer> _layers = new Dictionary<LayerType, Layer>
+        private ScoopGrammar _grammar;
+
+        public ScoopTranspiler()
         {
-            { LayerType.Layer1, new Layer(LayerType.Layer1, "Scoop L1", ".scl1", t => ScoopGrammar.Instance.CompilationUnits.Parse(t)) },
-            //{ LayerType.Layer2, new Layer(LayerType.Layer2, "Scoop L2", ".scl2", () => new ScoopL1Grammar()) }
-        };
+            _grammar = new ScoopGrammar();
+        }
 
-        public static Layer GetLayer(LayerType layerType) => _layers[layerType];
+        public void AdjustGrammar(Func<ScoopGrammar, ScoopGrammar> adjust)
+        {
+            _grammar = adjust?.Invoke(_grammar);
+            if (_grammar == null)
+                throw new InvalidOperationException("Cannot have a null grammar");
+        }
 
-        public static TranspileResult TranspileFile(LayerType layerType, string inputFileName, string outputFileName = null)
+        public TranspileResult TranspileFile(string inputFileName, string outputFileName = null)
         {
             CompilationUnitNode ast;
-            var layer = GetLayer(layerType);
+
             using (var source = new StreamCharacterSequence(inputFileName, Encoding.UTF8))
             {
                 var tokenizer = new Tokenizer(new TokenScanner(source));
-                ast = layer.ParseFile(tokenizer);
+                ast = _grammar.CompilationUnits.Parse(tokenizer);
                 ast.FileName = inputFileName;
             }
             var validateResults = ast.Validate();
@@ -37,7 +44,7 @@ namespace Scoop
             outputFileName = outputFileName ?? inputFileName + ".cs";
             using (var outStream = new StreamWriter(outputFileName, false))
             {
-                var preamble = Formatting.GetPreamble(layer.Name, inputFileName);
+                var preamble = Formatting.GetGeneratedFilePreamble("Scoop", inputFileName);
                 outStream.WriteLine(preamble);
                 new CSharpTranspileVisitor(outStream).Visit(ast);
                 outStream.Flush();
