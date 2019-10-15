@@ -952,19 +952,6 @@ namespace Scoop.Grammar
 
         private void InitializeGenericTypeArguments()
         {
-            // TODO: Can we remove this?
-            var requiredGenericTypeArguments = Sequence(
-                Operator("<"),
-                SeparatedList(
-                    Types,
-                    Operator(","),
-                    types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") },
-                    atLeastOne: true
-                ),
-                _requiredCloseAngle,
-                (a, types, b) => types.WithUnused(a, b)
-            ).Named("requiredGenericTypeArguments");
-
             _optionalGenericTypeArguments = Optional(
                 Sequence(
                     Operator("<"),
@@ -1542,7 +1529,6 @@ namespace Scoop.Grammar
                         Deferred(() => _normalMethodBody),
                         Transform(
                             expressionAssignment,
-                            // TODO: Does this need to become explicit "return"?
                             // Make sure the transpiler deals with this correctly if not
                             body => new ListNode<AstNode> { [0] = body }
                         ),
