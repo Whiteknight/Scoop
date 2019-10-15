@@ -28,6 +28,30 @@ namespace Scoop.Tests.L1.Parsing
         }
 
         [Test]
+        public void ParseUnit_AssemblyAttributes()
+        {
+            var target = TestSuite.GetGrammar();
+            var result = target.CompilationUnits.Parse("[assembly:MyAttr]");
+            result.Should().MatchAst(
+                new CompilationUnitNode
+                {
+                    Members = new ListNode<AstNode>
+                    {
+                        new ListNode<AttributeNode>
+                        {
+                            Separator = new OperatorNode(","),
+                            [0] = new AttributeNode
+                            {
+                                Target = new KeywordNode("assembly"),
+                                Type = new TypeNode("MyAttr")
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        [Test]
         public void ParseUnit_Class()
         {
             var target = TestSuite.GetGrammar();

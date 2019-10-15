@@ -85,6 +85,7 @@ namespace Scoop.Grammar
         private IParser<AstNode> _expressions;
         private IParser<AstNode> _expressionConditional;
         private IParser<ClassNode> _nestedClasses;
+        private IParser<ListNode<AttributeNode>> _attributeTags;
 
         private void Initialize()
         {
@@ -173,8 +174,8 @@ namespace Scoop.Grammar
                     // (<keyword> ":")? <type> <argumentList>
                     Optional(
                         Sequence(
-                            // TODO: Review this list, we probably don't want all these
-                            Keyword("assembly", "module", "field", "event", "method", "param", "property", "return", "type"),
+                            // We don't support "event" or "property" targets since we don't allow those structures
+                            Keyword("assembly", "module", "field", "method", "param", "return", "type"),
                             _requiredColon,
                             (target, o) => target.WithUnused(o)
                         )
@@ -193,19 +194,20 @@ namespace Scoop.Grammar
                 list => new ListNode<AttributeNode> { Items = list.ToList(), Separator = new OperatorNode(",") }
             ).Named("attributeList");
 
+            _attributeTags = Sequence(
+                // "[" <attributeList> "]"
+                Operator("["),
+                attrParser,
+                _requiredCloseBrace,
+                (a, attrs, b) => attrs.WithUnused(a, b)
+            ).Named("attributeTag");
+            
             Attributes = Transform(
                 Optional(
                     List(
-                        Sequence(
-                            // "[" <attributeList> "]"
-                            Operator("["),
-                            attrParser,
-                            _requiredCloseBrace,
-                            (a, attrs, b) => attrs.WithUnused(a, b)
-                        ),
+                        _attributeTags,
                         list => new ListNode<AttributeNode> { Items = list.SelectMany(l => l.Items).ToList() }.WithUnused(list.SelectMany(a => a.Unused.OrEmptyIfNull()).ToArray())
-                    ).Named("attributeTagList")
-                ),
+                    )),
                 n => n is EmptyNode ? ListNode<AttributeNode>.Default() : n as ListNode<AttributeNode>
             ).Named("Attributes");
         }
@@ -259,7 +261,6 @@ namespace Scoop.Grammar
                 Error<ListNode<AstNode>>(false, Errors.MissingOpenBracket)
             );
             var namespaces = Sequence(
-                // TODO: assembly-level attributes
                 Keyword("namespace"),
                 Required(_dottedIdentifiers, () => new DottedIdentifierNode(""), Errors.MissingNamespaceName),
                 namespaceBody,
@@ -270,11 +271,13 @@ namespace Scoop.Grammar
                     Declarations = members
                 }.WithUnused(ns)
             ).Named("namespaces");
+
             CompilationUnits = Transform(
                 List(
                     First<AstNode>(
                         usingDirectives,
-                        namespaces
+                        namespaces,
+                        Deferred(() => _attributeTags)
                     ),
                     items => new ListNode<AstNode> { Items = items.ToList() }
                 ),
