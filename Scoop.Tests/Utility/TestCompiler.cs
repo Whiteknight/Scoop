@@ -42,7 +42,7 @@ namespace Scoop.Tests.Utility
         public static Assembly Compile(CompilationUnitNode ast)
         {
             var errors = ast.Validate();
-            errors.Count.Should().Be(0);
+            errors.Count.Should().Be(0, errors.FirstOrDefault()?.ErrorMessage);
             var code = CSharpTranspileVisitor.ToString(ast);
             Debug.WriteLine(code);
             var testAssemblyName = GetTestAssemblyName();

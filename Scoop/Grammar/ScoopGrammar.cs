@@ -84,6 +84,7 @@ namespace Scoop.Grammar
         private IParser<DottedIdentifierNode> _dottedIdentifiers;
         private IParser<AstNode> _expressions;
         private IParser<AstNode> _expressionConditional;
+        private IParser<ClassNode> _nestedClasses;
 
         private void Initialize()
         {
@@ -572,7 +573,7 @@ namespace Scoop.Grammar
 
             ClassMembers = First<AstNode>(
                 Token(TokenType.CSharpLiteral, cs => new CSharpNode(cs)),
-                Deferred(() => Classes),
+                Deferred(() => _nestedClasses),
                 Interfaces,
                 Enums,
                 Delegates,
@@ -604,6 +605,30 @@ namespace Scoop.Grammar
 
             Classes = Sequence(
                 Attributes,
+                Optional(Keyword("public")),
+                Optional(Keyword("partial")),
+                Keyword("class", "struct"),
+                _requiredIdentifier,
+                _genericTypeParameters,
+                inheritanceList,
+                _typeConstraints,
+                classBody,
+                (attrs, vis, isPartial, obj, name, genParm, contracts, cons, body) => new ClassNode
+                {
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                    AccessModifier = (vis as KeywordNode) ?? new KeywordNode("public"),
+                    Modifiers = isPartial is KeywordNode k ? new ListNode<KeywordNode> { k } : null,
+                    Type = obj,
+                    Name = name,
+                    GenericTypeParameters = genParm.IsNullOrEmpty() ? null : genParm,
+                    Interfaces = contracts as ListNode<TypeNode>,
+                    TypeConstraints = cons.IsNullOrEmpty() ? null : cons,
+                    Members = body
+                }
+            ).Named("Classes");
+
+            _nestedClasses = Sequence(
+                Attributes,
                 _accessModifiers,
                 Optional(Keyword("partial")),
                 Keyword("class", "struct"),
@@ -615,7 +640,7 @@ namespace Scoop.Grammar
                 (attrs, vis, isPartial, obj, name, genParm, contracts, cons, body) => new ClassNode
                 {
                     Attributes = attrs.IsNullOrEmpty() ? null : attrs,
-                    AccessModifier = vis as KeywordNode,
+                    AccessModifier = (vis as KeywordNode) ?? new KeywordNode("private"),
                     Modifiers = isPartial is KeywordNode k ? new ListNode<KeywordNode> { k } : null,
                     Type = obj,
                     Name = name,
@@ -624,7 +649,7 @@ namespace Scoop.Grammar
                     TypeConstraints = cons.IsNullOrEmpty() ? null : cons,
                     Members = body
                 }
-            ).Named("Classes");
+            ).Named("_nestedClasses");
         }
 
         private void InitializeParameters()

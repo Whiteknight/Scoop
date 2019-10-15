@@ -354,7 +354,7 @@ namespace XYZ
     }
 
 
-    private class MyList
+    public class MyList
     {
         List<int> Items;
         public MyList() { Items = new List<int>(); }
@@ -368,7 +368,7 @@ namespace XYZ
     }
 }");
             var assembly = TestCompiler.Compile(ast);
-            var type = assembly.ExportedTypes.First();
+            var type = assembly.ExportedTypes.First(t => t.Name == "MyClass");
             var myObj = Activator.CreateInstance(type);
             var method = type.GetMethod("MyMethod");
             var result = (int)method.Invoke(myObj, new object[] { });
