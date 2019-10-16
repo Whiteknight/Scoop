@@ -145,5 +145,16 @@ comment ");
             Action act = () => new TokenScanner("`").ScanNext();
             act.Should().Throw<TokenizingException>();
         }
+
+        [Test]
+        public void ParseNext_Word()
+        {
+            var target = new TokenScanner("test class @class");
+            target.ScanNext().Should().Match(TokenType.Word, "test");
+            target.ScanNext().Type.Should().Be(TokenType.Whitespace);
+            target.ScanNext().Should().Match(TokenType.Word, "class");
+            target.ScanNext().Type.Should().Be(TokenType.Whitespace);
+            target.ScanNext().Should().Match(TokenType.Word, "@class");
+        }
     }
 }

@@ -22,14 +22,12 @@ namespace Scoop.SyntaxTree
 
         public void AddUnusedMembers(params AstNode[] unused)
         {
-            // TODO: combine if the list isn't empty
-            Unused = unused;
+            Unused = (Unused ?? Enumerable.Empty<AstNode>()).Concat(unused).ToList();
         }
 
         public void AddDiagnostics(params Diagnostic[] diagnostics)
         {
-            // TODO: combine if the list isn't empty
-            Diagnostics = diagnostics;
+            Diagnostics = (Diagnostics ?? Enumerable.Empty<Diagnostic>()).Concat(diagnostics).ToList();
         }
     }
 

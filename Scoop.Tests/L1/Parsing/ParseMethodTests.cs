@@ -241,6 +241,42 @@ public void TestMethod(int a = 5)
             );
         }
 
+
+        [Test]
+        public void ParseMethod_AtIdentifier()
+        {
+            var target = TestSuite.GetGrammar();
+            var result = target.ClassMembers.Parse(@"
+public void TestMethod(int @class) => @class;");
+            result.Should().MatchAst(
+                new MethodNode
+                {
+                    Name = new IdentifierNode("TestMethod"),
+                    AccessModifier = new KeywordNode("public"),
+                    ReturnType = new TypeNode("void"),
+                    Parameters = new ListNode<ParameterNode>
+                    {
+                        Separator = new OperatorNode(","),
+                        [0] = new ParameterNode
+                        {
+                            Type = new TypeNode
+                            {
+                                Name = new IdentifierNode("int")
+                            },
+                            Name = new IdentifierNode("@class")
+                        }
+                    },
+                    Statements = new ListNode<AstNode>
+                    {
+                        new ReturnNode
+                        {
+                            Expression = new IdentifierNode("@class")
+                        }
+                    }
+                }
+            );
+        }
+
         [Test]
         public void ParseMethod_Params()
         {

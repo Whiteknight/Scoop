@@ -94,7 +94,14 @@ namespace Scoop.Tokenization
                 return ReadCharacter();
             if (c == '@')
             {
-                // TODO: Case where we use @keyword for identifier names, otherwise fall through because it might prefix a string
+                _chars.GetNext();
+                if (char.IsLetter(_chars.Peek()))
+                {
+                    var word = ReadWord();
+                    return Token.Word("@" + word.Value, word.Location);
+                }
+
+                _chars.PutBack(c);
             }
 
             if (c == '"' || c == '$' || c == '@')

@@ -11,6 +11,7 @@ namespace Scoop.Tokenization
         private int _index;
         private int _line;
         private int _column;
+        private int _previousEndOfLineColumn;
 
         public StringCharacterSequence(string s, string fileName = null)
         {
@@ -29,6 +30,7 @@ namespace Scoop.Tokenization
             if (next == '\n')
             {
                 _line++;
+                _previousEndOfLineColumn = _column;
                 _column = 0;
             }
             else
@@ -39,9 +41,12 @@ namespace Scoop.Tokenization
 
         public void PutBack(char c)
         {
-            // TODO: We need to reset _column to end-of-line
             if (c == '\n')
+            {
                 _line--;
+                _column = _previousEndOfLineColumn;
+            }
+
             _putbacks.Push(c);
         }
 
