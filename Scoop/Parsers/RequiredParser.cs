@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Scoop.Parsers.Visiting;
-using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
 namespace Scoop.Parsers
@@ -12,27 +11,31 @@ namespace Scoop.Parsers
     /// The default fallback value might be an error/diagnostic object to help with error reporting
     /// </summary>
     /// <typeparam name="TOutput"></typeparam>
-    public class RequiredParser<TOutput> : IParser<TOutput>
-        where TOutput : AstNode
+    /// <typeparam name="TInput"></typeparam>
+    public class RequiredParser<TInput, TOutput> : IParser<TInput, TOutput>
     {
-        private readonly IParser<TOutput> _inner;
+        private readonly IParser<TInput, TOutput> _inner;
         private readonly Func<Location, TOutput> _otherwise;
 
-        public RequiredParser(IParser<TOutput> inner, Func<Location, TOutput> otherwise)
+        public RequiredParser(IParser<TInput, TOutput> inner, Func<Location, TOutput> otherwise)
         {
             _inner = inner;
             _otherwise = otherwise;
         }
 
-        public TOutput Parse(ITokenizer t)
+        public IParseResult<TOutput> Parse(ISequence<TInput> t)
         {
             var result = _inner.Parse(t);
-            if (result != null)
+            if (result.Success)
                 return result;
 
             // Otherwise, create the fallback production at the location where _inner would have started
-            return _otherwise(t.Peek().Location);
+            // TODO: There has to be a better way to get Location information here
+            var location = (t.Peek() as Token)?.Location;
+            return new Result<TOutput>(true, _otherwise(location));
         }
+
+        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);
 
         public string Name { get; set; }
 
@@ -42,8 +45,8 @@ namespace Scoop.Parsers
 
         public IParser ReplaceChild(IParser find, IParser replace)
         {
-            if (_inner == find && replace is IParser<TOutput> realReplace)
-                return new RequiredParser<TOutput>(realReplace, _otherwise);
+            if (_inner == find && replace is IParser<TInput, TOutput> realReplace)
+                return new RequiredParser<TInput, TOutput>(realReplace, _otherwise);
             return this;
         }
 

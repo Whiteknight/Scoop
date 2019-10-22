@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
@@ -53,7 +54,10 @@ public class MyClass
                             ClassName = new IdentifierNode("MyClass"),
                             Name = new IdentifierNode("Test"),
                             Parameters = ListNode<ParameterNode>.Default(),
-                            Statements = new ListNode<AstNode>()
+                            Statements = new ListNode<AstNode>
+                            {
+                                Items = new List<AstNode>()
+                            }
                         }
                     }
                 }

@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Collections.Generic;
+using NUnit.Framework;
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
@@ -71,7 +72,10 @@ namespace Scoop.Tests.L1.Parsing
                                     AccessModifier = new KeywordNode("public"),
                                     Type = new KeywordNode("class"),
                                     Name = new IdentifierNode("MyClass"),
-                                    Members = new ListNode<AstNode>()
+                                    Members = new ListNode<AstNode>
+                                    {
+                                        Items = new List<AstNode>()
+                                    }
                                 }
                             }
                         }
@@ -114,7 +118,10 @@ namespace A
                                     AccessModifier = new KeywordNode("public"),
                                     Type = new KeywordNode("class"),
                                     Name = new IdentifierNode("MyClass"),
-                                    Members = new ListNode<AstNode>()
+                                    Members = new ListNode<AstNode>
+                                    {
+                                        Items = new List<AstNode>()
+                                    }
                                 }
                             }
                         }
@@ -144,7 +151,10 @@ namespace A
                                 {
                                     AccessModifier = new KeywordNode("public"),
                                     Name = new IdentifierNode("MyInterface"),
-                                    Members = new ListNode<MethodDeclareNode>()
+                                    Members = new ListNode<MethodDeclareNode>
+                                    {
+                                        Items = new List<MethodDeclareNode> ()
+                                    }
                                 }
                             }
                         }

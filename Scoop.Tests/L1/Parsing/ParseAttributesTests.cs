@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
@@ -148,7 +149,10 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new ListNode<AstNode>()
+                    Members = new ListNode<AstNode>
+                    {
+                        Items = new List<AstNode>()
+                    }
                 }
             );
         }
@@ -230,7 +234,10 @@ public interface MyInterface
                     },
                     AccessModifier = new KeywordNode("public"),
                     Name = new IdentifierNode("MyInterface"),
-                    Members = new ListNode<MethodDeclareNode>()
+                    Members = new ListNode<MethodDeclareNode> 
+                    {
+                        Items = new List<MethodDeclareNode> ()
+                    }
                 }
             );
         }
@@ -265,7 +272,10 @@ public void MyMethod([MyAttr] int x)
                             Name = new IdentifierNode("x")
                         }
                     },
-                    Statements = new ListNode<AstNode>()
+                    Statements = new ListNode<AstNode>
+                    {
+                        Items = new List<AstNode>()
+                    }
                 }
             );
         }

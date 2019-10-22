@@ -1,5 +1,6 @@
 ﻿using Scoop.Parsers;
 using Scoop.SyntaxTree;
+using Scoop.Tokenization;
 using static Scoop.Parsers.ScoopParsers;
 
 namespace Scoop.Grammar
@@ -14,10 +15,10 @@ namespace Scoop.Grammar
             var compilationUnits = l1.CompilationUnits;
 
             // named constructors
-            var identifiers = compilationUnits.FindNamed("_identifiers") as IParser<IdentifierNode>;
-            var initializers = compilationUnits.FindNamed("initializers") as IParser<ListNode<AstNode>>;
-            var argumentLists = compilationUnits.FindNamed("ArgumentLists") as IParser<ListNode<AstNode>>;
-            var newNamed = compilationUnits.FindNamed("newNamedArgsInitsStub") as ReplaceableParser<NewNode>;
+            var identifiers = compilationUnits.FindNamed("_identifiers") as IParser<Token, IdentifierNode>;
+            var initializers = compilationUnits.FindNamed("initializers") as IParser<Token, ListNode<AstNode>>;
+            var argumentLists = compilationUnits.FindNamed("ArgumentLists") as IParser<Token, ListNode<AstNode>>;
+            var newNamed = compilationUnits.FindNamed("newNamedArgsInitsStub") as ReplaceableParser<Token, NewNode>;
             newNamed.SetParser(
                 // "new" <type> ":" <identifier> <arguments> <initializers>?
                 Sequence(
@@ -33,16 +34,16 @@ namespace Scoop.Grammar
                         Type = type,
                         Name = name,
                         Arguments = args,
-                        Initializers = inits as ListNode<AstNode>
+                        Initializers = inits
                     }.WithUnused(o)
                 ).Named("newNamedArgsInits")
             );
             // TODO: "new" <type> ":" <identifier> <initializers>
 
-            var accessModifiers = compilationUnits.FindNamed("accessModifiers") as IParser<AstNode>;
-            var parameterLists = compilationUnits.FindNamed("ParameterList") as IParser<ListNode<ParameterNode>>;
-            var methodBody = compilationUnits.FindNamed("methodBody") as IParser<ListNode<AstNode>>;
-            var namedConstructor = compilationUnits.FindNamed("constructorNamedStub") as ReplaceableParser<ConstructorNode>;
+            var accessModifiers = compilationUnits.FindNamed("accessModifiers") as IParser<Token, KeywordNode>;
+            var parameterLists = compilationUnits.FindNamed("ParameterList") as IParser<Token, ListNode<ParameterNode>>;
+            var methodBody = compilationUnits.FindNamed("methodBody") as IParser<Token, ListNode<AstNode>>;
+            var namedConstructor = compilationUnits.FindNamed("constructorNamedStub") as ReplaceableParser<Token, ConstructorNode>;
             namedConstructor.SetParser(
                 Sequence(
                     l1.Attributes,
@@ -64,11 +65,11 @@ namespace Scoop.Grammar
                     {
                         Attributes = attrs.IsNullOrEmpty() ? null : attrs,
                         Location = type.Location,
-                        AccessModifier = vis as KeywordNode,
+                        AccessModifier = vis,
                         ClassName = type,
                         Name = name,
                         Parameters = param,
-                        ThisArgs = targs as ListNode<AstNode>,
+                        ThisArgs = targs,
                         Statements = body
                     }.WithUnused(c)
                 ).Named("constructorNamed")

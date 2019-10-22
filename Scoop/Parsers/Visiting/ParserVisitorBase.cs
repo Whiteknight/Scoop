@@ -1,4 +1,5 @@
 ﻿using Scoop.SyntaxTree;
+using Scoop.Tokenization;
 
 namespace Scoop.Parsers.Visiting
 {
@@ -17,96 +18,89 @@ namespace Scoop.Parsers.Visiting
             return parser;
         }
 
-        public virtual IParser<AstNode> VisitApplyPostfix(ApplyPostfixParser p)
+        public virtual IParser<Token, AstNode> VisitApplyPostfix(ApplyPostfixParser p)
         {
             return p;
         }
 
-        public virtual IParser<TNode> VisitDeferred<TNode>(DeferredParser<TNode> p)
+        public virtual IParser<TInput, TOutput> VisitDeferred<TInput, TOutput>(DeferredParser<TInput, TOutput> p)
         {
             return p;
         }
 
-        public virtual IParser<TNode> VisitError<TNode>(ErrorParser<TNode> p) 
-            where TNode : AstNode, new()
+        public virtual IParser<Token, TOutput> VisitError<TOutput>(ErrorParser<TOutput> p) 
+            where TOutput : AstNode, new()
         {
             return p;
         }
 
-        public virtual IParser<TNode> VisitFirst<TNode>(FirstParser<TNode> p) 
-            where TNode : AstNode
+        public virtual IParser<TInput, TOutput> VisitFirst<TInput, TOutput>(FirstParser<TInput, TOutput> p)
         {
             return p;
         }
 
-        public virtual IParser<IdentifierNode> VisitIdentifier(IdentifierParser p)
+        public virtual IParser<Token, IdentifierNode> VisitIdentifier(IdentifierParser p)
         {
             return p;
         }
 
-        public virtual IParser<AstNode> VisitInfix(InfixOperatorParser p)
+        public virtual IParser<Token, AstNode> VisitInfix(InfixOperatorParser p)
         {
             return p;
         }
 
-        public virtual IParser<KeywordNode> VisitKeyword(KeywordParser p)
+        public virtual IParser<Token, KeywordNode> VisitKeyword(KeywordParser p)
         {
             return p;
         }
 
-        public virtual IParser<ListNode<TOutput>> VisitList<TOutput, TItem>(ListParser<TOutput, TItem> p) 
+        public virtual IParser<TInput, TOutput> VisitList<TInput, TItem, TOutput>(ListParser<TInput, TItem, TOutput> p)
+        {
+            return p;
+        }
+
+        public virtual IParser<Token, OperatorNode> VisitOperator(OperatorParser p)
+        {
+            return p;
+        }
+
+        public virtual IParser<TInput, TOutput> VisitOptional<TInput, TOutput>(OptionalParser<TInput, TOutput> p)
+        {
+            return p;
+        }
+
+        public virtual IParser<TInput, TOutput> VisitProduce<TInput, TOutput>(ProduceParser<TInput, TOutput> p)
+        {
+            return p;
+        }
+
+        public virtual IParser<TInput, TOutput> VisitReplaceable<TInput, TOutput>(ReplaceableParser<TInput, TOutput> p)
+        {
+            return p;
+        }
+
+        public virtual IParser<TInput, TOutput> VisitRequired<TInput, TOutput>(RequiredParser<TInput, TOutput> p)
+        {
+            return p;
+        }
+
+        public virtual IParser<TInput, TOutput> VisitSeparatedList<TInput, TItem, TSeparator, TOutput>(SeparatedListParser<TInput, TItem, TSeparator, TOutput> p) 
             where TOutput : AstNode
         {
             return p;
         }
 
-        public virtual IParser<OperatorNode> VisitOperator(OperatorParser p)
+        public virtual IParser<TInput, TOutput> VisitSequence<TInput, TOutput>(SequenceParser<TInput, TOutput> p)
         {
             return p;
         }
 
-        public virtual IParser<AstNode> VisitOptional(OptionalParser p)
+        public virtual IParser<Token, TOutput> VisitToken<TOutput>(TokenParser<TOutput> p)
         {
             return p;
         }
 
-        public virtual IParser<TOutput> VisitProduce<TOutput>(ProduceParser<TOutput> p)
-        {
-            return p;
-        }
-
-        public virtual IParser<TOutput> VisitReplaceable<TOutput>(ReplaceableParser<TOutput> p)
-        {
-            return p;
-        }
-
-        public virtual IParser<TOutput> VisitRequired<TOutput>(RequiredParser<TOutput> p) 
-            where TOutput : AstNode
-        {
-            return p;
-        }
-
-        public virtual IParser<ListNode<TOutput>> VisitSeparatedList<TOutput, TItem>(SeparatedListParser<TOutput, TItem> p) 
-            where TOutput : AstNode 
-            where TItem : AstNode
-        {
-            return p;
-        }
-
-        public virtual IParser<TOutput> VisitSequence<TOutput>(SequenceParser<TOutput> p)
-        {
-            return p;
-        }
-
-        public virtual IParser<TOutput> VisitToken<TOutput>(TokenParser<TOutput> p) 
-            where TOutput : AstNode
-        {
-            return p;
-        }
-
-        public virtual IParser<TOutput> VisitTransform<TOutput, TInput>(TransformParser<TOutput, TInput> p) 
-            where TOutput : AstNode 
-            where TInput : AstNode
+        public virtual IParser<TInput, TOutput> VisitTransform<TInput, TMiddle, TOutput>(TransformParser<TInput, TMiddle, TOutput> p)
         {
             return p;
         }

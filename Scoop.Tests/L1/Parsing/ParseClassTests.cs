@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Collections.Generic;
+using NUnit.Framework;
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
@@ -19,7 +20,10 @@ namespace Scoop.Tests.L1.Parsing
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new ListNode<AstNode>()
+                    Members = new ListNode<AstNode>
+                    {
+                        Items = new List<AstNode>()
+                    }
                 }
             );
         }
@@ -50,7 +54,10 @@ public class MyClass
                             ClassName = new IdentifierNode("MyClass"),
                             AccessModifier = new KeywordNode("public"),
                             Parameters = ListNode<ParameterNode>.Default(),
-                            Statements = new ListNode<AstNode>()
+                            Statements = new ListNode<AstNode>
+                            {
+                                Items = new List<AstNode>()
+                            }
                         },
                         new MethodNode
                         {
@@ -61,7 +68,10 @@ public class MyClass
                                 Name = new IdentifierNode("void")
                             },
                             Parameters = ListNode<ParameterNode>.Default(),
-                            Statements = new ListNode<AstNode>()
+                            Statements = new ListNode<AstNode>
+                            {
+                                Items = new List<AstNode>()
+                            }
                         }
                     }
                 }
@@ -99,7 +109,10 @@ public class MyClass
                                 Separator = new OperatorNode(","),
                                 [0] = new IntegerNode(1)
                             },
-                            Statements = new ListNode<AstNode>()
+                            Statements = new ListNode<AstNode>
+                            {
+                                Items = new List<AstNode>()
+                            }
                         },
                         new ConstructorNode
                         {
@@ -120,7 +133,10 @@ public class MyClass
                                 [0] = new IdentifierNode("a"),
                                 [1] = new StringNode("\"test\"")
                             },
-                            Statements = new ListNode<AstNode>()
+                            Statements = new ListNode<AstNode>
+                            {
+                                Items = new List<AstNode>()
+                            }
                         },
                         new ConstructorNode
                         {
@@ -140,7 +156,10 @@ public class MyClass
                                     Name = new IdentifierNode("b")
                                 }
                             },
-                            Statements = new ListNode<AstNode>()
+                            Statements = new ListNode<AstNode>
+                            {
+                                Items = new List<AstNode>()
+                            }
                         }
                     }
                 }
@@ -649,7 +668,10 @@ public class MyClass
                             AccessModifier = new KeywordNode("public"),
                             Type = new KeywordNode("class"),
                             Name = new IdentifierNode("ChildClass"),
-                            Members = new ListNode<AstNode>()
+                            Members = new ListNode<AstNode>
+                            {
+                                Items = new List<AstNode>()
+                            }
                         }
                     }
                 }
@@ -677,7 +699,10 @@ public class MyClass
                         {
                             AccessModifier = new KeywordNode("public"),
                             Name = new IdentifierNode("ChildIFace"),
-                            Members = new ListNode<MethodDeclareNode>()
+                            Members = new ListNode<MethodDeclareNode>
+                            {
+                                Items = new List<MethodDeclareNode> ()
+                            }
                         }
                     }
                 }
@@ -707,7 +732,10 @@ public class MyClass
                             Name = new IdentifierNode("IFaceB")
                         }
                     },
-                    Members = new ListNode<AstNode>()
+                    Members = new ListNode<AstNode>
+                    {
+                        Items = new List<AstNode>()
+                    }
                 }
             );
         }
@@ -723,7 +751,10 @@ public class MyClass
                     AccessModifier = new KeywordNode("public"),
                     Type = new KeywordNode("struct"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new ListNode<AstNode>()
+                    Members = new ListNode<AstNode>
+                    {
+                        Items = new List<AstNode>()
+                    }
                 }
             );
         }
@@ -740,7 +771,10 @@ public class MyClass
                     Modifiers = new ListNode<KeywordNode> { new KeywordNode("partial") },
                     Type = new KeywordNode("class"),
                     Name = new IdentifierNode("MyClass"),
-                    Members = new ListNode<AstNode>()
+                    Members = new ListNode<AstNode>
+                    {
+                        Items = new List<AstNode>()
+                    }
                 }
             );
         }

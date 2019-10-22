@@ -11,14 +11,14 @@ namespace Scoop.Parsers
     /// to parse an operator and then a right-hand-side production. For each successful match, it produces an
     /// operation node, sets that as the new left-hand-side and continues.
     /// </summary>
-    public class InfixOperatorParser : IParser<AstNode>
+    public class InfixOperatorParser : IParser<Token, AstNode>
     {
-        private readonly IParser<AstNode> _left;
-        private readonly IParser<OperatorNode> _operatorParser;
-        private readonly IParser<AstNode> _right;
+        private readonly IParser<Token, AstNode> _left;
+        private readonly IParser<Token, OperatorNode> _operatorParser;
+        private readonly IParser<Token, AstNode> _right;
         private readonly Func<AstNode, OperatorNode, AstNode, AstNode> _producer;
 
-        public InfixOperatorParser(IParser<AstNode> left, IParser<OperatorNode> operatorParser, IParser<AstNode> right, Func<AstNode, OperatorNode, AstNode, AstNode> producer)
+        public InfixOperatorParser(IParser<Token, AstNode> left, IParser<Token, OperatorNode> operatorParser, IParser<Token, AstNode> right, Func<AstNode, OperatorNode, AstNode, AstNode> producer)
         {
             _left = left;
             _operatorParser = operatorParser;
@@ -26,36 +26,46 @@ namespace Scoop.Parsers
             _producer = producer;
         }
 
-        public AstNode Parse(ITokenizer t)
+        public IParseResult<AstNode> Parse(ISequence<Token> t)
         {
-            var left = _left.Parse(t);
-            if (left == null)
-                return null;
+            var result = _left.Parse(t);
+            if (!result.Success)
+                return Result<AstNode>.Fail();
+            var left = result.Value;
 
             while (true)
             {
-                var op = _operatorParser.Parse(t);
-                if (op == null)
-                    return left;
-                var right = _right.Parse(t) ?? new EmptyNode().WithDiagnostics(t.Peek().Location, "Missing right-hand expression for operator " + op.Operator);
-                left = _producer(left, op, right);
+                var opResult  = _operatorParser.Parse(t);
+                if (!opResult.Success)
+                    return new Result<AstNode>(true, left);
+                result = _right.Parse(t);
+                var right = result.Value;
+                if (!result.Success)
+                {
+                    var location = t.Peek()?.Location;
+                    right = new EmptyNode().WithDiagnostics(location, "Missing right-hand expression for operator " + opResult.Value.Operator);
+                }
+
+                left = _producer(left, opResult.Value, right);
             }
         }
+
+        IParseResult<object> IParser<Token>.ParseUntyped(ISequence<Token> t) => (IParseResult<object>)Parse(t);
 
         public string Name { get; set; }
 
         public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitInfix(this);
 
-        public IEnumerable<IParser> GetChildren() => new[] { _left, _operatorParser, _right };
+        public IEnumerable<IParser> GetChildren() => new IParser[] { _left, _operatorParser, _right };
 
         public IParser ReplaceChild(IParser find, IParser replace)
         {
             if (_left == find)
-                return new InfixOperatorParser(replace as IParser<AstNode>, _operatorParser, _right, _producer);
-            if (_operatorParser == find && replace is IParser<OperatorNode> realOperator)
+                return new InfixOperatorParser(replace as IParser<Token, AstNode>, _operatorParser, _right, _producer);
+            if (_operatorParser == find && replace is IParser<Token, OperatorNode> realOperator)
                 return new InfixOperatorParser(_left, realOperator, _right, _producer);
             if (_right == find)
-                return new InfixOperatorParser(_left, _operatorParser, replace as IParser<AstNode>, _producer);
+                return new InfixOperatorParser(_left, _operatorParser, replace as IParser<Token, AstNode>, _producer);
             return this;
         }
 

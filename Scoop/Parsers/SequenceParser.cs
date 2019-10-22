@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Scoop.Parsers.Visiting;
-using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
 namespace Scoop.Parsers
@@ -11,34 +10,37 @@ namespace Scoop.Parsers
     /// Parses a list of steps and produces a single output
     /// </summary>
     /// <typeparam name="TOutput"></typeparam>
-    public class SequenceParser<TOutput> : IParser<TOutput>
+    /// <typeparam name="TInput"></typeparam>
+    public class SequenceParser<TInput, TOutput> : IParser<TInput, TOutput>
     {
-        private readonly IReadOnlyList<IParser<AstNode>> _parsers;
-        private readonly Func<IReadOnlyList<AstNode>, TOutput> _produce;
+        private readonly IReadOnlyList<IParser<TInput>> _parsers;
+        private readonly Func<IReadOnlyList<object>, TOutput> _produce;
 
-        public SequenceParser(IReadOnlyList<IParser<AstNode>> parsers, Func<IReadOnlyList<AstNode>, TOutput> produce)
+        public SequenceParser(IReadOnlyList<IParser<TInput>> parsers, Func<IReadOnlyList<object>, TOutput> produce)
         {
             _parsers = parsers;
             _produce = produce;
         }
 
-        public TOutput Parse(ITokenizer t)
+        public IParseResult<TOutput> Parse(ISequence<TInput> t)
         {
             t = t.Mark();
-            var outputs = new AstNode[_parsers.Count];
+            var outputs = new object[_parsers.Count];
             for (int i = 0; i < _parsers.Count; i++)
             {
-                var result = _parsers[i].Parse(t);
-                if (result == null)
+                var result = _parsers[i].ParseUntyped(t);
+                if (!result.Success)
                 {
-                    (t as WindowTokenizer)?.Rewind();
-                    return default;
+                    (t as WindowTokenizer<TInput>)?.Rewind();
+                    return Result<TOutput>.Fail();
                 }
 
-                outputs[i] = result;
+                outputs[i] = result.Value;
             }
-            return _produce(outputs);
+            return new Result<TOutput>(true, _produce(outputs));
         }
+
+        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>) Parse(t);
 
         public string Name { get; set; }
 
@@ -48,16 +50,16 @@ namespace Scoop.Parsers
 
         public IParser ReplaceChild(IParser find, IParser replace)
         {
-            if (_parsers.Contains(find) && replace is IParser<AstNode> realReplace)
+            if (_parsers.Contains(find) && replace is IParser<TInput> realReplace)
             {
-                var newList = new IParser<AstNode>[_parsers.Count];
+                var newList = new IParser<TInput>[_parsers.Count];
                 for (int i = 0; i < _parsers.Count; i++)
                 {
                     var child = _parsers[i];
                     newList[i] = child == find ? realReplace : child;
                 }
 
-                return new SequenceParser<TOutput>(newList, _produce);
+                return new SequenceParser<TInput, TOutput>(newList, _produce);
             }
 
             return this;

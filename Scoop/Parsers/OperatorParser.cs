@@ -9,7 +9,7 @@ namespace Scoop.Parsers
     /// <summary>
     /// Parse one of a list of allowable operators and return an OperatorNode
     /// </summary>
-    public class OperatorParser : IParser<OperatorNode>
+    public class OperatorParser : IParser<Token, OperatorNode>
     {
         private readonly string[] _operators;
 
@@ -18,12 +18,14 @@ namespace Scoop.Parsers
             _operators = operators;
         }
 
-        public OperatorNode Parse(ITokenizer t)
+        public IParseResult<OperatorNode> Parse(ISequence<Token> t)
         {
             if (!t.Peek().IsOperator(_operators))
-                return null;
-            return new OperatorNode(t.GetNext());
+                return Result<OperatorNode>.Fail();
+            return new Result<OperatorNode>(true, new OperatorNode(t.GetNext()));
         }
+
+        IParseResult<object> IParser<Token>.ParseUntyped(ISequence<Token> t) => (IParseResult<object>)Parse(t);
 
         public string Name { get; set; }
 

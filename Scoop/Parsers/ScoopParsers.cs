@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
@@ -8,20 +7,22 @@ namespace Scoop.Parsers
 {
     public static class ScoopParsers
     {
-        public static IParser<AstNode> ApplyPostfix(IParser<AstNode> left, Func<IParser<AstNode>, IParser<AstNode>> produce)
+        public static IParser<Token, AstNode> ApplyPostfix(IParser<Token, AstNode> left, Func<IParser<Token, AstNode>, IParser<Token, AstNode>> getRight)
         {
-            return new ApplyPostfixParser(left, produce);
+            return new ApplyPostfixParser(left, getRight);
         }
 
         /// <summary>
         /// Get a reference to a parser. Avoids circular dependencies in the grammar
         /// </summary>
         /// <typeparam name="TOutput"></typeparam>
+        /// <typeparam name="TInput"></typeparam>
         /// <param name="getParser"></param>
         /// <returns></returns>
-        public static IParser<TOutput> Deferred<TOutput>(Func<IParser<TOutput>> getParser)
+        public static IParser<TInput, TOutput> Deferred<TInput, TOutput>(Func<IParser<TInput, TOutput>> getParser)
+            where TOutput : AstNode
         {
-            return new DeferredParser<TOutput>(getParser);
+            return new DeferredParser<TInput, TOutput>(getParser);
         }
 
         /// <summary>
@@ -32,7 +33,7 @@ namespace Scoop.Parsers
         /// <param name="consumeOne"></param>
         /// <param name="errorMessage"></param>
         /// <returns></returns>
-        public static IParser<TOutput> Error<TOutput>(bool consumeOne, string errorMessage)
+        public static IParser<Token, TOutput> Error<TOutput>(bool consumeOne, string errorMessage)
             where TOutput : AstNode, new()
         {
             return new ErrorParser<TOutput>(consumeOne, errorMessage);
@@ -43,22 +44,32 @@ namespace Scoop.Parsers
         /// we may want to make a replacement later
         /// </summary>
         /// <typeparam name="TOutput"></typeparam>
+        /// <typeparam name="TInput"></typeparam>
         /// <returns></returns>
-        public static IParser<TOutput> Fail<TOutput>()
+        public static IParser<TInput, TOutput> Fail<TInput, TOutput>()
+            where TOutput : AstNode
         {
-            return new ProduceParser<TOutput>(() => default(TOutput));
+            return new FailParser<TInput, TOutput>();
         }
 
         /// <summary>
         /// Return the reuslt of the first parser which succeeds
         /// </summary>
         /// <typeparam name="TOutput"></typeparam>
+        /// <typeparam name="TInput"></typeparam>
         /// <param name="parsers"></param>
         /// <returns></returns>
-        public static IParser<TOutput> First<TOutput>(params IParser<TOutput>[] parsers)
-            where TOutput : AstNode
+        //public static IParser<TInput, TOutput> First<TInput, TOutput>(params IParser<TInput>[] parsers)
+        //{
+        //    // This variant allows us to put off output type-checking until runtime, but there's a possibility
+        //    // that the parser returns a type of output which isn't compatible with TOutput and we will get
+        //    // a runtime exception.
+        //    return new FirstParser<TInput, TOutput>(parsers);
+        //}
+
+        public static IParser<TInput, TOutput> First<TInput, TOutput>(params IParser<TInput, TOutput>[] parsers)
         {
-            return new FirstParser<TOutput>(parsers.Cast<IParser<AstNode>>().ToArray());
+            return new FirstParser<TInput, TOutput>(parsers);
         }
 
         /// <summary>
@@ -71,12 +82,12 @@ namespace Scoop.Parsers
         /// <param name="right"></param>
         /// <param name="producer"></param>
         /// <returns></returns>
-        public static IParser<AstNode> Infix(IParser<AstNode> left, IParser<OperatorNode> operatorParser, IParser<AstNode> right, Func<AstNode, OperatorNode, AstNode, AstNode> producer)
+        public static IParser<Token, AstNode> Infix(IParser<Token, AstNode> left, IParser<Token, OperatorNode> operatorParser, IParser<Token, AstNode> right, Func<AstNode, OperatorNode, AstNode, AstNode> producer)
         {
             return new InfixOperatorParser(left, operatorParser, right, producer);
         }
 
-        public static IParser<KeywordNode> Keyword(params string[] keywords)
+        public static IParser<Token, KeywordNode> Keyword(params string[] keywords)
         {
             return new KeywordParser(keywords);
         }
@@ -86,16 +97,16 @@ namespace Scoop.Parsers
         /// </summary>
         /// <typeparam name="TItem"></typeparam>
         /// <typeparam name="TOutput"></typeparam>
+        /// <typeparam name="TInput"></typeparam>
         /// <param name="p"></param>
         /// <param name="produce"></param>
         /// <returns></returns>
-        public static IParser<ListNode<TOutput>> List<TItem, TOutput>(IParser<TItem> p, Func<IReadOnlyList<TItem>, ListNode<TOutput>> produce)
-            where TOutput : AstNode
+        public static IParser<TInput, TOutput> List<TInput, TItem, TOutput>(IParser<TInput, TItem> p, Func<IReadOnlyList<TItem>, TOutput> produce)
         {
-            return new ListParser<TOutput, TItem>(p, produce);
+            return new ListParser<TInput, TItem, TOutput>(p, produce);
         }
 
-        public static IParser<OperatorNode> Operator(params string[] operators)
+        public static IParser<Token, OperatorNode> Operator(params string[] operators)
         {
             return new OperatorParser(operators);
         }
@@ -106,25 +117,27 @@ namespace Scoop.Parsers
         /// <param name="p"></param>
         /// <param name="getDefault"></param>
         /// <returns></returns>
-        public static IParser<AstNode> Optional(IParser<AstNode> p, Func<AstNode> getDefault = null)
+        public static IParser<TInput, TOutput> Optional<TInput, TOutput>(IParser<TInput, TOutput> p, Func<TOutput> getDefault = null)
+            where TOutput : AstNode
         {
-            return new OptionalParser(p, getDefault);
+            return new OptionalParser<TInput, TOutput>(p, getDefault);
         }
 
         /// <summary>
         /// Produce an empty or default node without consuming anything out of the tokenizer
         /// </summary>
         /// <typeparam name="TOutput"></typeparam>
+        /// <typeparam name="TInput"></typeparam>
         /// <param name="produce"></param>
         /// <returns></returns>
-        public static IParser<TOutput> Produce<TOutput>(Func<TOutput> produce)
+        public static IParser<TInput, TOutput> Produce<TInput, TOutput>(Func<TOutput> produce)
         {
-            return new ProduceParser<TOutput>(produce);
+            return new ProduceParser<TInput, TOutput>(produce);
         }
 
-        public static IParser<TOutput> Replaceable<TOutput>(IParser<TOutput> defaultValue)
+        public static IParser<TInput, TOutput> Replaceable<TInput, TOutput>(IParser<TInput, TOutput> defaultValue)
         {
-            return new ReplaceableParser<TOutput>(defaultValue);
+            return new ReplaceableParser<TInput, TOutput>(defaultValue);
         }
 
         /// <summary>
@@ -132,13 +145,14 @@ namespace Scoop.Parsers
         /// error information for the missing tokens
         /// </summary>
         /// <typeparam name="TOutput"></typeparam>
+        /// <typeparam name="TInput"></typeparam>
         /// <param name="p"></param>
         /// <param name="errorMessage"></param>
         /// <returns></returns>
-        public static IParser<TOutput> Required<TOutput>(IParser<TOutput> p, string errorMessage)
+        public static IParser<TInput, TOutput> Required<TInput, TOutput>(IParser<TInput, TOutput> p, string errorMessage)
             where TOutput : AstNode, new()
         {
-            return new RequiredParser<TOutput>(p, l => new TOutput().WithDiagnostics(l, errorMessage));
+            return new RequiredParser<TInput, TOutput>(p, l => new TOutput().WithDiagnostics(l, errorMessage));
         }
 
         /// <summary>
@@ -146,14 +160,15 @@ namespace Scoop.Parsers
         /// diagnostic error message
         /// </summary>
         /// <typeparam name="TOutput"></typeparam>
+        /// <typeparam name="TInput"></typeparam>
         /// <param name="p"></param>
         /// <param name="produce"></param>
         /// <param name="errorMessage"></param>
         /// <returns></returns>
-        public static IParser<TOutput> Required<TOutput>(IParser<TOutput> p, Func<TOutput> produce, string errorMessage)
+        public static IParser<TInput, TOutput> Required<TInput, TOutput>(IParser<TInput, TOutput> p, Func<TOutput> produce, string errorMessage)
             where TOutput : AstNode
         {
-            return new RequiredParser<TOutput>(p, l => produce().WithDiagnostics(l, errorMessage));
+            return new RequiredParser<TInput, TOutput>(p, l => produce().WithDiagnostics(l, errorMessage));
         }
 
         /// <summary>
@@ -161,126 +176,86 @@ namespace Scoop.Parsers
         /// </summary>
         /// <typeparam name="TItem"></typeparam>
         /// <typeparam name="TOutput"></typeparam>
+        /// <typeparam name="TSeparator"></typeparam>
+        /// <typeparam name="TInput"></typeparam>
         /// <param name="p"></param>
         /// <param name="separator"></param>
         /// <param name="produce"></param>
+        /// <param name="getMissingItem"></param>
         /// <param name="atLeastOne"></param>
         /// <returns></returns>
-        public static IParser<ListNode<TOutput>> SeparatedList<TItem, TOutput>(IParser<TItem> p, IParser<AstNode> separator, Func<IReadOnlyList<TItem>, ListNode<TOutput>> produce, bool atLeastOne = false)
+        public static IParser<TInput, TOutput> SeparatedList<TInput, TItem, TSeparator, TOutput>(IParser<TInput, TItem> p, IParser<TInput, TSeparator> separator, Func<IReadOnlyList<TItem>, TOutput> produce, bool atLeastOne = false)
             where TOutput : AstNode
-            where TItem : AstNode
         {
-            return new SeparatedListParser<TOutput, TItem>(p, separator, produce, atLeastOne);
+            return new SeparatedListParser<TInput, TItem, TSeparator, TOutput>(p, separator, produce, atLeastOne);
         }
 
         /// <summary>
         /// Parse a sequence of productions and reduce them into a single output. If any item fails, rollback all and
         /// return failure
         /// </summary>
-        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="TInput, T1"></typeparam>
         /// <typeparam name="T2"></typeparam>
         /// <typeparam name="TOutput"></typeparam>
+        /// <typeparam name="TInput"></typeparam>
+        /// <typeparam name="T1"></typeparam>
         /// <param name="p1"></param>
         /// <param name="p2"></param>
         /// <param name="produce"></param>
         /// <returns></returns>
-        public static IParser<TOutput> Sequence<T1, T2, TOutput>(IParser<T1> p1, IParser<T2> p2, Func<T1, T2, TOutput> produce)
-            where T1: AstNode
-            where T2: AstNode
+        public static IParser<TInput, TOutput> Sequence<TInput, T1, T2, TOutput>(IParser<TInput, T1> p1, IParser<TInput, T2> p2, Func<T1, T2, TOutput> produce)
         {
-            return new SequenceParser<TOutput>(
-                new IParser<AstNode>[] { p1, p2 },
+            return new SequenceParser<TInput, TOutput>(
+                new IParser<TInput>[] { p1, p2 },
                 (list) => produce((T1)list[0], (T2)list[1]));
         }
 
-        public static IParser<TOutput> Sequence<T1, T2, T3, TOutput>(IParser<T1> p1, IParser<T2> p2, IParser<T3> p3, Func<T1, T2, T3, TOutput> produce)
-            where T1 : AstNode
-            where T2 : AstNode
-            where T3 : AstNode
+        public static IParser<TInput, TOutput> Sequence<TInput, T1, T2, T3, TOutput>(IParser<TInput, T1> p1, IParser<TInput, T2> p2, IParser<TInput, T3> p3, Func<T1, T2, T3, TOutput> produce)
         {
-            return new SequenceParser<TOutput>(
-                new IParser<AstNode>[] { p1, p2, p3 },
+            return new SequenceParser<TInput, TOutput>(
+                new IParser<TInput>[] { p1, p2, p3 },
                 (list) => produce((T1)list[0], (T2)list[1], (T3)list[2]));
         }
 
-        public static IParser<TOutput> Sequence<T1, T2, T3, T4, TOutput>(IParser<T1> p1, IParser<T2> p2, IParser<T3> p3, IParser<T4> p4, Func<T1, T2, T3, T4, TOutput> produce)
-            where T1 : AstNode
-            where T2 : AstNode
-            where T3 : AstNode
-            where T4 : AstNode
+        public static IParser<TInput, TOutput> Sequence<TInput, T1, T2, T3, T4, TOutput>(IParser<TInput, T1> p1, IParser<TInput, T2> p2, IParser<TInput, T3> p3, IParser<TInput, T4> p4, Func<T1, T2, T3, T4, TOutput> produce)
         {
-            return new SequenceParser<TOutput>(
-                new IParser<AstNode>[] { p1, p2, p3, p4 },
+            return new SequenceParser<TInput, TOutput>(
+                new IParser<TInput>[] { p1, p2, p3, p4 },
                 (list) => produce((T1)list[0], (T2)list[1], (T3)list[2], (T4)list[3]));
         }
 
-        public static IParser<TOutput> Sequence<T1, T2, T3, T4, T5, TOutput>(IParser<T1> p1, IParser<T2> p2, IParser<T3> p3, IParser<T4> p4, IParser<T5> p5, Func<T1, T2, T3, T4, T5, TOutput> produce)
-            where T1 : AstNode
-            where T2 : AstNode
-            where T3 : AstNode
-            where T4 : AstNode
-            where T5 : AstNode
+        public static IParser<TInput, TOutput> Sequence<TInput, T1, T2, T3, T4, T5, TOutput>(IParser<TInput, T1> p1, IParser<TInput, T2> p2, IParser<TInput, T3> p3, IParser<TInput, T4> p4, IParser<TInput, T5> p5, Func<T1, T2, T3, T4, T5, TOutput> produce)
         {
-            return new SequenceParser<TOutput>(
-                new IParser<AstNode>[] { p1, p2, p3, p4, p5 },
+            return new SequenceParser<TInput, TOutput>(
+                new IParser<TInput>[] { p1, p2, p3, p4, p5 },
                 (list) => produce((T1)list[0], (T2)list[1], (T3)list[2], (T4)list[3], (T5)list[4]));
         }
 
-        public static IParser<TOutput> Sequence<T1, T2, T3, T4, T5, T6, TOutput>(IParser<T1> p1, IParser<T2> p2, IParser<T3> p3, IParser<T4> p4, IParser<T5> p5, IParser<T6> p6, Func<T1, T2, T3, T4, T5, T6, TOutput> produce)
-            where T1 : AstNode
-            where T2 : AstNode
-            where T3 : AstNode
-            where T4 : AstNode
-            where T5 : AstNode
-            where T6 : AstNode
+        public static IParser<TInput, TOutput> Sequence<TInput, T1, T2, T3, T4, T5, T6, TOutput>(IParser<TInput, T1> p1, IParser<TInput, T2> p2, IParser<TInput, T3> p3, IParser<TInput, T4> p4, IParser<TInput, T5> p5, IParser<TInput, T6> p6, Func<T1, T2, T3, T4, T5, T6, TOutput> produce)
         {
-            return new SequenceParser<TOutput>(
-                new IParser<AstNode>[] { p1, p2, p3, p4, p5, p6 },
+            return new SequenceParser<TInput, TOutput>(
+                new IParser<TInput>[] { p1, p2, p3, p4, p5, p6 },
                 (list) => produce((T1)list[0], (T2)list[1], (T3)list[2], (T4)list[3], (T5)list[4], (T6)list[5]));
         }
 
-        public static IParser<TOutput> Sequence<T1, T2, T3, T4, T5, T6, T7, TOutput>(IParser<T1> p1, IParser<T2> p2, IParser<T3> p3, IParser<T4> p4, IParser<T5> p5, IParser<T6> p6, IParser<T7> p7, Func<T1, T2, T3, T4, T5, T6, T7, TOutput> produce)
-            where T1 : AstNode
-            where T2 : AstNode
-            where T3 : AstNode
-            where T4 : AstNode
-            where T5 : AstNode
-            where T6 : AstNode
-            where T7 : AstNode
+        public static IParser<TInput, TOutput> Sequence<TInput, T1, T2, T3, T4, T5, T6, T7, TOutput>(IParser<TInput, T1> p1, IParser<TInput, T2> p2, IParser<TInput, T3> p3, IParser<TInput, T4> p4, IParser<TInput, T5> p5, IParser<TInput, T6> p6, IParser<TInput, T7> p7, Func<T1, T2, T3, T4, T5, T6, T7, TOutput> produce)
         {
-            return new SequenceParser<TOutput>(
-                new IParser<AstNode>[] { p1, p2, p3, p4, p5, p6, p7 },
+            return new SequenceParser<TInput, TOutput>(
+                new IParser<TInput>[] { p1, p2, p3, p4, p5, p6, p7 },
                 (list) => produce((T1)list[0], (T2)list[1], (T3)list[2], (T4)list[3], (T5)list[4], (T6)list[5], (T7)list[6]));
         }
 
-        public static IParser<TOutput> Sequence<T1, T2, T3, T4, T5, T6, T7, T8, TOutput>(IParser<T1> p1, IParser<T2> p2, IParser<T3> p3, IParser<T4> p4, IParser<T5> p5, IParser<T6> p6, IParser<T7> p7, IParser<T8> p8, Func<T1, T2, T3, T4, T5, T6, T7, T8, TOutput> produce)
-            where T1 : AstNode
-            where T2 : AstNode
-            where T3 : AstNode
-            where T4 : AstNode
-            where T5 : AstNode
-            where T6 : AstNode
-            where T7 : AstNode
-            where T8 : AstNode
+        public static IParser<TInput, TOutput> Sequence<TInput, T1, T2, T3, T4, T5, T6, T7, T8, TOutput>(IParser<TInput, T1> p1, IParser<TInput, T2> p2, IParser<TInput, T3> p3, IParser<TInput, T4> p4, IParser<TInput, T5> p5, IParser<TInput, T6> p6, IParser<TInput, T7> p7, IParser<TInput, T8> p8, Func<T1, T2, T3, T4, T5, T6, T7, T8, TOutput> produce)
         {
-            return new SequenceParser<TOutput>(
-                new IParser<AstNode>[] { p1, p2, p3, p4, p5, p6, p7, p8 },
+            return new SequenceParser<TInput, TOutput>(
+                new IParser<TInput>[] { p1, p2, p3, p4, p5, p6, p7, p8 },
                 (list) => produce((T1)list[0], (T2)list[1], (T3)list[2], (T4)list[3], (T5)list[4], (T6)list[5], (T7)list[6], (T8)list[7]));
         }
 
-        public static IParser<TOutput> Sequence<T1, T2, T3, T4, T5, T6, T7, T8, T9, TOutput>(IParser<T1> p1, IParser<T2> p2, IParser<T3> p3, IParser<T4> p4, IParser<T5> p5, IParser<T6> p6, IParser<T7> p7, IParser<T8> p8, IParser<T9> p9, Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, TOutput> produce)
-            where T1 : AstNode
-            where T2 : AstNode
-            where T3 : AstNode
-            where T4 : AstNode
-            where T5 : AstNode
-            where T6 : AstNode
-            where T7 : AstNode
-            where T8 : AstNode
-            where T9 : AstNode
+        public static IParser<TInput, TOutput> Sequence<TInput, T1, T2, T3, T4, T5, T6, T7, T8, T9, TOutput>(IParser<TInput, T1> p1, IParser<TInput, T2> p2, IParser<TInput, T3> p3, IParser<TInput, T4> p4, IParser<TInput, T5> p5, IParser<TInput, T6> p6, IParser<TInput, T7> p7, IParser<TInput, T8> p8, IParser<TInput, T9> p9, Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, TOutput> produce)
         {
-            return new SequenceParser<TOutput>(
-                new IParser<AstNode>[] { p1, p2, p3, p4, p5, p6, p7, p8, p9 },
+            return new SequenceParser<TInput, TOutput>(
+                new IParser<TInput>[] { p1, p2, p3, p4, p5, p6, p7, p8, p9 },
                 (list) => produce((T1)list[0], (T2)list[1], (T3)list[2], (T4)list[3], (T5)list[4], (T6)list[5], (T7)list[6], (T8)list[7], (T9)list[8]));
         }
 
@@ -291,8 +266,7 @@ namespace Scoop.Parsers
         /// <param name="type"></param>
         /// <param name="produce"></param>
         /// <returns></returns>
-        public static IParser<TOutput> Token<TOutput>(TokenType type, Func<Token, TOutput> produce)
-            where TOutput : AstNode
+        public static IParser<Token, TOutput> Token<TOutput>(TokenType type, Func<Token, TOutput> produce)
         {
             return new TokenParser<TOutput>(type, produce);
         }
@@ -302,14 +276,13 @@ namespace Scoop.Parsers
         /// </summary>
         /// <typeparam name="TInput"></typeparam>
         /// <typeparam name="TOutput"></typeparam>
+        /// <typeparam name="TMiddle"></typeparam>
         /// <param name="parser"></param>
         /// <param name="transform"></param>
         /// <returns></returns>
-        public static IParser<TOutput> Transform<TInput, TOutput>(IParser<TInput> parser, Func<TInput, TOutput> transform)
-            where TOutput : AstNode
-            where TInput : AstNode
+        public static IParser<TInput, TOutput> Transform<TInput, TMiddle, TOutput>(IParser<TInput, TMiddle> parser, Func<TMiddle, TOutput> transform)
         {
-            return new TransformParser<TOutput, TInput>(parser, transform);
+            return new TransformParser<TInput, TMiddle, TOutput>(parser, transform);
         }
     }
 }

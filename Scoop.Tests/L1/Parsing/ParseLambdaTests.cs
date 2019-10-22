@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Collections.Generic;
+using NUnit.Framework;
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
@@ -17,7 +18,10 @@ namespace Scoop.Tests.L1.Parsing
                 new LambdaNode
                 {
                     Parameters = ListNode<IdentifierNode>.Default(),
-                    Statements = new ListNode<AstNode>()
+                    Statements = new ListNode<AstNode>
+                    {
+                        Items = new List<AstNode>()
+                    }
                 }
             );
         }

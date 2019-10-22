@@ -23,8 +23,10 @@ namespace Scoop.Transpiler
 
         public AstNode VisitArrayType(ArrayTypeNode n)
         {
-            // TODO: N-arity
-            Append("[]");
+            Append("[");
+            for (int i = 1; i < n.Dimensions; i++)
+                Append(",");
+            Append("]");
             return n;
         }
 

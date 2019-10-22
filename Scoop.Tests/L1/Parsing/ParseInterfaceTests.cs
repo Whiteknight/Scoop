@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Collections.Generic;
+using NUnit.Framework;
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
@@ -18,7 +19,10 @@ namespace Scoop.Tests.L1.Parsing
                 {
                     AccessModifier = new KeywordNode("public"),
                     Name = new IdentifierNode("MyInterface"),
-                    Members = new ListNode<MethodDeclareNode>()
+                    Members = new ListNode<MethodDeclareNode>
+                    {
+                        Items = new List<MethodDeclareNode>()
+                    }
                 }
             );
         }
@@ -182,7 +186,10 @@ public interface MyInterface<TA>
                             Name = new IdentifierNode("IFaceB")
                         }
                     },
-                    Members = new ListNode<MethodDeclareNode>()
+                    Members = new ListNode<MethodDeclareNode>
+                    {
+                        Items = new List<MethodDeclareNode>()
+                    }
                 }
             );
         }

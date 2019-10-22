@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Scoop.Parsers.Visiting;
+using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
 namespace Scoop.Parsers
@@ -13,14 +14,19 @@ namespace Scoop.Parsers
         IParser ReplaceChild(IParser find, IParser replace);
     }
 
-    public interface IParser<out TOutput> : IParser
+    public interface IParser<TInput> : IParser
     {
-        TOutput Parse(ITokenizer t);
+        IParseResult<object> ParseUntyped(ISequence<TInput> t);
+    }
+
+    public interface IParser<TInput, out TOutput> : IParser<TInput>
+    {
+        IParseResult<TOutput> Parse(ISequence<TInput> t);
     }
 
     public static class ParserExtensions
     {
-        //public static ParseResult<TOutput> Parse<TOutput>(this IParser<TOutput> parser, ITokenizer t)
+        //public static ParseResult<TOutput> Parse<TOutput>(this IParser<TInput, TOutput> parser, ISequence<TInput> t)
         //{
         //    var window = t.Mark();
         //    try
@@ -44,20 +50,25 @@ namespace Scoop.Parsers
         //    }
         //}
 
-        public static TOutput Parse<TOutput>(this IParser<TOutput> parser, string s) => parser.Parse(new Tokenizer(s));
+        public static TOutput Parse<TOutput>(this IParser<Token, TOutput> parser, string s)
+            where TOutput : AstNode 
+            => parser.Parse(new Tokenizer(s)).Value;
 
-        public static IParser<TOutput> Named<TOutput>(this IParser<TOutput> parser, string name)
+        public static IParser<TInput, TOutput> Named<TInput, TOutput>(this IParser<TInput, TOutput> parser, string name)
+            where TOutput : AstNode
         {
             parser.Name = name;
             return parser;
         }
 
-        public static IParser<TOutput> Replace<TOutput>(this IParser<TOutput> root, Func<IParser, bool> predicate, IParser replacement) 
-            => new ReplaceParserVisitor(predicate, replacement).Visit(root) as IParser<TOutput>;
+        public static IParser<TInput, TOutput> Replace<TInput, TOutput>(this IParser<TInput, TOutput> root, Func<IParser, bool> predicate, IParser replacement)
+            where TOutput : AstNode
+            => new ReplaceParserVisitor(predicate, replacement).Visit(root) as IParser<TInput, TOutput>;
 
         public static IParser FindNamed(this IParser root, string name) => FindParserVisitor.Named(name, root);
 
-        public static IParser<TOutput> Replace<TOutput>(this IParser<TOutput> root, IParser find, IParser replace) 
-            => new ReplaceParserVisitor(p => p == find, replace).Visit(root) as IParser<TOutput>;
+        public static IParser<TInput, TOutput> Replace<TInput, TOutput>(this IParser<TInput, TOutput> root, IParser find, IParser replace)
+            where TOutput : AstNode
+            => new ReplaceParserVisitor(p => p == find, replace).Visit(root) as IParser<TInput, TOutput>;
     }
 }

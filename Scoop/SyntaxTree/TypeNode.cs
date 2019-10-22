@@ -29,6 +29,17 @@ namespace Scoop.SyntaxTree
 
     public class ArrayTypeNode : AstNode
     {
+        public ArrayTypeNode()
+        {
+            Dimensions = 1;
+        }
+
+        public ArrayTypeNode(int dimensions)
+        {
+            Dimensions = dimensions;
+        }
+
+        public int Dimensions { get; set; }
         public override AstNode Accept(IAstNodeVisitorImplementation visitor) => visitor.VisitArrayType(this);
     }
 }

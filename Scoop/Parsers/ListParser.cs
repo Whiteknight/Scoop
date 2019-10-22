@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Scoop.Parsers.Visiting;
-using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
 namespace Scoop.Parsers
@@ -12,30 +11,32 @@ namespace Scoop.Parsers
     /// </summary>
     /// <typeparam name="TOutput"></typeparam>
     /// <typeparam name="TItem"></typeparam>
-    public class ListParser<TOutput, TItem> : IParser<ListNode<TOutput>>
-        where TOutput : AstNode
+    /// <typeparam name="TInput"></typeparam>
+    public class ListParser<TInput, TItem, TOutput> : IParser<TInput, TOutput>
     {
-        private readonly IParser<TItem> _parser;
-        private readonly Func<IReadOnlyList<TItem>, ListNode<TOutput>> _produce;
+        private readonly IParser<TInput, TItem> _parser;
+        private readonly Func<IReadOnlyList<TItem>, TOutput> _produce;
 
-        public ListParser(IParser<TItem> parser, Func<IReadOnlyList<TItem>, ListNode<TOutput>> produce)
+        public ListParser(IParser<TInput, TItem> parser, Func<IReadOnlyList<TItem>, TOutput> produce)
         {
             _parser = parser;
             _produce = produce;
         }
 
-        public ListNode<TOutput> Parse(ITokenizer t)
+        public IParseResult<TOutput> Parse(ISequence<TInput> t)
         {
             var items = new List<TItem>();
             while (true)
             {
                 var result = _parser.Parse(t);
-                if (result == null)
+                if (!result.Success)
                     break;
-                items.Add(result);
+                items.Add(result.Value);
             }
-            return _produce(items);
+            return new Result<TOutput>(true, _produce(items));
         }
+
+        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);
 
         public string Name { get; set; }
 
@@ -45,8 +46,8 @@ namespace Scoop.Parsers
 
         public IParser ReplaceChild(IParser find, IParser replace)
         {
-            if (_parser == find && replace is IParser<TItem> realReplace)
-                return new ListParser<TOutput, TItem>(realReplace, _produce);
+            if (_parser == find && replace is IParser<TInput, TItem> realReplace)
+                return new ListParser<TInput, TItem, TOutput>(realReplace, _produce);
             return this;
         }
 

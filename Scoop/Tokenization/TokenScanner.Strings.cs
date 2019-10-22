@@ -94,6 +94,8 @@ namespace Scoop.Tokenization
                 {
                     case StringReadState.Brackets:
                         // basic state-machine to try and scan through this block
+                        // TODO: I think it's possible for the expression to contain a {} pair, so we should 
+                        // count the number of brackets and only PopState() when we've hit 0
                         if (c == '}')
                         {
                             PopState();

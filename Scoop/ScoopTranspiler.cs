@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Scoop.Grammar;
-using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 using Scoop.Transpiler;
@@ -34,7 +33,8 @@ namespace Scoop
             using (var source = new StreamCharacterSequence(inputFileName, Encoding.UTF8))
             {
                 var tokenizer = new Tokenizer(new TokenScanner(source));
-                ast = _grammar.CompilationUnits.Parse(tokenizer);
+                var result = _grammar.CompilationUnits.Parse(tokenizer);
+                ast = result.Value;
                 ast.FileName = inputFileName;
             }
             var validateResults = ast.Validate();

@@ -7,43 +7,46 @@ using Scoop.Tokenization;
 
 namespace Scoop.Parsers
 {
-    public class ApplyPostfixParser : IParser<AstNode>
+    public class ApplyPostfixParser : IParser<Token, AstNode>
     {
-        private readonly IParser<AstNode> _initial;
-        private readonly IParser<AstNode> _right;
+        private readonly IParser<Token, AstNode> _initial;
+        private readonly IParser<Token, AstNode> _right;
         private readonly LeftParser _left;
 
-        public ApplyPostfixParser(IParser<AstNode> initial, Func<IParser<AstNode>, IParser<AstNode>> getRight)
+        public ApplyPostfixParser(IParser<Token, AstNode> initial, Func<IParser<Token, AstNode>, IParser<Token, AstNode>> getRight)
         {
             _initial = initial;
             _left = new LeftParser();
             _right = getRight(_left);
         }
 
-        private ApplyPostfixParser(IParser<AstNode> initial, LeftParser left, IParser<AstNode> right)
+        private ApplyPostfixParser(IParser<Token, AstNode> initial, LeftParser left, IParser<Token, AstNode> right)
         {
             _initial = initial;
             _left = left;
             _right = right;
         }
 
-        public AstNode Parse(ITokenizer t)
+        public IParseResult<AstNode> Parse(ISequence<Token> t)
         {
-            var current = _initial.Parse(t);
-            if (current == null)
-                return null;
+            var result = _initial.Parse(t);
+            if (!result.Success)
+                return Result<AstNode>.Fail();
 
-            _left.Value = current;
+            var current = result.Value;
+            _left.Value = result.Value;
             while (true)
             {
-                var rhs = _right.Parse(t);
-                if (rhs == null)
-                    return current;
+                var rhsResult = _right.Parse(t);
+                if (!rhsResult.Success)
+                    return new Result<AstNode>(true, current);
 
-                current = rhs;
+                current = rhsResult.Value;
                 _left.Value = current;
             }
         }
+
+        IParseResult<object> IParser<Token>.ParseUntyped(ISequence<Token> t) => (IParseResult<object>)Parse(t);
 
         public string Name { get; set; }
 
@@ -54,9 +57,9 @@ namespace Scoop.Parsers
         public IParser ReplaceChild(IParser find, IParser replace)
         {
             if (_initial == find)
-                return new ApplyPostfixParser(replace as IParser<AstNode>, _left, _right);
+                return new ApplyPostfixParser(replace as IParser<Token, AstNode>, _left, _right);
             if (_right == find)
-                return new ApplyPostfixParser(_initial, _left, replace as IParser<AstNode>);
+                return new ApplyPostfixParser(_initial, _left, replace as IParser<Token, AstNode>);
 
             return this;
         }
@@ -67,14 +70,13 @@ namespace Scoop.Parsers
             return Name == null ? base.ToString() : $"{typeName} {Name}";
         }
 
-        private class LeftParser : IParser<AstNode>
+        private class LeftParser : IParser<Token, AstNode>
         {
-            public AstNode Value;
+            public AstNode Value { get; set; }
 
-            public AstNode Parse(ITokenizer t)
-            {
-                return Value;
-            }
+            public IParseResult<AstNode> Parse(ISequence<Token> t) => new Result<AstNode>(true, Value);
+
+            IParseResult<object> IParser<Token>.ParseUntyped(ISequence<Token> t) => (IParseResult<object>)Parse(t);
 
             public string Name { get; set; }
 

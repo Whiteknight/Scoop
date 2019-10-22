@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Collections.Generic;
+using NUnit.Framework;
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
@@ -201,7 +202,10 @@ public void TestMethod(int a, double b, string c)
                             Name = new IdentifierNode("c")
                         }
                     },
-                    Statements = new ListNode<AstNode>()
+                    Statements = new ListNode<AstNode>
+                    {
+                        Items = new List<AstNode>()
+                    }
                 }
             );
         }
@@ -236,7 +240,10 @@ public void TestMethod(int a = 5)
                             DefaultValue = new IntegerNode(5)
                         }
                     },
-                    Statements = new ListNode<AstNode>()
+                    Statements = new ListNode<AstNode>
+                    {
+                        Items = new List<AstNode>()
+                    }
                 }
             );
         }
@@ -307,7 +314,10 @@ public void TestMethod(params int[] a)
                             Name = new IdentifierNode("a")
                         }
                     },
-                    Statements = new ListNode<AstNode>()
+                    Statements = new ListNode<AstNode>
+                    {
+                        Items = new List<AstNode>()
+                    }
                 }
             );
         }

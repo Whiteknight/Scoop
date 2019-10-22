@@ -9,16 +9,19 @@ namespace Scoop.Parsers
     /// Looks up a parser at Parse() time, to avoid circular references in the grammar
     /// </summary>
     /// <typeparam name="TOutput"></typeparam>
-    public class DeferredParser<TOutput> : IParser<TOutput>
+    /// <typeparam name="TInput"></typeparam>
+    public class DeferredParser<TInput, TOutput> : IParser<TInput, TOutput>
     {
-        private readonly Func<IParser<TOutput>> _getParser;
+        private readonly Func<IParser<TInput, TOutput>> _getParser;
 
-        public DeferredParser(Func<IParser<TOutput>> getParser )
+        public DeferredParser(Func<IParser<TInput, TOutput>> getParser )
         {
             _getParser = getParser;
         }
 
-        public TOutput Parse(ITokenizer t) => _getParser().Parse(t);
+        public IParseResult<TOutput> Parse(ISequence<TInput> t) => _getParser().Parse(t);
+
+        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);
 
         public string Name { get; set; }
 
@@ -28,7 +31,7 @@ namespace Scoop.Parsers
 
         public IParser ReplaceChild(IParser find, IParser replace)
         {
-            if (find == _getParser() && replace is IParser<TOutput> realReplace)
+            if (find == _getParser() && replace is IParser<TInput, TOutput> realReplace)
                 return realReplace;
             return this;
         }

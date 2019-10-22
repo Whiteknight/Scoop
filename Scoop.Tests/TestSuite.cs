@@ -21,7 +21,7 @@ namespace Scoop.Tests
         {
             _testRunId = Guid.NewGuid().ToString("N");
             //Directory.CreateDirectory(_testRunId);
-            _scoopGrammar = new ScoopGrammar();
+            //_scoopGrammar = new ScoopGrammar();
         }
 
         [OneTimeTearDown]

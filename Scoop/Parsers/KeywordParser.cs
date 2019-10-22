@@ -9,7 +9,7 @@ namespace Scoop.Parsers
     /// <summary>
     /// Parses one of a list of allowable keywords
     /// </summary>
-    public class KeywordParser : IParser<KeywordNode>
+    public class KeywordParser : IParser<Token, KeywordNode>
     {
         private readonly string[] _expected;
 
@@ -18,17 +18,19 @@ namespace Scoop.Parsers
             _expected = expected;
         }
 
-        public KeywordNode Parse(ITokenizer t)
+        public IParseResult<KeywordNode> Parse(ISequence<Token> t)
         {
             var word = t.Peek();
             if (!word.IsType(TokenType.Word))
-                return null;
+                return Result<KeywordNode>.Fail();
 
             if (_expected.Any() && !_expected.Contains(word.Value))
-                return null;
+                return Result<KeywordNode>.Fail();
 
-            return new KeywordNode(t.GetNext());
+            return new Result<KeywordNode>(true, new KeywordNode(t.GetNext()));
         }
+
+        IParseResult<object> IParser<Token>.ParseUntyped(ISequence<Token> t) => (IParseResult<object>)Parse(t);
 
         public string Name { get; set; }
 

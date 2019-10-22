@@ -11,7 +11,8 @@ namespace Scoop.Parsers
     /// This is used to provide a default node value
     /// </summary>
     /// <typeparam name="TOutput"></typeparam>
-    public class ProduceParser<TOutput> : IParser<TOutput>
+    /// <typeparam name="TInput"></typeparam>
+    public class ProduceParser<TInput, TOutput> : IParser<TInput, TOutput>
     {
         private readonly Func<TOutput> _produce;
 
@@ -20,10 +21,9 @@ namespace Scoop.Parsers
             _produce = produce;
         }
 
-        public TOutput Parse(ITokenizer t)
-        {
-            return _produce();
-        }
+        public IParseResult<TOutput> Parse(ISequence<TInput> t) => new Result<TOutput>(true, _produce());
+
+        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);
 
         public string Name { get; set; }
 

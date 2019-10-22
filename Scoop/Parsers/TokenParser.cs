@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Scoop.Parsers.Visiting;
-using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
 namespace Scoop.Parsers
@@ -11,8 +10,7 @@ namespace Scoop.Parsers
     /// Consumes a single Token of a specified type and produces an output
     /// </summary>
     /// <typeparam name="TOutput"></typeparam>
-    public class TokenParser<TOutput> : IParser<TOutput>
-        where TOutput : AstNode
+    public class TokenParser<TOutput> : IParser<Token, TOutput>
     {
         private readonly TokenType _type;
         private readonly Func<Token, TOutput> _produce;
@@ -23,12 +21,14 @@ namespace Scoop.Parsers
             _produce = produce;
         }
 
-        public TOutput Parse(ITokenizer t)
+        public IParseResult<TOutput> Parse(ISequence<Token> t)
         {
             if (t.Peek().IsType(_type))
-                return _produce(t.GetNext());
-            return null;
+                return new Result<TOutput>(true, _produce(t.GetNext()));
+            return Result<TOutput>.Fail();
         }
+
+        IParseResult<object> IParser<Token>.ParseUntyped(ISequence<Token> t) => (IParseResult<object>)Parse(t);
 
         public string Name { get; set; }
 

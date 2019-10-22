@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Scoop.Parsers.Visiting;
-using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
 namespace Scoop.Parsers
@@ -10,22 +9,24 @@ namespace Scoop.Parsers
     /// Attempts to parse the production and returns a default value if it does not succeed
     /// The fallback value is typically an EmptyNode but can be overridden
     /// </summary>
-    public class OptionalParser : IParser<AstNode>
+    public class OptionalParser<TInput, TOutput> : IParser<TInput, TOutput>
     {
-        private readonly IParser<AstNode> _parser;
-        private readonly Func<AstNode> _getDefault;
+        private readonly IParser<TInput, TOutput> _parser;
+        private readonly Func<TOutput> _getDefault;
 
-        public OptionalParser(IParser<AstNode> parser, Func<AstNode> getDefault = null)
+        public OptionalParser(IParser<TInput, TOutput> parser, Func<TOutput> getDefault = null)
         {
             _parser = parser;
-            _getDefault = getDefault ?? (() => new EmptyNode());
+            _getDefault = getDefault ?? (() => default);
         }
 
-        public AstNode Parse(ITokenizer t)
+        public IParseResult<TOutput> Parse(ISequence<TInput> t)
         {
             var result = _parser.Parse(t);
-            return result ?? _getDefault();
+            return result.Success ? result : new Result<TOutput>(true, _getDefault());
         }
+
+        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);
 
         public string Name { get; set; }
 
@@ -36,14 +37,14 @@ namespace Scoop.Parsers
         public IParser ReplaceChild(IParser find, IParser replace)
         {
             if (_parser == find)
-                return new OptionalParser(replace as IParser<AstNode>, _getDefault);
+                return new OptionalParser<TInput, TOutput>(replace as IParser<TInput, TOutput>, _getDefault);
             return this;
         }
 
         public override string ToString()
         {
             if (Name == null)
-                return "Optional." + _parser.ToString();
+                return "Optional." + _parser;
             return $"Optional={Name}.{_parser}";
         }
     }

@@ -9,7 +9,7 @@ namespace Scoop.Parsers
     /// <summary>
     /// Attempts to parse an identifier
     /// </summary>
-    public class IdentifierParser : IParser<IdentifierNode>
+    public class IdentifierParser : IParser<Token, IdentifierNode>
     {
         private readonly HashSet<string> _keywords;
         private readonly string[] _identifiers;
@@ -20,21 +20,23 @@ namespace Scoop.Parsers
             _identifiers = identifiers;
         }
 
-        public IdentifierNode Parse(ITokenizer t)
+        public IParseResult<IdentifierNode> Parse(ISequence<Token> t)
         {
             var id = t.Peek();
             // If it's not a Word or if the value isn't a keyword, fail
             if (!id.IsType(TokenType.Word) || _keywords.Contains(id.Value))
-                return null;
+                return Result<IdentifierNode>.Fail();
 
             if (_identifiers == null || _identifiers.Length == 0)
-                return new IdentifierNode(t.GetNext());
+                return new Result<IdentifierNode>(true, new IdentifierNode(t.GetNext()));
 
             if (_identifiers.Any(identifier => identifier == id.Value))
-                return new IdentifierNode(t.GetNext());
+                return new Result<IdentifierNode>(true, new IdentifierNode(t.GetNext()));
 
-            return null;
+            return Result<IdentifierNode>.Fail();
         }
+
+        IParseResult<object> IParser<Token>.ParseUntyped(ISequence<Token> t) => (IParseResult<object>)Parse(t);
 
         public string Name { get; set; }
 

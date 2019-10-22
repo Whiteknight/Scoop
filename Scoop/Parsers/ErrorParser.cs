@@ -10,7 +10,7 @@ namespace Scoop.Parsers
     /// Represents an error situation. Returns a default node with error information
     /// </summary>
     /// <typeparam name="TOutput"></typeparam>
-    public class ErrorParser<TOutput> : IParser<TOutput>
+    public class ErrorParser<TOutput> : IParser<Token, TOutput>
         where TOutput : AstNode, new()
     {
         private readonly bool _consumeOne;
@@ -22,12 +22,14 @@ namespace Scoop.Parsers
             _errorMessage = errorMessage;
         }
 
-        public TOutput Parse(ITokenizer t)
+        public IParseResult<TOutput> Parse(ISequence<Token> t)
         {
             if (_consumeOne)
                 t.Advance();
-            return new TOutput().WithDiagnostics(t.Peek().Location, _errorMessage);
+            return new Result<TOutput>(true, new TOutput().WithDiagnostics(t.Peek().Location, _errorMessage));
         }
+
+        IParseResult<object> IParser<Token>.ParseUntyped(ISequence<Token> t) => (IParseResult<object>)Parse(t);
 
         public string Name { get; set; }
 

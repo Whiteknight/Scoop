@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Scoop.Parsers.Visiting;
-using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
 namespace Scoop.Parsers
@@ -11,26 +10,27 @@ namespace Scoop.Parsers
     /// </summary>
     /// <typeparam name="TOutput"></typeparam>
     /// <typeparam name="TInput"></typeparam>
-    public class TransformParser<TOutput, TInput> : IParser<TOutput>
-        where TOutput : AstNode
-        where TInput : AstNode
+    /// <typeparam name="TMiddle"></typeparam>
+    public class TransformParser<TInput, TMiddle, TOutput> : IParser<TInput, TOutput>
     {
-        private readonly IParser<TInput> _parser;
-        private readonly Func<TInput, TOutput> _transform;
+        private readonly IParser<TInput, TMiddle> _parser;
+        private readonly Func<TMiddle, TOutput> _transform;
 
-        public TransformParser(IParser<TInput> parser, Func<TInput, TOutput> transform)
+        public TransformParser(IParser<TInput, TMiddle> parser, Func<TMiddle, TOutput> transform)
         {
             _parser = parser;
             _transform = transform;
         }
 
-        public TOutput Parse(ITokenizer t)
+        public IParseResult<TOutput> Parse(ISequence<TInput> t)
         {
             var result = _parser.Parse(t);
-            if (result == null)
-                return default;
-            return _transform(result);
+            if (!result.Success)
+                return Result<TOutput>.Fail();
+            return new Result<TOutput>(true, _transform(result.Value));
         }
+
+        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);
 
         public string Name { get; set; }
 
@@ -40,11 +40,10 @@ namespace Scoop.Parsers
 
         public IParser ReplaceChild(IParser find, IParser replace)
         {
-            if (find == _parser && replace is IParser<TInput> realReplace)
-                return new TransformParser<TOutput, TInput>(realReplace, _transform);
+            if (find == _parser && replace is IParser<TInput, TMiddle> realReplace)
+                return new TransformParser<TInput, TMiddle, TOutput>(realReplace, _transform);
             return this;
         }
-
 
         public override string ToString()
         {

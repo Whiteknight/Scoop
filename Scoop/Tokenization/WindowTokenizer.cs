@@ -2,35 +2,40 @@
 
 namespace Scoop.Tokenization
 {
-    public class WindowTokenizer : ITokenizer
+    public class WindowTokenizer<T> : ISequence<T>
     {
-        private readonly Stack<Token> _window;
-        private readonly ITokenizer _inner;
+        private readonly Stack<T> _window;
+        private readonly ISequence<T> _inner;
 
-        public WindowTokenizer(ITokenizer inner)
+        public WindowTokenizer(ISequence<T> inner)
         {
             _inner = inner;
-            _window = new Stack<Token>();
+            _window = new Stack<T>();
         }
 
-        public void PutBack(Token token)
+        public void PutBack(T token)
         {
-            if (_window.Peek() == token)
+            if (_window.Peek().Equals(token))
                 _window.Pop();
             _inner.PutBack(token);
-        }
-
-        public Token ScanNextToken()
-        {
-            var token = _inner.ScanNextToken();
-            _window.Push(token);
-            return token;
         }
 
         public void Rewind()
         {
             while (_window.Count > 0)
                 _inner.PutBack(_window.Pop());
+        }
+
+        public T GetNext()
+        {
+            var token = _inner.GetNext();
+            _window.Push(token);
+            return token;
+        }
+
+        public T Peek()
+        {
+            return _inner.Peek();
         }
     }
 }

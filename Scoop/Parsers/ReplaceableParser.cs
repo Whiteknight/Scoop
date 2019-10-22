@@ -8,16 +8,18 @@ namespace Scoop.Parsers
     // replaced without causing the entire parser tree to be rewritten.
     // Also if a child has been rewritten and the rewrite is bubbling up the tree, it will
     // stop here.
-    public class ReplaceableParser<TOutput> : IParser<TOutput>
+    public class ReplaceableParser<TInput, TOutput> : IParser<TInput, TOutput>
     {
-        private IParser<TOutput> _value;
+        private IParser<TInput, TOutput> _value;
 
-        public ReplaceableParser(IParser<TOutput> defaultValue)
+        public ReplaceableParser(IParser<TInput, TOutput> defaultValue)
         {
             _value = defaultValue;
         }
 
-        public TOutput Parse(ITokenizer t) => _value.Parse(t);
+        public IParseResult<TOutput> Parse(ISequence<TInput> t) => _value.Parse(t);
+
+        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);
 
         public string Name { get; set; }
 
@@ -27,12 +29,12 @@ namespace Scoop.Parsers
 
         public IParser ReplaceChild(IParser find, IParser replace)
         {
-            if (_value == find && replace is IParser<TOutput> realReplace)
+            if (_value == find && replace is IParser<TInput, TOutput> realReplace)
                 _value = realReplace;
             return this;
         }
 
-        public void SetParser(IParser<TOutput> parser)
+        public void SetParser(IParser<TInput, TOutput> parser)
         {
             _value = parser;
         }
