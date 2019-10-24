@@ -28,7 +28,7 @@ namespace Scoop.Parsers.Visiting
             return p;
         }
 
-        public virtual IParser<Token, TOutput> VisitError<TOutput>(ErrorParser<TOutput> p) 
+        public virtual IParser<Token, TOutput> VisitError<TOutput>(ErrorParser<TOutput> p)
             where TOutput : AstNode, new()
         {
             return p;
@@ -39,17 +39,7 @@ namespace Scoop.Parsers.Visiting
             return p;
         }
 
-        public virtual IParser<Token, IdentifierNode> VisitIdentifier(IdentifierParser p)
-        {
-            return p;
-        }
-
         public virtual IParser<Token, AstNode> VisitInfix(InfixOperatorParser p)
-        {
-            return p;
-        }
-
-        public virtual IParser<Token, KeywordNode> VisitKeyword(KeywordParser p)
         {
             return p;
         }
@@ -59,12 +49,12 @@ namespace Scoop.Parsers.Visiting
             return p;
         }
 
-        public virtual IParser<Token, OperatorNode> VisitOperator(OperatorParser p)
+        public virtual IParser<TInput, TOutput> VisitOptional<TInput, TOutput>(OptionalParser<TInput, TOutput> p)
         {
             return p;
         }
 
-        public virtual IParser<TInput, TOutput> VisitOptional<TInput, TOutput>(OptionalParser<TInput, TOutput> p)
+        public virtual IParser<TInput, TOutput> VisitPredicate<TInput, TOutput>(PredicateParser<TInput, TOutput> p)
         {
             return p;
         }
@@ -91,11 +81,6 @@ namespace Scoop.Parsers.Visiting
         }
 
         public virtual IParser<TInput, TOutput> VisitSequence<TInput, TOutput>(SequenceParser<TInput, TOutput> p)
-        {
-            return p;
-        }
-
-        public virtual IParser<Token, TOutput> VisitToken<TOutput>(TokenParser<TOutput> p)
         {
             return p;
         }

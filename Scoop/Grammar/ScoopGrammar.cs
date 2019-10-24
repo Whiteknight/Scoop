@@ -93,7 +93,9 @@ namespace Scoop.Grammar
             Expressions = Deferred(() => _expressions).Named("Expressions");
 
             // Setup some commonly-used parsers
-            _identifiers = new IdentifierParser(_keywords).Named("_identifiers");
+            _identifiers = new PredicateParser<Token, IdentifierNode>(
+                t => t.IsType(TokenType.Word) && !_keywords.Contains(t.Value), 
+                t => new IdentifierNode(t)).Named("_identifiers");
             _accessModifiers = Optional(
                 Keyword("public", "private")
             ).Named("accessModifiers");

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
 
@@ -87,9 +88,14 @@ namespace Scoop.Parsers
             return new InfixOperatorParser(left, operatorParser, right, producer);
         }
 
-        public static IParser<Token, KeywordNode> Keyword(params string[] keywords)
+        public static IParser<Token, KeywordNode> Keyword(string firstKeyword, params string[] keywords)
         {
-            return new KeywordParser(keywords);
+            return new PredicateParser<Token, KeywordNode>(t => t.IsType(TokenType.Word) && (t.Value == firstKeyword || keywords.Any(k => k == t.Value)), t => new KeywordNode(t));
+        }
+
+        public static IParser<Token, TOutput> Keyword<TOutput>(string firstKeyword, Func<Token, TOutput> produce)
+        {
+            return new PredicateParser<Token, TOutput>(t => t.IsType(TokenType.Word) && t.Value == firstKeyword, produce);
         }
 
         /// <summary>
@@ -106,9 +112,9 @@ namespace Scoop.Parsers
             return new ListParser<TInput, TItem, TOutput>(p, produce);
         }
 
-        public static IParser<Token, OperatorNode> Operator(params string[] operators)
+        public static IParser<Token, OperatorNode> Operator(string firstOp, params string[] operators)
         {
-            return new OperatorParser(operators);
+            return new PredicateParser<Token, OperatorNode>(t => t.IsType(TokenType.Operator) && (t.Value == firstOp || operators.Any(k => k == t.Value)), t => new OperatorNode(t));
         }
 
         /// <summary>
@@ -268,7 +274,7 @@ namespace Scoop.Parsers
         /// <returns></returns>
         public static IParser<Token, TOutput> Token<TOutput>(TokenType type, Func<Token, TOutput> produce)
         {
-            return new TokenParser<TOutput>(type, produce);
+            return new PredicateParser<Token, TOutput>(t => t.IsType(type), produce);
         }
 
         /// <summary>
