@@ -9,6 +9,10 @@ namespace Scoop.SyntaxTree
         public string Id { get; }
         public IReadOnlyList<string> Parts { get; }
 
+        public DottedIdentifierNode()
+        {
+        }
+
         public DottedIdentifierNode(IEnumerable<string> parts, Location location = null)
         {
             Parts = parts.ToList();

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Scoop.SyntaxTree;
+using System.Linq;
 using Scoop.Tokenization;
 
 namespace Scoop.Parsers
@@ -107,9 +107,38 @@ namespace Scoop.Parsers
         /// <param name="atLeastOne"></param>
         /// <returns></returns>
         public static IParser<TInput, TOutput> SeparatedList<TInput, TItem, TSeparator, TOutput>(IParser<TInput, TItem> p, IParser<TInput, TSeparator> separator, Func<IReadOnlyList<TItem>, TOutput> produce, bool atLeastOne = false)
-            where TOutput : AstNode
         {
-            return new SeparatedListParser<TInput, TItem, TSeparator, TOutput>(p, separator, produce, atLeastOne);
+            if (atLeastOne)
+            {
+                return Sequence(
+                    p,
+                    List(
+                        Sequence(
+                            separator,
+                            p,
+                            (s, item) => item
+                        ),
+                        items => items
+                    ),
+                    (first, rest) => produce(new[] { first }.Concat(rest).ToList())
+                );
+            }
+
+            return First(
+                Sequence(
+                    p,
+                    List(
+                        Sequence(
+                            separator,
+                            p,
+                            (s, item) => item
+                        ),
+                        items => items
+                    ),
+                    (first, rest) => produce(new[] { first }.Concat(rest).ToList())
+                ),
+                Produce<TInput, TOutput>(() => produce(new List<TItem>()))
+            );
         }
 
         /// <summary>

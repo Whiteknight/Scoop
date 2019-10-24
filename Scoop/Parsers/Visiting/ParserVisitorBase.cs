@@ -74,12 +74,6 @@ namespace Scoop.Parsers.Visiting
             return p;
         }
 
-        public virtual IParser<TInput, TOutput> VisitSeparatedList<TInput, TItem, TSeparator, TOutput>(SeparatedListParser<TInput, TItem, TSeparator, TOutput> p) 
-            where TOutput : AstNode
-        {
-            return p;
-        }
-
         public virtual IParser<TInput, TOutput> VisitSequence<TInput, TOutput>(SequenceParser<TInput, TOutput> p)
         {
             return p;
