@@ -65,6 +65,11 @@ namespace Scoop.Parsers
         /// <returns></returns>
         public static IParser<TInput, TOutput> Produce<TInput, TOutput>(Func<TOutput> produce)
         {
+            return new ProduceParser<TInput, TOutput>(t => produce());
+        }
+
+        public static IParser<TInput, TOutput> Produce<TInput, TOutput>(Func<ISequence<TInput>, TOutput> produce)
+        {
             return new ProduceParser<TInput, TOutput>(produce);
         }
 

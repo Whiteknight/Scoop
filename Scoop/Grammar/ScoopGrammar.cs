@@ -444,7 +444,7 @@ namespace Scoop.Grammar
                         _requiredSemicolon,
                         (expr, s) => new ListNode<AstNode> { new ReturnNode { Expression = expr } }.WithUnused(s)
                     ),
-                    Error<ListNode<AstNode>>(false, Errors.MissingOpenBracket)
+                    Error<ListNode<AstNode>>(Errors.MissingOpenBracket)
                 ),
                 (lambda, body) => body.WithUnused(lambda)
             ).Named("exprMethodBody");
@@ -462,7 +462,7 @@ namespace Scoop.Grammar
             var methodBody = First(
                 exprMethodBody,
                 _normalMethodBody,
-                Error<ListNode<AstNode>>(false, Errors.MissingOpenBracket)
+                Error<ListNode<AstNode>>(Errors.MissingOpenBracket)
             ).Named("methodBody");
 
             var constructors = First(
@@ -762,7 +762,7 @@ namespace Scoop.Grammar
                 First(
                     varDeclareParser,
                     Expressions,
-                    Error<EmptyNode>(false, Errors.MissingExpression)
+                    Error<EmptyNode>(Errors.MissingExpression)
                 ),
                 _requiredCloseParen,
                 Required(Deferred(() => Statements), t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingStatement)),
@@ -777,7 +777,7 @@ namespace Scoop.Grammar
             Statements = First(
                 // ";" | <returnStatement> | <declaration> | <constDeclaration> | <expression>
                 // <csharpLiteral> | <usingStatement>
-                Transform(Operator(";"), o => (AstNode)new EmptyNode().WithUnused(o)).Named("emptyStmt"),
+                Transform(Operator(";"), o => new EmptyNode().WithUnused(o)).Named("emptyStmt"),
                 Token(TokenType.CSharpLiteral, x => new CSharpNode(x)),
                 usingStmtParser,
                 returnStmtParser,
@@ -793,12 +793,13 @@ namespace Scoop.Grammar
 
         private void InitializeTypes()
         {
-            // <typeName> ("<" <typeArray> ("," <typeArray>)* ">")?
+            // <ypeName = <identifier>
             var typeName = Transform(
                 _identifiers,
                 id => new TypeNode(id)
             ).Named("typeName");
 
+            // generictype = <typeName> ("<" <Type> ("," <Type>)* ">")?
             var genericType = Sequence(
                 typeName,
                 Optional(
@@ -828,6 +829,7 @@ namespace Scoop.Grammar
                 }
             ).Named("genericType");
 
+            // subtype = <genericType> ("." <genericType>)*
             var subtype = SeparatedList(
                 genericType,
                 Operator("."),
@@ -835,7 +837,7 @@ namespace Scoop.Grammar
                 atLeastOne: true
             ).Named("subtype");
 
-            // <subtype> ("[" "]")*
+            // types = <subtype> ("[" ","* "]")*
             _types = Sequence(
                 subtype,
                 List(
@@ -963,7 +965,7 @@ namespace Scoop.Grammar
                         return new ListNode<AstNode> { Items = list, Separator = new OperatorNode(",") };
                     }
                 ),
-                Error<ListNode<AstNode>>(false, Errors.MissingIdentifier)
+                Error<ListNode<AstNode>>(Errors.MissingExpression)
             ).Named("constraintList");
 
             _typeConstraints = List(
@@ -1482,7 +1484,7 @@ namespace Scoop.Grammar
                             // Make sure the transpiler deals with this correctly if not
                             body => new ListNode<AstNode> { [0] = body }
                         ),
-                        Error<ListNode<AstNode>>(false, Errors.MissingExpression)
+                        Error<ListNode<AstNode>>(Errors.MissingExpression)
                     ),
                     (parameters, x, body) => (AstNode)new LambdaNode
                     {
@@ -1501,6 +1503,12 @@ namespace Scoop.Grammar
                 items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") },
                 atLeastOne: true
             ).Named("ExpressionList");
+        }
+
+        private static IParser<Token, TOutput> Error<TOutput>(string error)
+            where TOutput : AstNode, new()
+        {
+            return Produce<Token, TOutput>(t => new TOutput().WithDiagnostics(t.CurrentLocation, error)).Named("error");
         }
     }
 }

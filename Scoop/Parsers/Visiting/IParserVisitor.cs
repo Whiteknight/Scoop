@@ -10,10 +10,8 @@ namespace Scoop.Parsers.Visiting
 
     public interface IParserVisitorImplementation
     {
-        IParser<Token, AstNode> VisitApplyPostfix(ApplyPostfixParser p);
+        IParser<TInput, TOutput> VisitApplyPostfix<TInput, TOutput>(ApplyPostfixParser<TInput, TOutput> p);
         IParser<TInput, TOutput> VisitDeferred<TInput, TOutput>(DeferredParser<TInput, TOutput> p);
-        IParser<Token, TOutput> VisitError<TOutput>(ErrorParser<TOutput> p) 
-            where TOutput : AstNode, new();
         IParser<TInput, TOutput> VisitFirst<TInput, TOutput>(FirstParser<TInput, TOutput> p);
 
         IParser<Token, AstNode> VisitInfix(InfixOperatorParser p);

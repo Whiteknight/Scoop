@@ -14,14 +14,14 @@ namespace Scoop.Parsers
     /// <typeparam name="TInput"></typeparam>
     public class ProduceParser<TInput, TOutput> : IParser<TInput, TOutput>
     {
-        private readonly Func<TOutput> _produce;
+        private readonly Func<ISequence<TInput>, TOutput> _produce;
 
-        public ProduceParser(Func<TOutput> produce)
+        public ProduceParser(Func<ISequence<TInput>, TOutput> produce)
         {
             _produce = produce;
         }
 
-        public IParseResult<TOutput> Parse(ISequence<TInput> t) => new Result<TOutput>(true, _produce());
+        public IParseResult<TOutput> Parse(ISequence<TInput> t) => new Result<TOutput>(true, _produce(t));
 
         IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);
 

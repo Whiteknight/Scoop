@@ -11,21 +11,7 @@ namespace Scoop.Parsers
     {
         public static IParser<Token, AstNode> ApplyPostfix(IParser<Token, AstNode> left, Func<IParser<Token, AstNode>, IParser<Token, AstNode>> getRight)
         {
-            return new ApplyPostfixParser(left, getRight);
-        }
-
-        /// <summary>
-        /// Return a node which represents an error in the parse. Returns a synthetic node
-        /// with diagnostic information about the underlying syntax being missing
-        /// </summary>
-        /// <typeparam name="TOutput"></typeparam>
-        /// <param name="consumeOne"></param>
-        /// <param name="errorMessage"></param>
-        /// <returns></returns>
-        public static IParser<Token, TOutput> Error<TOutput>(bool consumeOne, string errorMessage)
-            where TOutput : AstNode, new()
-        {
-            return new ErrorParser<TOutput>(consumeOne, errorMessage);
+            return new ApplyPostfixParser<Token, AstNode>(left, getRight);
         }
 
         /// <summary>

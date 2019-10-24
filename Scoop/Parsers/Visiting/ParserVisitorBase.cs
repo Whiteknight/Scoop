@@ -18,18 +18,12 @@ namespace Scoop.Parsers.Visiting
             return parser;
         }
 
-        public virtual IParser<Token, AstNode> VisitApplyPostfix(ApplyPostfixParser p)
+        public virtual IParser<TInput, TOutput> VisitApplyPostfix<TInput, TOutput>(ApplyPostfixParser<TInput, TOutput> p)
         {
             return p;
         }
 
         public virtual IParser<TInput, TOutput> VisitDeferred<TInput, TOutput>(DeferredParser<TInput, TOutput> p)
-        {
-            return p;
-        }
-
-        public virtual IParser<Token, TOutput> VisitError<TOutput>(ErrorParser<TOutput> p)
-            where TOutput : AstNode, new()
         {
             return p;
         }
