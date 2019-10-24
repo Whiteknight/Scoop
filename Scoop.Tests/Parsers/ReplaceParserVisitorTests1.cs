@@ -4,7 +4,8 @@ using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 using Scoop.Tokenization;
-using static Scoop.Parsers.ScoopParsers;
+using static Scoop.Parsers.ParserMethods;
+using static Scoop.Parsers.TokenParserMethods;
 
 namespace Scoop.Tests.Parsers
 {

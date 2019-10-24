@@ -6,5 +6,6 @@
         T GetNext();
 
         T Peek();
+        Location CurrentLocation { get; }
     }
 }

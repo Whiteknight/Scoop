@@ -37,5 +37,7 @@ namespace Scoop.Tokenization
         {
             return _inner.Peek();
         }
+
+        public Location CurrentLocation => _inner.CurrentLocation;
     }
 }

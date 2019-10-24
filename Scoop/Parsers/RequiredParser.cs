@@ -15,9 +15,9 @@ namespace Scoop.Parsers
     public class RequiredParser<TInput, TOutput> : IParser<TInput, TOutput>
     {
         private readonly IParser<TInput, TOutput> _inner;
-        private readonly Func<Location, TOutput> _otherwise;
+        private readonly Func<ISequence<TInput>, TOutput> _otherwise;
 
-        public RequiredParser(IParser<TInput, TOutput> inner, Func<Location, TOutput> otherwise)
+        public RequiredParser(IParser<TInput, TOutput> inner, Func<ISequence<TInput>, TOutput> otherwise)
         {
             _inner = inner;
             _otherwise = otherwise;
@@ -30,9 +30,7 @@ namespace Scoop.Parsers
                 return result;
 
             // Otherwise, create the fallback production at the location where _inner would have started
-            // TODO: There has to be a better way to get Location information here
-            var location = (t.Peek() as Token)?.Location;
-            return new Result<TOutput>(true, _otherwise(location));
+            return new Result<TOutput>(true, _otherwise(t));
         }
 
         IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);

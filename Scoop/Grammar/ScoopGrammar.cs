@@ -3,7 +3,8 @@ using System.Linq;
 using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
-using static Scoop.Parsers.ScoopParsers;
+using static Scoop.Parsers.ParserMethods;
+using static Scoop.Parsers.TokenParserMethods;
 
 namespace Scoop.Grammar
 {
@@ -101,20 +102,20 @@ namespace Scoop.Grammar
             ).Named("accessModifiers");
 
             // Setup some parsers for requiring operators or communicating helpful errors
-            _requiredSemicolon = Required(Operator(";"), Errors.MissingSemicolon);
-            _requiredOpenBracket = Required(Operator("{"), Errors.MissingOpenBracket);
-            _requiredCloseBracket = Required(Operator("}"), Errors.MissingCloseBracket);
-            _requiredOpenParen = Required(Operator("("), Errors.MissingOpenParen);
-            _requiredCloseParen = Required(Operator(")"), Errors.MissingCloseParen);
-            _requiredColon = Required(Operator(":"), Errors.MissingColon);
-            _requiredCloseBrace = Required(Operator("]"), Errors.MissingCloseBrace);
-            _requiredCloseAngle = Required(Operator(">"), Errors.MissingCloseAngle);
-            _requiredIdentifier = Required(_identifiers, Errors.MissingIdentifier);
-            _requiredEquals = Required(Operator("="), Errors.MissingEquals);
+            _requiredSemicolon = Required(Operator(";"), t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingSemicolon));
+            _requiredOpenBracket = Required(Operator("{"), t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket));
+            _requiredCloseBracket = Required(Operator("}"), t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseBracket));
+            _requiredOpenParen = Required(Operator("("), t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenParen));
+            _requiredCloseParen = Required(Operator(")"), t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseParen));
+            _requiredColon = Required(Operator(":"), t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingColon));
+            _requiredCloseBrace = Required(Operator("]"), t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseBrace));
+            _requiredCloseAngle = Required(Operator(">"), t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseAngle));
+            _requiredIdentifier = Required(_identifiers, t => new IdentifierNode().WithDiagnostics(t.CurrentLocation, Errors.MissingIdentifier));
+            _requiredEquals = Required(Operator("="), t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingEquals));
 
             // Parsers to require certain productions or add a helpful error
-            _requiredType = Required(Types, Errors.MissingType);
-            _requiredExpression = Required(Expressions, () => new EmptyNode(), Errors.MissingExpression);
+            _requiredType = Required(Types, t => new TypeNode().WithDiagnostics(t.CurrentLocation, Errors.MissingType));
+            _requiredExpression = Required(Expressions, t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression));
 
             // Setup individual sections of the grammar
             InitializeTopLevel();
@@ -216,7 +217,7 @@ namespace Scoop.Grammar
             var usingDirectives = Sequence(
                 // "using" <namespaceName> ";"
                 Keyword("using"),
-                Required(_dottedIdentifiers, () => new DottedIdentifierNode(""), Errors.MissingNamespaceName),
+                Required(_dottedIdentifiers, t => new DottedIdentifierNode("").WithDiagnostics(t.CurrentLocation, Errors.MissingNamespaceName)),
                 _requiredSemicolon,
                 (a, b, c) => new UsingDirectiveNode
                 {
@@ -243,8 +244,8 @@ namespace Scoop.Grammar
             );
             var namespaces = Sequence(
                 Keyword("namespace"),
-                Required(_dottedIdentifiers, () => new DottedIdentifierNode(""), Errors.MissingNamespaceName),
-                Required(namespaceBody, Errors.MissingOpenBracket),
+                Required(_dottedIdentifiers, t => new DottedIdentifierNode("").WithDiagnostics(t.CurrentLocation, Errors.MissingNamespaceName)),
+                Required(namespaceBody, t=> new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket)),
                 (ns, name, members) => new NamespaceNode
                 {
                     Location = ns.Location,
@@ -350,7 +351,7 @@ namespace Scoop.Grammar
                             types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") },
                             atLeastOne: true
                         ),
-                        Errors.MissingType
+                        t => new ListNode<TypeNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingType)
                     ),
                     (colon, types) => types.WithUnused(colon))
             ).Named("inheritanceList");
@@ -383,7 +384,7 @@ namespace Scoop.Grammar
                     _requiredCloseBracket,
                     (a, members, b) => members.WithUnused(a, b)
                 ),
-                Errors.MissingOpenBracket
+                t => new ListNode<MethodDeclareNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket)
             ).Named("interfaceBody");
 
             Interfaces = Sequence(
@@ -465,7 +466,7 @@ namespace Scoop.Grammar
             ).Named("methodBody");
 
             var constructors = First(
-                Replaceable(Fail<Token, ConstructorNode>()).Named("constructorNamedStub"),
+                Replaceable<Token, ConstructorNode>().Named("constructorNamedStub"),
                 Sequence(
                     Attributes,
                     _accessModifiers,
@@ -474,7 +475,7 @@ namespace Scoop.Grammar
                     Optional(
                         Sequence(
                             Operator(":"),
-                            Required(Keyword("this"), Errors.MissingThis),
+                            Required(Keyword("this"), t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
                             _argumentLists,
                             (a, b, args) => args.WithUnused(a, b)
                         )
@@ -544,8 +545,8 @@ namespace Scoop.Grammar
                 constants,
                 fields,
                 methods,
-                Replaceable(Fail<Token, AstNode>()).Named("Method1"),
-                Replaceable(Fail<Token, AstNode>()).Named("Method2"),
+                Replaceable<Token, AstNode>().Named("Method1"),
+                Replaceable<Token, AstNode>().Named("Method2"),
                 constructors
             ).Named("ClassMembers");
 
@@ -568,7 +569,7 @@ namespace Scoop.Grammar
                 _genericTypeParameters,
                 inheritanceList,
                 _typeConstraints,
-                Required(classBody, Errors.MissingOpenBracket),
+                Required(classBody, t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket)),
                 (attrs, vis, isPartial, obj, name, genParm, contracts, cons, body) => new ClassNode
                 {
                     Attributes = attrs.IsNullOrEmpty() ? null : attrs,
@@ -592,7 +593,7 @@ namespace Scoop.Grammar
                 _genericTypeParameters,
                 inheritanceList,
                 _typeConstraints,
-                Required(classBody, Errors.MissingOpenBracket),
+                Required(classBody, t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket)),
                 (attrs, vis, isPartial, obj, name, genParm, contracts, cons, body) => new ClassNode
                 {
                     Attributes = attrs.IsNullOrEmpty() ? null : attrs,
@@ -646,7 +647,7 @@ namespace Scoop.Grammar
                     _requiredCloseParen,
                     (a, parameters, b) => parameters.WithUnused(a, b)
                 ),
-                Errors.MissingParameterList
+                t => new ListNode<ParameterNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingParameterList)
             ).Named("ParameterList");
         }
 
@@ -764,7 +765,7 @@ namespace Scoop.Grammar
                     Error<EmptyNode>(false, Errors.MissingExpression)
                 ),
                 _requiredCloseParen,
-                Required(Deferred(() => Statements), () => new EmptyNode(), Errors.MissingStatement),
+                Required(Deferred(() => Statements), t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingStatement)),
                 (u, a, disposable, b, stmt) => new UsingStatementNode
                 {
                     Location = u.Location,
@@ -813,7 +814,8 @@ namespace Scoop.Grammar
                                     Separator = new OperatorNode(",")
                                 },
                                 atLeastOne: true
-                            ), Errors.MissingType
+                            ), 
+                            t => new ListNode<TypeNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingType)
                         ),
                         _requiredCloseAngle,
                         (b, genericArgs, d) => genericArgs.WithUnused(b, d)
@@ -1092,7 +1094,7 @@ namespace Scoop.Grammar
                         }
                     )
                 ).Named("newInits"),
-                Replaceable(Fail<Token, NewNode>()).Named("newNamedArgsInitsStub"),
+                Replaceable<Token, NewNode>().Named("newNamedArgsInitsStub"),
                 // "new" <type> <arguments> <initializers>?
                 Replaceable(
                     Sequence(
@@ -1153,7 +1155,7 @@ namespace Scoop.Grammar
                         },
                         atLeastOne: true
                     ),
-                    Errors.MissingExpression
+                    t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)
                 ),
                 _requiredCloseBrace,
                 (a, items, b) => items.WithUnused(a, b)
@@ -1303,7 +1305,7 @@ namespace Scoop.Grammar
                 // <Unary> (<op> <Unary>)+
                 expressionUnary,
                 Operator("*", "/", "%"),
-                Required(expressionUnary, () => new EmptyNode(), Errors.MissingExpression),
+                Required(expressionUnary, t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
                 (left, op, right) => new InfixOperationNode
                 {
                     Location = op.Location,
@@ -1318,7 +1320,7 @@ namespace Scoop.Grammar
                 // <multiplicative> (<op> <multiplicative>)+
                 expressionMultiplicative,
                 Operator("+", "-"),
-                Required(expressionMultiplicative, () => new EmptyNode(), Errors.MissingExpression),
+                Required(expressionMultiplicative, t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
                 (left, op, right) => new InfixOperationNode
                 {
                     Location = op.Location,
@@ -1353,7 +1355,7 @@ namespace Scoop.Grammar
                 // <typeCoerce> (<op> <typeCoerce>)+
                 expressionTypeCoerce,
                 Operator("==", "!=", ">=", "<=", "<", ">"),
-                Required(expressionTypeCoerce, () => new EmptyNode(), Errors.MissingExpression),
+                Required(expressionTypeCoerce, t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
                 (left, op, right) => new InfixOperationNode
                 {
                     Location = op.Location,
@@ -1368,7 +1370,7 @@ namespace Scoop.Grammar
                 // <equality> (<op> <equality>)+
                 expressionEquality,
                 Operator("&", "^", "|"),
-                Required(expressionEquality, () => new EmptyNode(), Errors.MissingExpression),
+                Required(expressionEquality, t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
                 (left, op, right) => new InfixOperationNode
                 {
                     Location = op.Location,
@@ -1383,7 +1385,7 @@ namespace Scoop.Grammar
                 // <bitwise> (<op> <bitwise>)+
                 expressionBitwise,
                 Operator("&&", "||"),
-                Required(expressionBitwise, () => new EmptyNode(), Errors.MissingExpression),
+                Required(expressionBitwise, t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
                 (left, op, right) => new InfixOperationNode
                 {
                     Location = op.Location,
@@ -1398,7 +1400,7 @@ namespace Scoop.Grammar
                 // <logical> (<op> <local>)+
                 expressionLogical,
                 Operator("??"),
-                Required(expressionLogical, () => new EmptyNode(), Errors.MissingExpression),
+                Required(expressionLogical, t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
                 (left, op, right) => new InfixOperationNode
                 {
                     Location = op.Location,
@@ -1417,14 +1419,12 @@ namespace Scoop.Grammar
                         Operator("?"),
                         Required(
                             Deferred(() => _expressionConditional),
-                            () => new EmptyNode(),
-                            Errors.MissingExpression
+                            t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)
                         ),
                         _requiredColon,
                         Required(
                             Deferred(() => _expressionConditional),
-                            () => new EmptyNode(),
-                            Errors.MissingExpression
+                            t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)
                         ),
                         (condition, q, consequent, c, alternative) => (AstNode)new ConditionalNode
                         {

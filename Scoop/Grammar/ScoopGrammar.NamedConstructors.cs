@@ -1,7 +1,8 @@
 ﻿using Scoop.Parsers;
 using Scoop.SyntaxTree;
 using Scoop.Tokenization;
-using static Scoop.Parsers.ScoopParsers;
+using static Scoop.Parsers.ParserMethods;
+using static Scoop.Parsers.TokenParserMethods;
 
 namespace Scoop.Grammar
 {
@@ -55,7 +56,7 @@ namespace Scoop.Grammar
                     Optional(
                         Sequence(
                             Operator(":"),
-                            Required(Keyword("this"), Errors.MissingThis),
+                            Required(Keyword("this"), t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
                             argumentLists,
                             (a, b, args) => args.WithUnused(a, b)
                         )

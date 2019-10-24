@@ -47,6 +47,8 @@ namespace Scoop.Tokenization
             return next;
         }
 
+        public Location CurrentLocation => Peek().Location;
+
         private Token ScanNextToken()
         {
             if (_putbacks.Count > 0)
