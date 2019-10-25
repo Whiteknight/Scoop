@@ -265,6 +265,7 @@ namespace Scoop.Grammar
                     Members = new ListNode<AstNode> { Items = items.ToList() }
                 }
             ).Named("CompilationUnits");
+            // TODO: Should we have a reule expecting explicit EndOfInput?
         }
 
         private void InitializeEnums()

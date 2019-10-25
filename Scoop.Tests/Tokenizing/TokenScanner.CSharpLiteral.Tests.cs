@@ -1,3 +1,4 @@
+using FluentAssertions;
 using NUnit.Framework;
 using Scoop.Tests.Utility;
 using Scoop.Tokenization;
@@ -11,103 +12,103 @@ namespace Scoop.Tests.Tokenizing
         [Test]
         public void ParseNext_CSharpLiteral_Simple()
         {
-            var target = new TokenScanner(@"c# {obj.Method();}");
-            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "obj.Method();");
+            var source = new StringCharacterSequence(@"c# {obj.Method();}");
+            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "obj.Method();");
         }
 
         [Test]
         public void ParseNext_CSharpLiteral_Braces()
         {
-            var target = new TokenScanner(@"c# {if(x==2){y();}}");
-            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "if(x==2){y();}");
+            var source = new StringCharacterSequence(@"c# {if(x==2){y();}}");
+            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "if(x==2){y();}");
         }
 
         [Test]
         public void ParseNext_CSharpLiteral_CharSimple()
         {
-            var target = new TokenScanner(@"c# {'a'}");
+            var source = new StringCharacterSequence(@"c# {'a'}");
 
-            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "'a'");
+            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'a'");
         }
 
         [Test]
         public void ParseNext_CSharpLiteral_CharEscape()
         {
-            var target = new TokenScanner(@"c# {'\n'}");
+            var source = new StringCharacterSequence(@"c# {'\n'}");
 
-            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "'\\n'");
+            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'\\n'");
         }
 
         [Test]
         public void ParseNext_CSharpLiteral_StringSimple()
         {
-            var target = new TokenScanner(@"c# {""quoted""}");
+            var source = new StringCharacterSequence(@"c# {""quoted""}");
 
-            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "\"quoted\"");
+            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "\"quoted\"");
         }
 
         [Test]
         public void ParseNext_CSharpLiteral_StringEscapedQuote()
         {
-            var target = new TokenScanner(@"c# {""quo\""ted""}");
+            var source = new StringCharacterSequence(@"c# {""quo\""ted""}");
 
-            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "\"quo\\\"ted\"");
+            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "\"quo\\\"ted\"");
         }
 
         [Test]
         public void ParseNext_CSharpLiteral_StringBrace()
         {
-            var target = new TokenScanner(@"c# {""quo}ted""}");
+            var source = new StringCharacterSequence(@"c# {""quo}ted""}");
 
-            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "\"quo}ted\"");
+            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "\"quo}ted\"");
         }
 
         [Test]
         public void ParseNext_CSharpLiteral_AtStringSimple()
         {
-            var target = new TokenScanner(@"c# {@""quoted""}");
+            var source = new StringCharacterSequence(@"c# {@""quoted""}");
 
-            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "@\"quoted\"");
+            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "@\"quoted\"");
         }
 
         [Test]
         public void ParseNext_CSharpLiteral_AtStringEscapedQuote()
         {
-            var target = new TokenScanner(@"c# {@""quo""""ted""}");
+            var source = new StringCharacterSequence(@"c# {@""quo""""ted""}");
 
-            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "@\"quo\"\"ted\"");
+            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "@\"quo\"\"ted\"");
         }
 
         [Test]
         public void ParseNext_CSharpLiteral_AtStringBackslashEscapedQuote()
         {
-            var target = new TokenScanner(@"c# {@""quo\""""ted""}");
+            var source = new StringCharacterSequence(@"c# {@""quo\""""ted""}");
 
-            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "@\"quo\\\"\"ted\"");
+            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "@\"quo\\\"\"ted\"");
         }
 
         [Test]
         public void ParseNext_CSharpLiteral_Character()
         {
-            var target = new TokenScanner(@"c# {'x'}");
+            var source = new StringCharacterSequence(@"c# {'x'}");
 
-            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "'x'");
+            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'x'");
         }
 
         [Test]
         public void ParseNext_CSharpLiteral_CharacterEscapedQuote()
         {
-            var target = new TokenScanner(@"c# {'\''}");
+            var source = new StringCharacterSequence(@"c# {'\''}");
 
-            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "'\\''");
+            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'\\''");
         }
 
         [Test]
         public void ParseNext_CSharpLiteral_CharacterEscapedHexSequence()
         {
-            var target = new TokenScanner(@"c# {'\x1234'}");
+            var source = new StringCharacterSequence(@"c# {'\x1234'}");
 
-            target.ScanNext().Should().Match(TokenType.CSharpLiteral, "'\\x1234'");
+            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'\\x1234'");
         }
     }
 }

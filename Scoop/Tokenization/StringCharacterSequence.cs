@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Scoop.Tokenization
 {
-    public class StringCharacterSequence : ICharacterSequence
+    public class StringCharacterSequence : ISequence<char>
     {
         private readonly string _fileName;
         private readonly string _s;
@@ -50,6 +50,15 @@ namespace Scoop.Tokenization
             _putbacks.Push(c);
         }
 
-        public Location GetLocation() => new Location(_fileName, _line, _column);
+        public char Peek()
+        {
+            if (_putbacks.Count > 0)
+                return _putbacks.Peek();
+            var next = GetNext();
+            PutBack(next);
+            return next;
+        }
+
+        public Location CurrentLocation => new Location(_fileName, _line, _column);
     }
 }

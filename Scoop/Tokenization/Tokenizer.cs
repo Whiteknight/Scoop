@@ -1,29 +1,33 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using Scoop.Parsers;
 
 namespace Scoop.Tokenization
 {
     public class Tokenizer : IEnumerable<Token>, ISequence<Token>
     {
+        private readonly ISequence<char> _chars;
         private readonly Stack<Token> _putbacks;
-        private readonly TokenScanner _scanner;
+        private readonly IParser<char, Token> _scanner;
 
         public Tokenizer(string s)
             : this(new StringCharacterSequence(s ?? ""))
         {
         }
 
-        public Tokenizer(ICharacterSequence chars)
-            : this(new TokenScanner(chars))
+        public Tokenizer(ISequence<char> chars)
         {
+            _chars = chars;
+            _scanner = new TokenParser();
+            _putbacks = new Stack<Token>();
         }
 
-        public Tokenizer(TokenScanner scanner)
+        public Tokenizer(ISequence<char> chars, IParser<char, Token> scanner)
         {
-            _putbacks = new Stack<Token>();
-            _scanner = scanner ?? throw new ArgumentNullException(nameof(scanner));
+            _chars = chars;
+            _scanner = scanner;
         }
+
 
         public Token GetNext()
         {
@@ -54,10 +58,10 @@ namespace Scoop.Tokenization
             if (_putbacks.Count > 0)
                 return _putbacks.Pop();
 
-            var next = _scanner.ScanNext();
-            if (next == null)
+            var next = _scanner.Parse(_chars);
+            if (!next.Success || next.Value == null)
                 return Token.EndOfInput();
-            return next;
+            return next.Value;
         }
 
         public void PutBack(Token token)

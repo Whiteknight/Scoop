@@ -1,19 +1,20 @@
 ﻿using System.Collections.Generic;
+using Scoop.Parsers;
 
 namespace Scoop.Tokenization
 {
-    public partial class TokenScanner
+    public partial class TokenParser
     {
-        private Token ReadString()
+        private IParseResult<Token> ReadString(ISequence<char> _chars)
         {
             var buffer = new List<char>();
-            var l = _chars.GetLocation();
-            AdvanceThroughString(buffer);
+            var l = _chars.CurrentLocation;
+            AdvanceThroughString(_chars, buffer);
             var str = new string(buffer.ToArray());
-            return Token.String(str, l);
+            return new Result<Token>(true, Token.String(str, l));
         }
 
-        private void AdvanceThroughString(List<char> buffer)
+        private void AdvanceThroughString(ISequence<char> _chars, List<char> buffer)
         {
             var c = _chars.GetNext();
             if (c == '$')
@@ -24,12 +25,12 @@ namespace Scoop.Tokenization
                 {
                     buffer.Add(_chars.GetNext());
                     buffer.Add(_chars.Expect('"'));
-                    AdvanceThroughString(StringReadState.InterpolatedBlockString, buffer);
+                    AdvanceThroughString(_chars, StringReadState.InterpolatedBlockString, buffer);
                     return;
                 }
 
                 buffer.Add(_chars.Expect('"'));
-                AdvanceThroughString(StringReadState.InterpolatedString, buffer);
+                AdvanceThroughString(_chars, StringReadState.InterpolatedString, buffer);
                 return;
             }
 
@@ -37,18 +38,18 @@ namespace Scoop.Tokenization
             {
                 buffer.Add(c);
                 buffer.Add(_chars.Expect('"'));
-                AdvanceThroughString(StringReadState.BlockString, buffer);
+                AdvanceThroughString(_chars, StringReadState.BlockString, buffer);
                 return;
             }
 
             if (c == '"')
             {
                 buffer.Add(c);
-                AdvanceThroughString(StringReadState.String, buffer);
+                AdvanceThroughString(_chars, StringReadState.String, buffer);
                 return;
             }
 
-            throw TokenizingException.UnexpectedCharacter('"', c, _chars.GetLocation());
+            throw TokenizingException.UnexpectedCharacter('"', c, _chars.CurrentLocation);
         }
 
         private enum StringReadState
@@ -63,9 +64,9 @@ namespace Scoop.Tokenization
 
         // This method is a large mess. We can consider breaking it up into a proper state machine
         // with classes per state
-        private void AdvanceThroughString(StringReadState initialState, List<char> chars)
+        private void AdvanceThroughString(ISequence<char> _chars, StringReadState initialState, List<char> chars)
         {
-            var l = _chars.GetLocation();
+            var l = _chars.CurrentLocation;
             var nesting = new Stack<StringReadState>();
             nesting.Push(StringReadState.End);
             var current = initialState;

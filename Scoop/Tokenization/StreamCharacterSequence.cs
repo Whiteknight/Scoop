@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Scoop.Tokenization
 {
-    public class StreamCharacterSequence : ICharacterSequence, IDisposable
+    public class StreamCharacterSequence : ISequence<char>, IDisposable
     {
         private const int BufferSize = 128;
         private readonly string _fileName;
@@ -69,7 +69,16 @@ namespace Scoop.Tokenization
                 _line--;
         }
 
-        public Location GetLocation() => new Location(_fileName, _line, _column);
+        public char Peek()
+        {
+            if (_putbacks.Count > 0)
+                return _putbacks.Peek();
+            var next = GetNext();
+            PutBack(next);
+            return next;
+        }
+
+        public Location CurrentLocation => new Location(_fileName, _line, _column);
 
         public void Dispose()
         {

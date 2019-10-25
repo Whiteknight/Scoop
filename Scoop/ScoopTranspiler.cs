@@ -32,7 +32,7 @@ namespace Scoop
 
             using (var source = new StreamCharacterSequence(inputFileName, Encoding.UTF8))
             {
-                var tokenizer = new Tokenizer(new TokenScanner(source));
+                var tokenizer = new Tokenizer(source, new TokenParser());
                 var result = _grammar.CompilationUnits.Parse(tokenizer);
                 ast = result.Value;
                 ast.FileName = inputFileName;

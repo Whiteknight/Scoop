@@ -1,20 +1,16 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using Scoop.Parsers;
+using Scoop.Parsers.Visiting;
 
 namespace Scoop.Tokenization
 {
-    public partial class TokenScanner
+    public partial class TokenParser : IParser<char, Token>
     {
-        private readonly ICharacterSequence _chars;
         private readonly SymbolSequence _operators;
 
-        public TokenScanner(string s)
-            : this(new StringCharacterSequence(s))
+        public TokenParser()
         {
-        }
-
-        public TokenScanner(ICharacterSequence chars)
-        {
-            _chars = chars;
             _operators = new SymbolSequence();
 
             // punctuation
@@ -51,25 +47,25 @@ namespace Scoop.Tokenization
             _operators.Add("==", "!=", ">", "<", ">=", "<=");
         }
 
-        public Token ScanNext()
+        public IParseResult<Token> Parse(ISequence<char> _chars)
         {
             var c = _chars.Peek();
             if (c == '\0')
-                return Token.EndOfInput();
+                return new Result<Token>(true, Token.EndOfInput());
             if (char.IsWhiteSpace(c))
-                return ReadWhitespace();
+                return ReadWhitespace(_chars);
             if (c == '/')
             {
                 _chars.GetNext();
                 if (_chars.Peek() == '/')
                 {
-                    var l = _chars.GetLocation();
+                    var l = _chars.CurrentLocation;
                     _chars.GetNext();
-                    var x = ReadLine();
-                    return Token.Comment(x, l);
+                    var x = ReadLine(_chars);
+                    return new Result<Token>(true, Token.Comment(x, l));
                 }
                 if (_chars.Peek() == '*')
-                    return ReadMultilineComment();
+                    return ReadMultilineComment(_chars);
                     
                 _chars.PutBack(c);
             }
@@ -78,7 +74,7 @@ namespace Scoop.Tokenization
             {
                 c = _chars.GetNext();
                 if (_chars.Peek() == '#')
-                    return ReadCSharpCodeLiteral();
+                    return ReadCSharpCodeLiteral(_chars);
                 _chars.PutBack(c);
                 // Fall through, we might use that 'c' for an identifier somewhere
             }
@@ -86,39 +82,39 @@ namespace Scoop.Tokenization
             // TODO: "global" keyword and "::" operator
             // a keyword followed by an operator
             if (c == '_' || char.IsLetter(c))
-                return ReadWord();
+                return ReadWord(_chars);
 
             if (char.IsNumber(c))
-                return ReadNumber();
+                return ReadNumber(_chars);
             if (c == '\'')
-                return ReadCharacter();
+                return ReadCharacter(_chars);
             if (c == '@')
             {
                 _chars.GetNext();
                 if (char.IsLetter(_chars.Peek()))
                 {
-                    var word = ReadWord();
-                    return Token.Word("@" + word.Value, word.Location);
+                    var word = ReadWord(_chars);
+                    return new Result<Token>(true, Token.Word("@" + word.Value.Value, word.Value.Location));
                 }
 
                 _chars.PutBack(c);
             }
 
             if (c == '"' || c == '$' || c == '@')
-                return ReadString();
+                return ReadString(_chars);
             if (char.IsPunctuation(c) || char.IsSymbol(c))
-                return ReadOperator();
+                return ReadOperator(_chars);
 
             // Advance so the next call to ScanNext can return something new
-            throw TokenizingException.UnexpectedCharacter(_chars.GetNext(), _chars.GetLocation());
+            throw TokenizingException.UnexpectedCharacter(_chars.GetNext(), _chars.CurrentLocation);
         }
 
-        private Token ReadCSharpCodeLiteral()
+        private IParseResult<Token> ReadCSharpCodeLiteral(ISequence<char> _chars)
         {
             // Attempt to read through an arbitrary c# code literal. We can largely do this by 
             // counting braces, but we have to get a bit more involved when we deal with 
             //  braces which are quoted as chars and strings: '{' and "{".
-            var l = _chars.GetLocation();
+            var l = _chars.CurrentLocation;
             _chars.Expect('#');
             while (char.IsWhiteSpace(_chars.Peek()))
                 _chars.GetNext();
@@ -215,27 +211,27 @@ namespace Scoop.Tokenization
             }
 
             //_chars.Expect('}');
-            return Token.CSharpLiteral(new string(buffer.ToArray()), l);
+            return new Result<Token>(true, Token.CSharpLiteral(new string(buffer.ToArray()), l));
         }
 
         private static readonly HashSet<char> _hexChars = new HashSet<char>("0123456789abcdefABCDEF");
 
-        private Token ReadCharacter()
+        private IParseResult<Token> ReadCharacter(ISequence<char> _chars)
         {
             _chars.Expect('\'');
-            var l = _chars.GetLocation();
+            var l = _chars.CurrentLocation;
             var c = _chars.GetNext();
             if (c != '\\')
             {
                 _chars.Expect('\'');
-                return Token.Character($"'{c}'", l);
+                return new Result<Token>(true, Token.Character($"'{c}'", l));
             }
 
             c = _chars.GetNext();
             if (c != 'x')
             {
                 _chars.Expect('\'');
-                return Token.Character($"'\\{c}'", l);
+                return new Result<Token>(true, Token.Character($"'\\{c}'", l));
             }
 
             var buffer = new char[4];
@@ -248,12 +244,12 @@ namespace Scoop.Tokenization
             }
 
             _chars.Expect('\'');
-            return Token.Character($"'\\x{new string(buffer, 0, i)}'", l);
+            return new Result<Token>(true, Token.Character($"'\\x{new string(buffer, 0, i)}'", l));
         }
 
-        private Token ReadWhitespace()
+        private IParseResult<Token> ReadWhitespace(ISequence<char> _chars)
         {
-            var l = _chars.GetLocation();
+            var l = _chars.CurrentLocation;
             var chars = new List<char>();
             while (true)
             {
@@ -268,10 +264,10 @@ namespace Scoop.Tokenization
             }
 
             var w = new string(chars.ToArray());
-            return Token.Whitespace(w, l);
+            return new Result<Token>(true, Token.Whitespace(w, l));
         }
 
-        private string ReadLine()
+        private string ReadLine(ISequence<char> _chars)
         {
             var chars = new List<char>();
             while (true)
@@ -289,9 +285,9 @@ namespace Scoop.Tokenization
             return new string(chars.ToArray());
         }
 
-        private Token ReadMultilineComment()
+        private IParseResult<Token> ReadMultilineComment(ISequence<char> _chars)
         {
-            var l = _chars.GetLocation();
+            var l = _chars.CurrentLocation;
             _chars.Expect('*');
             var chars = new List<char>();
             while (true)
@@ -315,15 +311,15 @@ namespace Scoop.Tokenization
             }
 
             var x = new string(chars.ToArray());
-            return Token.Comment(x, l);
+            return new Result<Token>(true, Token.Comment(x, l));
         }
 
-        private Token ReadNumber()
+        private IParseResult<Token> ReadNumber(ISequence<char> _chars)
         {
-            var l = _chars.GetLocation();
+            var l = _chars.CurrentLocation;
             var chars = new List<char>();
             char c;
-            bool hasDecimal = false;;
+            bool hasDecimal = false;
             while (true)
             {
                 c = _chars.GetNext();
@@ -343,7 +339,7 @@ namespace Scoop.Tokenization
                 {
                     // The . is for method invocation, not a decimal, so we put back
                     _chars.PutBack(dot);
-                    return new Token(new string(chars.ToArray()), TokenType.Integer, l);
+                    return new Result<Token>(true, new Token(new string(chars.ToArray()), TokenType.Integer, l));
                 }
 
                 hasDecimal = true;
@@ -363,33 +359,33 @@ namespace Scoop.Tokenization
 
             c = _chars.GetNext();
             if (c == 'F')
-                return new Token(new string(chars.ToArray()), TokenType.Float, l);
+                return new Result<Token>(true, new Token(new string(chars.ToArray()), TokenType.Float, l));
             if (c == 'M')
-                return new Token(new string(chars.ToArray()), TokenType.Decimal, l);
+                return new Result<Token>(true, new Token(new string(chars.ToArray()), TokenType.Decimal, l));
             if (c == 'L' && !hasDecimal)
-                return new Token(new string(chars.ToArray()), TokenType.Long, l);
+                return new Result<Token>(true, new Token(new string(chars.ToArray()), TokenType.Long, l));
             if (c == 'U' && !hasDecimal)
             {
                 c = _chars.Peek();
                 if (c == 'L')
                 {
                     _chars.GetNext();
-                    return new Token(new string(chars.ToArray()), TokenType.ULong, l);
+                    return new Result<Token>(true, new Token(new string(chars.ToArray()), TokenType.ULong, l));
                 }
 
-                return new Token(new string(chars.ToArray()), TokenType.UInteger, l);
+                return new Result<Token>(true, new Token(new string(chars.ToArray()), TokenType.UInteger, l));
             }
 
             _chars.PutBack(c);
 
             if (hasDecimal)
-                return new Token(new string(chars.ToArray()), TokenType.Double, l);
-            return new Token(new string(chars.ToArray()), TokenType.Integer, l);
+                return new Result<Token>(true, new Token(new string(chars.ToArray()), TokenType.Double, l));
+            return new Result<Token>(true, new Token(new string(chars.ToArray()), TokenType.Integer, l));
         }
 
-        private Token ReadWord()
+        private IParseResult<Token> ReadWord(ISequence<char> _chars)
         {
-            var l = _chars.GetLocation();
+            var l = _chars.CurrentLocation;
             var chars = new List<char>();
             while (true)
             {
@@ -405,20 +401,20 @@ namespace Scoop.Tokenization
 
             var x = new string(chars.ToArray());
             if (x == "is" || x == "as")
-                return Token.Operator(x, l);
-            return Token.Word(x, l);
+                return new Result<Token>(true, Token.Operator(x, l));
+            return new Result<Token>(true, Token.Word(x, l));
         }
 
-        private Token ReadOperator()
+        private IParseResult<Token> ReadOperator(ISequence<char> _chars)
         {
-            var l = _chars.GetLocation();
-            var op = ReadOperator(_operators);
+            var l = _chars.CurrentLocation;
+            var op = ReadOperator(_chars, _operators);
             if (string.IsNullOrEmpty(op))
                 throw TokenizingException.UnexpectedCharacter(_chars.GetNext(), l);
-            return Token.Operator(op, l);
+            return new Result<Token>(true, Token.Operator(op, l));
         }
 
-        private string ReadOperator(SymbolSequence op)
+        private string ReadOperator(ISequence<char> _chars, SymbolSequence op)
         {
             var x = _chars.GetNext();
             if (!char.IsPunctuation(x) && !char.IsSymbol(x))
@@ -433,7 +429,17 @@ namespace Scoop.Tokenization
                 return op.Operator;
             }
 
-            return ReadOperator(nextOp);
+            return ReadOperator(_chars, nextOp);
         }
+
+        public IParseResult<object> ParseUntyped(ISequence<char> t) => Parse(t);
+
+        public string Name { get; set; }
+
+        public IParser Accept(IParserVisitorImplementation visitor) => this;
+
+        public IEnumerable<IParser> GetChildren() => Enumerable.Empty<IParser>();
+
+        public IParser ReplaceChild(IParser find, IParser replace) => this;
     }
 }
