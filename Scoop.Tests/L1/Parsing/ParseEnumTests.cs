@@ -1,5 +1,5 @@
 ﻿using NUnit.Framework;
-using Scoop.Parsers;
+using Scoop.Parsing;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 

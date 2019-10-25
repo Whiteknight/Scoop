@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
 using Scoop.SyntaxTree;
-using Scoop.Transpiler;
+using Scoop.Transpiling;
 
 namespace Scoop.Tests.Utility
 {

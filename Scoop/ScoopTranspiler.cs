@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Scoop.Grammar;
+using Scoop.Parsing;
+using Scoop.Parsing.Sequences;
+using Scoop.Parsing.Tokenization;
 using Scoop.SyntaxTree;
-using Scoop.Tokenization;
-using Scoop.Transpiler;
+using Scoop.Transpiling;
 
 namespace Scoop
 {

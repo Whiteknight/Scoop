@@ -1,11 +1,10 @@
 ﻿using NUnit.Framework;
-using Scoop.Grammar;
-using Scoop.Parsers;
+using Scoop.Parsing;
+using Scoop.Parsing.Tokenization;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
-using Scoop.Tokenization;
-using static Scoop.Parsers.ParserMethods;
-using static Scoop.Parsers.TokenParserMethods;
+using static Scoop.Parsing.Parsers.ParserMethods;
+using static Scoop.Parsing.Parsers.TokenParserMethods;
 
 namespace Scoop.Tests.Parsers
 {

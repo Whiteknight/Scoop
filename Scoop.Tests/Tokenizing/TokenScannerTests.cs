@@ -1,8 +1,9 @@
 using System;
 using FluentAssertions;
 using NUnit.Framework;
+using Scoop.Parsing.Sequences;
+using Scoop.Parsing.Tokenization;
 using Scoop.Tests.Utility;
-using Scoop.Tokenization;
 
 namespace Scoop.Tests.Tokenizing
 {

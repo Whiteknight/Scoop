@@ -1,4 +1,4 @@
-﻿using Scoop.Tokenization;
+﻿using Scoop.Parsing.Tokenization;
 
 namespace Scoop.Tests.Utility
 {

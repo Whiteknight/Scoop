@@ -1,6 +1,6 @@
 ﻿using FluentAssertions;
 using FluentAssertions.Primitives;
-using Scoop.Tokenization;
+using Scoop.Parsing.Tokenization;
 
 namespace Scoop.Tests.Utility
 {

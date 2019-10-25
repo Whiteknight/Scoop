@@ -1,5 +1,5 @@
-﻿using Scoop.SyntaxTree.Visiting;
-using Scoop.Tokenization;
+﻿using Scoop.Parsing.Tokenization;
+using Scoop.SyntaxTree.Visiting;
 
 namespace Scoop.SyntaxTree
 {

@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
-using Scoop.Grammar;
-using Scoop.Parsers;
+using Scoop.Parsing;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 

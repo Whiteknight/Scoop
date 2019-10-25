@@ -2,7 +2,7 @@
 using System.Text;
 using FluentAssertions;
 using NUnit.Framework;
-using Scoop.Tokenization;
+using Scoop.Parsing.Sequences;
 
 namespace Scoop.Tests.Tokenizing
 {

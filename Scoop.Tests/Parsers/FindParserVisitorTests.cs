@@ -1,7 +1,6 @@
 ﻿using FluentAssertions;
 using NUnit.Framework;
-using Scoop.Grammar;
-using Scoop.Parsers;
+using Scoop.Parsing;
 
 namespace Scoop.Tests.Parsers
 {

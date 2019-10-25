@@ -1,6 +1,6 @@
 ﻿using FluentAssertions;
 using NUnit.Framework;
-using Scoop.Parsers;
+using Scoop.Parsing;
 using Scoop.SyntaxTree;
 
 namespace Scoop.Tests.L1.Validation
