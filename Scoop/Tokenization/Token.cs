@@ -4,32 +4,31 @@ namespace Scoop.Tokenization
 {
     public class Token
     {
-        public Token(string value, TokenType type, Location location)
+        public Token(string value, TokenType type)
         {
             Value = value;
             Type = type;
-            Location = location;
         }
 
         public string Value { get; }
-        public Location Location { get; }
+        public Location Location { get; set; }
         public TokenType Type { get; }
 
-        public static Token EndOfInput() => new Token(null, TokenType.EndOfInput, null);
+        public static Token EndOfInput() => new Token(null, TokenType.EndOfInput);
 
-        public static Token Whitespace(string s, Location l) => new Token(s, TokenType.Whitespace, l);
+        public static Token Whitespace(string s) => new Token(s, TokenType.Whitespace);
 
-        public static Token Comment(string s, Location l) => new Token(s, TokenType.Comment, l);
+        public static Token Comment(string s) => new Token(s, TokenType.Comment);
 
-        public static Token Word(string s, Location l) => new Token(s, TokenType.Word, l);
+        public static Token Word(string s) => new Token(s, TokenType.Word);
 
-        public static Token String(string s, Location l) => new Token(s, TokenType.String, l);
+        public static Token String(string s) => new Token(s, TokenType.String);
 
-        public static Token Character(string s, Location l) => new Token(s, TokenType.Character, l);
+        public static Token Character(string s) => new Token(s, TokenType.Character);
 
-        public static Token Operator(string s, Location l) => new Token(s, TokenType.Operator, l);
+        public static Token Operator(string s) => new Token(s, TokenType.Operator);
 
-        public static Token CSharpLiteral(string s, Location l) => new Token(s, TokenType.CSharpLiteral, l);
+        public static Token CSharpLiteral(string s) => new Token(s, TokenType.CSharpLiteral);
 
         public bool IsType(params TokenType[] types) => types.Any(t => Type == t);
 

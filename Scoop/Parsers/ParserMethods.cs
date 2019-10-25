@@ -19,6 +19,7 @@ namespace Scoop.Parsers
             return new DeferredParser<TInput, TOutput>(getParser);
         }
 
+
         /// <summary>
         /// Return the reuslt of the first parser which succeeds
         /// </summary>
@@ -39,10 +40,16 @@ namespace Scoop.Parsers
         /// <typeparam name="TInput"></typeparam>
         /// <param name="p"></param>
         /// <param name="produce"></param>
+        /// <param name="atLeastOne"></param>
         /// <returns></returns>
-        public static IParser<TInput, TOutput> List<TInput, TItem, TOutput>(IParser<TInput, TItem> p, Func<IReadOnlyList<TItem>, TOutput> produce)
+        public static IParser<TInput, TOutput> List<TInput, TItem, TOutput>(IParser<TInput, TItem> p, Func<IReadOnlyList<TItem>, TOutput> produce, bool atLeastOne = false)
         {
-            return new ListParser<TInput, TItem, TOutput>(p, produce);
+            return new ListParser<TInput, TItem, TOutput>(p, produce, atLeastOne);
+        }
+
+        public static IParser<T, T> Match<T>(Func<T, bool> predicate)
+        {
+            return new PredicateParser<T, T>(predicate, t => t);
         }
 
         /// <summary>

@@ -22,11 +22,7 @@ namespace Scoop.Tokenization
 
         public char GetNext()
         {
-            if (_putbacks.Any())
-                return _putbacks.Pop();
-            if (_index >= _s.Length)
-                return '\0';
-            var next = _s[_index++];
+            var next = GetNextInternal();
             if (next == '\n')
             {
                 _line++;
@@ -37,6 +33,15 @@ namespace Scoop.Tokenization
                 _column++;
 
             return next;
+        }
+
+        private char GetNextInternal()
+        {
+            if (_putbacks.Any())
+                return _putbacks.Pop();
+            if (_index >= _s.Length)
+                return '\0';
+            return _s[_index++];
         }
 
         public void PutBack(char c)
@@ -54,11 +59,12 @@ namespace Scoop.Tokenization
         {
             if (_putbacks.Count > 0)
                 return _putbacks.Peek();
-            var next = GetNext();
-            PutBack(next);
-            return next;
+            if (_index >= _s.Length)
+                return '\0';
+            return _s[_index];
         }
 
-        public Location CurrentLocation => new Location(_fileName, _line, _column);
+        public Location CurrentLocation => 
+            new Location(_fileName, _line, _column);
     }
 }

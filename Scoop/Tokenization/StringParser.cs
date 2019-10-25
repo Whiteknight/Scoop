@@ -1,20 +1,34 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Scoop.Parsers;
+using Scoop.Parsers.Visiting;
 
 namespace Scoop.Tokenization
 {
-    public partial class TokenParser
+    public class StringParser : IParser<char, Token>
     {
-        private IParseResult<Token> ReadString(ISequence<char> _chars)
+        public IParseResult<Token> Parse(ISequence<char> t)
         {
             var buffer = new List<char>();
-            var l = _chars.CurrentLocation;
-            AdvanceThroughString(_chars, buffer);
+            bool ok = AdvanceThroughString(t, buffer);
+            if (!ok)
+                return Result<Token>.Fail();
+
             var str = new string(buffer.ToArray());
-            return new Result<Token>(true, Token.String(str, l));
+            return new Result<Token>(true, Token.String(str));
         }
 
-        private void AdvanceThroughString(ISequence<char> _chars, List<char> buffer)
+        public IParseResult<object> ParseUntyped(ISequence<char> t) => Parse(t);
+
+        public string Name { get; set; }
+
+        public IParser Accept(IParserVisitorImplementation visitor) => this;
+
+        public IEnumerable<IParser> GetChildren() => Enumerable.Empty<IParser>();
+
+        public IParser ReplaceChild(IParser find, IParser replace) => this;
+
+        private bool AdvanceThroughString(ISequence<char> _chars, List<char> buffer)
         {
             var c = _chars.GetNext();
             if (c == '$')
@@ -26,12 +40,12 @@ namespace Scoop.Tokenization
                     buffer.Add(_chars.GetNext());
                     buffer.Add(_chars.Expect('"'));
                     AdvanceThroughString(_chars, StringReadState.InterpolatedBlockString, buffer);
-                    return;
+                    return true;
                 }
 
                 buffer.Add(_chars.Expect('"'));
                 AdvanceThroughString(_chars, StringReadState.InterpolatedString, buffer);
-                return;
+                return true;
             }
 
             if (c == '@')
@@ -39,17 +53,18 @@ namespace Scoop.Tokenization
                 buffer.Add(c);
                 buffer.Add(_chars.Expect('"'));
                 AdvanceThroughString(_chars, StringReadState.BlockString, buffer);
-                return;
+                return true;
             }
 
             if (c == '"')
             {
                 buffer.Add(c);
                 AdvanceThroughString(_chars, StringReadState.String, buffer);
-                return;
+                return true;
             }
 
-            throw TokenizingException.UnexpectedCharacter('"', c, _chars.CurrentLocation);
+            _chars.PutBack(c);
+            return false;
         }
 
         private enum StringReadState

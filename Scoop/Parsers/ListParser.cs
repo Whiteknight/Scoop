@@ -16,11 +16,13 @@ namespace Scoop.Parsers
     {
         private readonly IParser<TInput, TItem> _parser;
         private readonly Func<IReadOnlyList<TItem>, TOutput> _produce;
+        private readonly bool _atLeastOne;
 
-        public ListParser(IParser<TInput, TItem> parser, Func<IReadOnlyList<TItem>, TOutput> produce)
+        public ListParser(IParser<TInput, TItem> parser, Func<IReadOnlyList<TItem>, TOutput> produce, bool atLeastOne)
         {
             _parser = parser;
             _produce = produce;
+            _atLeastOne = atLeastOne;
         }
 
         public IParseResult<TOutput> Parse(ISequence<TInput> t)
@@ -33,10 +35,13 @@ namespace Scoop.Parsers
                     break;
                 items.Add(result.Value);
             }
-            return new Result<TOutput>(true, _produce(items));
+
+            if (_atLeastOne && items.Count == 0)
+                return Result<TOutput>.Fail();
+            return  new Result<TOutput>(true, _produce(items));
         }
 
-        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);
+        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => Parse(t).Untype();
 
         public string Name { get; set; }
 
@@ -47,7 +52,7 @@ namespace Scoop.Parsers
         public IParser ReplaceChild(IParser find, IParser replace)
         {
             if (_parser == find && replace is IParser<TInput, TItem> realReplace)
-                return new ListParser<TInput, TItem, TOutput>(realReplace, _produce);
+                return new ListParser<TInput, TItem, TOutput>(realReplace, _produce, _atLeastOne);
             return this;
         }
 

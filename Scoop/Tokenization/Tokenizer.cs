@@ -18,7 +18,7 @@ namespace Scoop.Tokenization
         public Tokenizer(ISequence<char> chars)
         {
             _chars = chars;
-            _scanner = new TokenParser();
+            _scanner = LexicalGrammar.GetParser();
             _putbacks = new Stack<Token>();
         }
 

@@ -25,7 +25,13 @@ namespace Scoop.Parsers
             return new Result<TOutput>(true, _produce(t.GetNext()));
         }
 
-        public IParseResult<object> ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);
+        public IParseResult<object> ParseUntyped(ISequence<TInput> t)
+        {
+            var next = t.Peek();
+            if (!_predicate(next))
+                return Result<object>.Fail();
+            return new Result<object>(true, _produce(t.GetNext()));
+        }
 
         public string Name { get; set; }
 

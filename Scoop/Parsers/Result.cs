@@ -11,6 +11,8 @@
         public bool Success { get; }
         public TOutput Value { get; }
 
+        public IParseResult<object> Untype() => new Result<object>(Success, Value);
+
         public static Result<TOutput> Fail() => new Result<TOutput>(false, default);
     }
 }

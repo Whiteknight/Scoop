@@ -2,6 +2,7 @@
 {
     public enum TokenType
     {
+        Unknown,
         EndOfInput,
 
         Whitespace,

@@ -13,14 +13,14 @@ namespace Scoop.Tests.Tokenizing
         public void ParseNext_CSharpLiteral_Simple()
         {
             var source = new StringCharacterSequence(@"c# {obj.Method();}");
-            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "obj.Method();");
+            LexicalGrammar.GetParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "obj.Method();");
         }
 
         [Test]
         public void ParseNext_CSharpLiteral_Braces()
         {
             var source = new StringCharacterSequence(@"c# {if(x==2){y();}}");
-            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "if(x==2){y();}");
+            LexicalGrammar.GetParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "if(x==2){y();}");
         }
 
         [Test]
@@ -28,7 +28,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var source = new StringCharacterSequence(@"c# {'a'}");
 
-            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'a'");
+            LexicalGrammar.GetParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'a'");
         }
 
         [Test]
@@ -36,7 +36,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var source = new StringCharacterSequence(@"c# {'\n'}");
 
-            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'\\n'");
+            LexicalGrammar.GetParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'\\n'");
         }
 
         [Test]
@@ -44,7 +44,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var source = new StringCharacterSequence(@"c# {""quoted""}");
 
-            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "\"quoted\"");
+            LexicalGrammar.GetParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "\"quoted\"");
         }
 
         [Test]
@@ -52,7 +52,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var source = new StringCharacterSequence(@"c# {""quo\""ted""}");
 
-            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "\"quo\\\"ted\"");
+            LexicalGrammar.GetParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "\"quo\\\"ted\"");
         }
 
         [Test]
@@ -60,7 +60,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var source = new StringCharacterSequence(@"c# {""quo}ted""}");
 
-            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "\"quo}ted\"");
+            LexicalGrammar.GetParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "\"quo}ted\"");
         }
 
         [Test]
@@ -68,7 +68,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var source = new StringCharacterSequence(@"c# {@""quoted""}");
 
-            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "@\"quoted\"");
+            LexicalGrammar.GetParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "@\"quoted\"");
         }
 
         [Test]
@@ -76,7 +76,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var source = new StringCharacterSequence(@"c# {@""quo""""ted""}");
 
-            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "@\"quo\"\"ted\"");
+            LexicalGrammar.GetParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "@\"quo\"\"ted\"");
         }
 
         [Test]
@@ -84,7 +84,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var source = new StringCharacterSequence(@"c# {@""quo\""""ted""}");
 
-            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "@\"quo\\\"\"ted\"");
+            LexicalGrammar.GetParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "@\"quo\\\"\"ted\"");
         }
 
         [Test]
@@ -92,7 +92,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var source = new StringCharacterSequence(@"c# {'x'}");
 
-            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'x'");
+            LexicalGrammar.GetParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'x'");
         }
 
         [Test]
@@ -100,7 +100,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var source = new StringCharacterSequence(@"c# {'\''}");
 
-            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'\\''");
+            LexicalGrammar.GetParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'\\''");
         }
 
         [Test]
@@ -108,7 +108,7 @@ namespace Scoop.Tests.Tokenizing
         {
             var source = new StringCharacterSequence(@"c# {'\x1234'}");
 
-            new TokenParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'\\x1234'");
+            LexicalGrammar.GetParser().Parse(source).Value.Should().Match(TokenType.CSharpLiteral, "'\\x1234'");
         }
     }
 }

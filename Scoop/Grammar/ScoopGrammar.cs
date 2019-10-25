@@ -20,6 +20,7 @@ namespace Scoop.Grammar
             // C# Keywords which are still allowed
             // (type names like "int" are counted as types not keywords for these purposes)
             // This list is mostly used to help filter out valid identifiers
+            "as",
             "async",
             "await",
             "class",
@@ -29,6 +30,7 @@ namespace Scoop.Grammar
             "enum",
             "false",
             "interface",
+            "is",
             "namespace",
             "new",
             "null",
@@ -1340,7 +1342,7 @@ namespace Scoop.Grammar
                 additive =>
                     Sequence(
                         additive,
-                        Operator("as", "is"),
+                        Transform(Keyword("as", "is"), k => new OperatorNode(k.Keyword, k.Location)),
                         _requiredType,
                         Optional(_identifiers),
                         (left, op, type, name) => (AstNode)new TypeCoerceNode

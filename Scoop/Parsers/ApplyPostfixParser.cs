@@ -45,7 +45,7 @@ namespace Scoop.Parsers
             }
         }
 
-        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);
+        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => Parse(t).Untype();
 
         public string Name { get; set; }
 
@@ -75,7 +75,7 @@ namespace Scoop.Parsers
 
             public IParseResult<TOutput> Parse(ISequence<TInput> t) => new Result<TOutput>(true, Value);
 
-            IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);
+            IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => Parse(t).Untype();
 
             public string Name { get; set; }
 

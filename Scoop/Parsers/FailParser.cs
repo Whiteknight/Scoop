@@ -9,7 +9,7 @@ namespace Scoop.Parsers
     {
         public IParseResult<TOutput> Parse(ISequence<TInput> t) => Result<TOutput>.Fail();
 
-        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);
+        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => Parse(t).Untype();
 
         public string Name { get; set; }
 

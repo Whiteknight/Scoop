@@ -51,11 +51,9 @@ namespace Scoop.Parsers
         //}
 
         public static TOutput Parse<TOutput>(this IParser<Token, TOutput> parser, string s)
-            where TOutput : AstNode 
             => parser.Parse(new Tokenizer(s)).Value;
 
         public static IParser<TInput, TOutput> Named<TInput, TOutput>(this IParser<TInput, TOutput> parser, string name)
-            where TOutput : AstNode
         {
             parser.Name = name;
             return parser;

@@ -19,7 +19,7 @@ namespace Scoop.Parsers
 
         public IParseResult<TOutput> Parse(ISequence<TInput> t) => _value.Parse(t);
 
-        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);
+        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => Parse(t).Untype();
 
         public string Name { get; set; }
 

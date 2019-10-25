@@ -4,5 +4,7 @@
     {
         bool Success { get; }
         TOutput Value { get; }
+
+        IParseResult<object> Untype();
     }
 }
