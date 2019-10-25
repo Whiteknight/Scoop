@@ -26,13 +26,12 @@ namespace Scoop.Validation
             return node.Accept(this);
         }
 
-        private void AddDiagnostics(AstNode node)
+        private void AddDiagnostics(ISyntaxElement node)
         {
-            if (!node.Diagnostics.IsNullOrEmpty())
-            {
-                foreach (var d in node.Diagnostics)
-                    _diagnostics.Add(d);
-            }
+            if (node.Diagnostics.IsNullOrEmpty())
+                return;
+            foreach (var d in node.Diagnostics)
+                _diagnostics.Add(d.AddLocation(node.Location));
         }
     }
 }

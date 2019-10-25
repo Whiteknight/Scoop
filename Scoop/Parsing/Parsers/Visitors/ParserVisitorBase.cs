@@ -68,7 +68,7 @@ namespace Scoop.Parsing.Parsers.Visitors
             return p;
         }
 
-        public virtual IParser<TInput, TOutput> VisitSequence<TInput, TOutput>(SequenceParser<TInput, TOutput> p)
+        public virtual IParser<TInput, TOutput> VisitSequence<TInput, TOutput>(RuleParser<TInput, TOutput> p)
         {
             return p;
         }

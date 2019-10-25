@@ -158,5 +158,15 @@ namespace Scoop.Tests.L1.Validation
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.MissingCloseParen);
         }
+
+        [Test]
+        public void Expressions_CharLiteral_NoContent()
+        {
+            const string syntax = @"''";
+            var ast = TestSuite.GetGrammar().Expressions.Parse(syntax);
+            var result = ast.Validate();
+            result.Count.Should().Be(1);
+            result[0].ErrorMessage.Should().Be(Errors.UnrecognizedCharLiteral);
+        }
     }
 }

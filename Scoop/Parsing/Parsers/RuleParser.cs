@@ -6,16 +6,16 @@ using Scoop.Parsing.Tokenization;
 namespace Scoop.Parsing.Parsers
 {
     /// <summary>
-    /// Parses a list of steps and produces a single output
+    /// Parses a list of steps and produces a single output. Succeeds or fails as an atomic unit
     /// </summary>
     /// <typeparam name="TOutput"></typeparam>
     /// <typeparam name="TInput"></typeparam>
-    public class SequenceParser<TInput, TOutput> : IParser<TInput, TOutput>
+    public class RuleParser<TInput, TOutput> : IParser<TInput, TOutput>
     {
         private readonly IReadOnlyList<IParser<TInput>> _parsers;
         private readonly Func<IReadOnlyList<object>, TOutput> _produce;
 
-        public SequenceParser(IReadOnlyList<IParser<TInput>> parsers, Func<IReadOnlyList<object>, TOutput> produce)
+        public RuleParser(IReadOnlyList<IParser<TInput>> parsers, Func<IReadOnlyList<object>, TOutput> produce)
         {
             _parsers = parsers;
             _produce = produce;
@@ -39,7 +39,7 @@ namespace Scoop.Parsing.Parsers
             return new Result<TOutput>(true, _produce(outputs));
         }
 
-        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => (IParseResult<object>) Parse(t);
+        IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => Parse(t).Untype();
 
         public string Name { get; set; }
 
@@ -58,7 +58,7 @@ namespace Scoop.Parsing.Parsers
                     newList[i] = child == find ? realReplace : child;
                 }
 
-                return new SequenceParser<TInput, TOutput>(newList, _produce);
+                return new RuleParser<TInput, TOutput>(newList, _produce);
             }
 
             return this;

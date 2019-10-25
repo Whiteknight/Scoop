@@ -8,65 +8,13 @@ namespace Scoop.Parsing.Tokenization
 {
     public static class LexicalGrammar
     {
+        private static readonly HashSet<char> _hexDigits = new HashSet<char>("abcdefABCDEF0123456789");
+
         public static IParser<char, Token> GetParser()
         {
-            // TODO: "_" separator in a number
-            // "0x" <hexDigit>+ | "-"? <digit>+ "." <digit>+ <type>? | "-"? <digit>+ <type>?
-            var _hexDigits = new HashSet<char>("abcdefABCDEF0123456789");
-            var numbers = First(
-                Sequence(
-                    Match("0x", c => c),
-                    List(
-                        Match<char>(c => _hexDigits.Contains(c)),
-                        c => new string(c.ToArray()),
-                        atLeastOne: true
-                    ),
-                    First(
-                        Match("UL", c => TokenType.ULong),
-                        Match("U", c => TokenType.UInteger),
-                        Match("L", c => TokenType.Long),
-                        Produce<char, TokenType>(() => TokenType.Integer)
-                    ),
-                    (prefix, body, type) => new Token(int.Parse(body, System.Globalization.NumberStyles.HexNumber).ToString(), type)
-                ),
-                Sequence(
-                    Optional(Match("-", c => "-"), () => ""),
-                    List(
-                        Match<char>(char.IsDigit),
-                        c => new string(c.ToArray()),
-                        atLeastOne: true
-                    ),
-                    Match(".", c => "."),
-                    List(
-                        Match<char>(char.IsDigit),
-                        c => new string(c.ToArray()),
-                        atLeastOne: true
-                    ),
-                    First(
-                        Match("F", c => TokenType.Float),
-                        Match("M", c => TokenType.Decimal),
-                        Produce<char, TokenType>(() => TokenType.Double)
-                    ),
-                    (neg, whole, dot, fract, type) => new Token(neg + whole + "." + fract, type)
-                ),
-                Sequence(
-                    Optional(Match("-", c => "-"), () => ""),
-                    List(
-                        Match<char>(char.IsDigit),
-                        c => new string(c.ToArray()),
-                        atLeastOne: true
-                    ),
-                    First(
-                        Match("UL", c => TokenType.ULong),
-                        Match("U", c => TokenType.UInteger),
-                        Match("L", c => TokenType.Long),
-                        Produce<char, TokenType>(() => TokenType.Integer)
-                    ),
-                    (neg, whole, type) => new Token(neg + whole, type)
-                )
-            );
+            var numbers = BuildNumberParser();
 
-            var words = Sequence(
+            var words = Rule(
                 First(
                     Match("@", c => "@"),
                     Produce<char, string>(() => "")
@@ -79,65 +27,37 @@ namespace Scoop.Parsing.Tokenization
                 (prefix, start, rest) => new Token(prefix + start + new string(rest), TokenType.Word)
             );
 
-            var chars = Sequence(
-                Match<char>(c => c == '\''),
-                First(
-                    Sequence(
-                        Match<char>(c => c == '\\'),
-                        Match<char>(c => c == 'x'),
-                        List(
-                            // TODO: 1-4 of these only
-                            Match<char>(c => _hexDigits.Contains(c)),
-                            t => new string(t.ToArray())
-                        ),
-                        (slash, x, c) => "\\x" + c
-                    ),
-                    Sequence(
-                        Match<char>(c => c == '\\'),
-                        Match<char>(c => c == 'u'),
-                        List(
-                            // TODO: 1-4 of these or exactly-4 of these?
-                            Match<char>(c => _hexDigits.Contains(c)),
-                            t => new string(t.ToArray())
-                        ),
-                        (slash, u, c) => "\\u" + c
-                    ),
-                    Sequence(
-                        Match<char>(c => c == '\\'),
-                        Match<char>(c => "abfnrtv\\'\"0".Contains(c)),
-                        (slash, c) => "\\" + c
-                    ),
-                    Transform(Match<char>(c => c != '\0'), c => c.ToString())
-                    // TODO: How to handle this case?
-                    //Error<char, char>(t => $"Expected char value but found {t.Peek()}")
-                ),
-                First(
-                    Match<char>(c => c == '\''),
-                    // TODO: Need to communicate an error here, but for now we'll create a synthetic char to fill the gap
-                    Produce<char, char>(() => '\'')
-                    //Error<char, char>(t => $"Expected end singlequote but found {t.Peek()}")
-                ),
-                (start, content, end) => new Token("'" + content + "'", TokenType.Character)
-            );
+            var chars = BuildCharacterLiteralParser();
+
+            var singleLineComments = Rule(
+                Match("//", c => new string(c)),
+                List(Match<char>(c => c != '\r' && c != '\n'), l => new string(l.ToArray())),
+                (prefix, content) => Token.Comment(prefix + content)
+            ).Named("SingleLineComment");
+
+            var multiLineComments = new MultilineCommentParser();
+
+            var cSharpLiterals = new CSharpLiteralParser();
+
+            var operators = new OperatorParser();
+
+            var strings = new StringParser();
 
             var allTokens = First(
                 Match("\0", c => Token.EndOfInput()),
-                Sequence(
-                    Match("//", c => new string(c)),
-                    List(Match<char>(c => c != '\r' && c != '\n'), l => new string(l.ToArray())),
-                    (prefix, content) => new Token(prefix + content, TokenType.Comment)
-                ).Named("C++ Comment"),
-                new MultilineCommentParser(),
-                new CSharpLiteralParser(),
+                singleLineComments,
+                multiLineComments,
+                cSharpLiterals,
                 words,
-                new OperatorParser(),
+                operators,
                 numbers,
-                new StringParser(),
+                strings,
                 chars,
                 Produce<char, Token>(t => new Token(t.GetNext().ToString(), TokenType.Unknown))
             );
 
-            return Sequence(
+            return Rule(
+                // TODO: Get a list of all whitespace and comments, and include those in the Token we return
                 List(Match<char>(char.IsWhiteSpace), t => (object) null),
                 Produce<char, Location>(t => t.CurrentLocation),
                 allTokens,
@@ -149,6 +69,115 @@ namespace Scoop.Parsing.Tokenization
                     return token;
                 }
             );
+        }
+
+        private static IParser<char, Token> BuildCharacterLiteralParser()
+        {
+            var hexCharLiteral = Rule(
+                Match<char>(c => c == '\\'),
+                Match<char>(c => c == 'x'),
+                List(
+                    // TODO: 1-4 of these only
+                    Match<char>(c => _hexDigits.Contains(c)),
+                    t => new string(t.ToArray())
+                ),
+                (slash, x, c) => "\\x" + c
+            );
+            var unicodeCharLiteral = Rule(
+                Match<char>(c => c == '\\'),
+                Match<char>(c => c == 'u'),
+                List(
+                    // TODO: 1-4 of these or exactly-4 of these?
+                    Match<char>(c => _hexDigits.Contains(c)),
+                    t => new string(t.ToArray())
+                ),
+                (slash, u, c) => "\\u" + c
+            );
+            var charEscape = Rule(
+                Match<char>(c => c == '\\'),
+                Match<char>(c => "abfnrtv\\'\"0".Contains(c)),
+                (slash, c) => "\\" + c
+            );
+
+            var chars = Rule(
+                Match<char>(c => c == '\''),
+                First(
+                    hexCharLiteral,
+                    unicodeCharLiteral,
+                    charEscape,
+                    Transform(Match<char>(c => c != '\0' && c != '\''), c => c.ToString()),
+                    Produce<char, string>(() => (string) null)
+                ),
+                First(
+                    Match<char>(c => c == '\''),
+                    Produce<char, char>(t => '\0')
+                ),
+                (start, content, end) =>
+                {
+                    if (string.IsNullOrEmpty(content))
+                        return Token.Character("").WithDiagnostics(Errors.UnrecognizedCharLiteral);
+                    var token = Token.Character("'" + content + "'");
+                    if (end == '\0')
+                        token.WithDiagnostics(Errors.MissingClosedSingleQuote);
+                    return token;
+                }
+            );
+            return chars;
+        }
+
+        private static IParser<char, Token> BuildNumberParser()
+        {
+            // TODO: "_" separator in a number
+            // "0x" <hexDigit>+ | "-"? <digit>+ "." <digit>+ <type>? | "-"? <digit>+ <type>?
+            var hexNumber = Rule(
+                Match("0x", c => c),
+                List(
+                    Match<char>(c => _hexDigits.Contains(c)),
+                    c => new string(c.ToArray()),
+                    atLeastOne: true
+                ),
+                First(
+                    Match("UL", c => TokenType.ULong),
+                    Match("U", c => TokenType.UInteger),
+                    Match("L", c => TokenType.Long),
+                    Produce<char, TokenType>(() => TokenType.Integer)
+                ),
+                (prefix, body, type) => new Token(int.Parse(body, System.Globalization.NumberStyles.HexNumber).ToString(), type)
+            );
+            var digitList = List(
+                Match<char>(char.IsDigit),
+                c => new string(c.ToArray()),
+                atLeastOne: true
+            );
+            var decimalNumber = Rule(
+                Optional(Match("-", c => "-"), () => ""),
+                digitList,
+                Match(".", c => "."),
+                digitList,
+                First(
+                    Match("F", c => TokenType.Float),
+                    Match("M", c => TokenType.Decimal),
+                    Produce<char, TokenType>(() => TokenType.Double)
+                ),
+                (neg, whole, dot, fract, type) => new Token(neg + whole + "." + fract, type)
+            );
+            var integralNumber = Rule(
+                Optional(Match("-", c => "-"), () => ""),
+                digitList,
+                First(
+                    Match("UL", c => TokenType.ULong),
+                    Match("U", c => TokenType.UInteger),
+                    Match("L", c => TokenType.Long),
+                    Produce<char, TokenType>(() => TokenType.Integer)
+                ),
+                (neg, whole, type) => new Token(neg + whole, type)
+            );
+            var numbers = First(
+                hexNumber,
+                decimalNumber,
+                integralNumber
+            );
+            return numbers;
         }
     }
 }

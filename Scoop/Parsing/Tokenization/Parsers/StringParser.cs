@@ -10,7 +10,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
         public IParseResult<Token> Parse(ISequence<char> t)
         {
             var buffer = new List<char>();
-            bool ok = AdvanceThroughString(t, buffer);
+            var ok = AdvanceThroughString(t, buffer);
             if (!ok)
                 return Result<Token>.Fail();
 
@@ -30,6 +30,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
 
         private bool AdvanceThroughString(ISequence<char> _chars, List<char> buffer)
         {
+            // TODO: Don't .Expect chars here. If we don't see something we want, back out and fail
             var c = _chars.GetNext();
             if (c == '$')
             {

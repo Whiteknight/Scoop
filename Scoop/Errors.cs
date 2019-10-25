@@ -35,6 +35,10 @@
 
         public const string MissingType = "Missing type";
 
+        public const string MissingClosedSingleQuote = "Missing '";
+
+        public const string UnrecognizedCharLiteral = "Unrecognized character literal";
+
         public const string UnexpectedToken = "Unexpected token";
     }
 }

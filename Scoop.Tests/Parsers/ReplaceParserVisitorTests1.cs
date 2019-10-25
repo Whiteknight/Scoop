@@ -15,7 +15,7 @@ namespace Scoop.Tests.Parsers
         [Test]
         public void Replace_Sequence()
         {
-            var parser = Sequence(
+            var parser = Rule(
                 Operator("("),
                 Operator("*").Named("Star"),
                 Operator(")"),

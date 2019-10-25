@@ -1,8 +1,9 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Scoop.Parsing.Tokenization
 {
-    public class Token
+    public class Token : ISyntaxElement
     {
         public Token(string value, TokenType type)
         {
@@ -15,8 +16,6 @@ namespace Scoop.Parsing.Tokenization
         public TokenType Type { get; }
 
         public static Token EndOfInput() => new Token(null, TokenType.EndOfInput);
-
-        public static Token Whitespace(string s) => new Token(s, TokenType.Whitespace);
 
         public static Token Comment(string s) => new Token(s, TokenType.Comment);
 
@@ -50,6 +49,20 @@ namespace Scoop.Parsing.Tokenization
         public override string ToString()
         {
             return $"{Type}:{Value}";
+        }
+
+        public IReadOnlyList<Diagnostic> Diagnostics { get; private set; }
+
+        public IReadOnlyList<ISyntaxElement> Unused { get; private set; }
+
+        public void AddUnusedMembers(params ISyntaxElement[] unused)
+        {
+            Unused = (Unused ?? Enumerable.Empty<ISyntaxElement>()).Concat(unused).ToList();
+        }
+
+        public void AddDiagnostics(params Diagnostic[] diagnostics)
+        {
+            Diagnostics = (Diagnostics ?? Enumerable.Empty<Diagnostic>()).Concat(diagnostics).ToList();
         }
     }
 }

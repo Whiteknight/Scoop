@@ -15,6 +15,8 @@ namespace Scoop.SyntaxTree
         {
             Value = t.Value;
             Location = t.Location;
+            if (!t.Diagnostics.IsNullOrEmpty())
+                AddUnusedMembers(t);
         }
 
         public string Value { get; set; }

@@ -16,8 +16,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
                 return Result<Token>.Fail();
             }
 
-            t.GetNext();
-            var chars = new List<char> { '/', '*' };
+            var chars = new List<char> { '/', t.GetNext() };
             while (true)
             {
                 var c = t.GetNext();

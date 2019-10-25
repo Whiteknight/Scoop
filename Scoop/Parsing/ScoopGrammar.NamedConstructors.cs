@@ -22,7 +22,7 @@ namespace Scoop.Parsing
             var newNamed = compilationUnits.FindNamed("newNamedArgsInitsStub") as ReplaceableParser<Token, NewNode>;
             newNamed.SetParser(
                 // "new" <type> ":" <identifier> <arguments> <initializers>?
-                Sequence(
+                Rule(
                     Keyword("new"),
                     l1.Types,
                     Operator(":"),
@@ -46,7 +46,7 @@ namespace Scoop.Parsing
             var methodBody = compilationUnits.FindNamed("methodBody") as IParser<Token, ListNode<AstNode>>;
             var namedConstructor = compilationUnits.FindNamed("constructorNamedStub") as ReplaceableParser<Token, ConstructorNode>;
             namedConstructor.SetParser(
-                Sequence(
+                Rule(
                     l1.Attributes,
                     accessModifiers,
                     identifiers,
@@ -54,7 +54,7 @@ namespace Scoop.Parsing
                     identifiers,
                     parameterLists,
                     Optional(
-                        Sequence(
+                        Rule(
                             Operator(":"),
                             Required(Keyword("this"), t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
                             argumentLists,

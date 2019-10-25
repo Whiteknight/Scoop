@@ -141,7 +141,7 @@ namespace Scoop.Parsing
         {
             var attributeArgs = First(
                 // (<identifier> "=" <expr>) | <expr>
-                Sequence(
+                Rule(
                     _identifiers,
                     Operator("="),
                     // TODO: I think these expressions can only be terminals or member accesses (consts or enums, etc)
@@ -154,7 +154,7 @@ namespace Scoop.Parsing
 
             var argumentListParser = Optional(
                 // ("(" <argumentList> ")"))?
-                Sequence(
+                Rule(
                     Operator("("),
                     SeparatedList(
                         attributeArgs,
@@ -167,10 +167,10 @@ namespace Scoop.Parsing
             );
 
             var attrParser = SeparatedList(
-                Sequence(
+                Rule(
                     // (<keyword> ":")? <type> <argumentList>
                     Optional(
-                        Sequence(
+                        Rule(
                             // We don't support "event" or "property" targets since we don't allow those structures
                             Keyword("assembly", "module", "field", "method", "param", "return", "type"),
                             _requiredColon,
@@ -191,7 +191,7 @@ namespace Scoop.Parsing
                 list => new ListNode<AttributeNode> { Items = list.ToList(), Separator = new OperatorNode(",") }
             ).Named("attributeList");
 
-            _attributeTags = Sequence(
+            _attributeTags = Rule(
                 // "[" <attributeList> "]"
                 Operator("["),
                 attrParser,
@@ -216,7 +216,7 @@ namespace Scoop.Parsing
                 atLeastOne: true
             ).Named("_dottedIdentifiers");
 
-            var usingDirectives = Sequence(
+            var usingDirectives = Rule(
                 // "using" <namespaceName> ";"
                 Keyword("using"),
                 Required(_dottedIdentifiers, t => new DottedIdentifierNode("").WithDiagnostics(t.CurrentLocation, Errors.MissingNamespaceName)),
@@ -235,7 +235,7 @@ namespace Scoop.Parsing
                 Deferred(() => Enums),
                 Deferred(() => Delegates)
             );
-            var namespaceBody = Sequence(
+            var namespaceBody = Rule(
                 Operator("{"),
                 List(
                     namespaceMembers,
@@ -244,7 +244,7 @@ namespace Scoop.Parsing
                 _requiredCloseBracket,
                 (a, members, b) => members.WithUnused(a, b)
             );
-            var namespaces = Sequence(
+            var namespaces = Rule(
                 Keyword("namespace"),
                 Required(_dottedIdentifiers, t => new DottedIdentifierNode("").WithDiagnostics(t.CurrentLocation, Errors.MissingNamespaceName)),
                 Required(namespaceBody, t=> new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket)),
@@ -272,11 +272,11 @@ namespace Scoop.Parsing
 
         private void InitializeEnums()
         {
-            var enumMember = Sequence(
+            var enumMember = Rule(
                 Attributes,
                 _identifiers,
                 Optional(
-                    Sequence(
+                    Rule(
                         Operator("="),
                         _requiredExpression,
                         (e, expr) => expr.WithUnused(e)
@@ -291,7 +291,7 @@ namespace Scoop.Parsing
                 }
             ).Named("enumMember");
 
-            Enums = Sequence(
+            Enums = Rule(
                 Attributes,
                 _accessModifiers,
                 Keyword("enum"),
@@ -316,7 +316,7 @@ namespace Scoop.Parsing
 
         private void InitializeDelegates()
         {
-            Delegates = Sequence(
+            Delegates = Rule(
                 // <attributes> <accessModifier>? "delegate" <type> <identifier> <genericParameters>? <parameters> <typeConstraints> ";"
                 Deferred(() => Attributes),
                 _accessModifiers,
@@ -345,7 +345,7 @@ namespace Scoop.Parsing
         {
             var inheritanceList = Optional(
                 // ":" <commaSeparatedType+>
-                Sequence(
+                Rule(
                     Operator(":"),
                     Required(
                         SeparatedList(
@@ -359,7 +359,7 @@ namespace Scoop.Parsing
                     (colon, types) => types.WithUnused(colon))
             ).Named("inheritanceList");
 
-            var interfaceMember = Sequence(
+            var interfaceMember = Rule(
                 Types,
                 _requiredIdentifier,
                 _genericTypeParameters,
@@ -378,7 +378,7 @@ namespace Scoop.Parsing
             ).Named("interfaceMember");
 
             var interfaceBody = Required(
-                Sequence(
+                Rule(
                     Operator("{"),
                     List(
                         interfaceMember,
@@ -390,7 +390,7 @@ namespace Scoop.Parsing
                 t => new ListNode<MethodDeclareNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket)
             ).Named("interfaceBody");
 
-            Interfaces = Sequence(
+            Interfaces = Rule(
                 Attributes,
                 _accessModifiers,
                 Keyword("interface"),
@@ -412,7 +412,7 @@ namespace Scoop.Parsing
                 }.WithUnused(i)
             ).Named("Interfaces");
 
-            var constants = Sequence(
+            var constants = Rule(
                 _accessModifiers,
                 Keyword("const"),
                 _requiredType,
@@ -430,10 +430,10 @@ namespace Scoop.Parsing
                 }.WithUnused(c, e, s)
             ).Named("constants");
 
-            var exprMethodBody = Sequence(
+            var exprMethodBody = Rule(
                 Operator("=>"),
                 First(
-                    Sequence(
+                    Rule(
                         Operator("{"),
                         List(
                             Statements,
@@ -442,7 +442,7 @@ namespace Scoop.Parsing
                         _requiredCloseBracket,
                         (a, stmts, b) => stmts.WithUnused(a, b)
                     ),
-                    Sequence(
+                    Rule(
                         Expressions,
                         _requiredSemicolon,
                         (expr, s) => new ListNode<AstNode> { new ReturnNode { Expression = expr } }.WithUnused(s)
@@ -452,7 +452,7 @@ namespace Scoop.Parsing
                 (lambda, body) => body.WithUnused(lambda)
             ).Named("exprMethodBody");
 
-            _normalMethodBody = Sequence(
+            _normalMethodBody = Rule(
                 Operator("{"),
                 List(
                     Statements,
@@ -470,13 +470,13 @@ namespace Scoop.Parsing
 
             var constructors = First(
                 Replaceable<Token, ConstructorNode>().Named("constructorNamedStub"),
-                Sequence(
+                Rule(
                     Attributes,
                     _accessModifiers,
                     _identifiers,
                     _parameterLists,
                     Optional(
-                        Sequence(
+                        Rule(
                             Operator(":"),
                             Required(Keyword("this"), t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
                             _argumentLists,
@@ -497,7 +497,7 @@ namespace Scoop.Parsing
                 ).Named("constructorNormal")
             ).Named("constructors");
 
-            var methods = Sequence(
+            var methods = Rule(
                 // <accessModifier>? "async"? <type> <ident> <genericTypeParameters>? <parameterList> <typeConstraints>? <methodBody>
                 Attributes,
                 _accessModifiers,
@@ -525,7 +525,7 @@ namespace Scoop.Parsing
                 }
             ).Named("methods");
 
-            var fields = Sequence(
+            var fields = Rule(
                 Attributes,
                 Types,
                 _identifiers,
@@ -553,7 +553,7 @@ namespace Scoop.Parsing
                 constructors
             ).Named("ClassMembers");
 
-            var classBody = Sequence(
+            var classBody = Rule(
                 Operator("{"),
                 List(
                     ClassMembers,
@@ -563,7 +563,7 @@ namespace Scoop.Parsing
                 (a, members, b) => members.WithUnused(a, b)
             ).Named("classBody");
 
-            Classes = Sequence(
+            Classes = Rule(
                 Attributes,
                 Optional(Keyword("public")),
                 Optional(Keyword("partial")),
@@ -587,7 +587,7 @@ namespace Scoop.Parsing
                 }
             ).Named("Classes");
 
-            _nestedClasses = Sequence(
+            _nestedClasses = Rule(
                 Attributes,
                 _accessModifiers,
                 Optional(Keyword("partial")),
@@ -614,14 +614,14 @@ namespace Scoop.Parsing
 
         private void InitializeParameters()
         {
-            var parameter = Sequence(
+            var parameter = Rule(
                 // <attributes> "params"? <type> <ident> ("=" <expr>)?
                 Attributes,
                 Optional(Keyword("params")),
                 Types,
                 _requiredIdentifier,
                 Optional(
-                    Sequence(
+                    Rule(
                         Operator("="),
                         _requiredExpression,
                         (op, expr) => expr.WithUnused(op)
@@ -640,7 +640,7 @@ namespace Scoop.Parsing
 
             _parameterLists = Required(
                 // ("(" <commaSeparatedParameterList> ")")
-                Sequence(
+                Rule(
                     _requiredOpenParen,
                     SeparatedList(
                         parameter,
@@ -657,7 +657,7 @@ namespace Scoop.Parsing
         private void InitializeArgumentLists()
         {
             var arguments = First(
-                Sequence(
+                Rule(
                     _identifiers,
                     Operator(":"),
                     _requiredExpression,
@@ -666,7 +666,7 @@ namespace Scoop.Parsing
                 Expressions
             ).Named("arguments");
 
-            _argumentLists = Sequence(
+            _argumentLists = Rule(
                 // A required argument list
                 // "(" <commaSeparatedArgs>? ")"
                 _requiredOpenParen,
@@ -683,7 +683,7 @@ namespace Scoop.Parsing
                 (a, items, c) => items.WithUnused(a, c)
             ).Named("ArgumentLists");
 
-            _maybeArgumentLists = Sequence(
+            _maybeArgumentLists = Rule(
                 // An optional argument list, is able to fail without diagnostics
                 // "(" <commaSeparatedArgs>? ")"
                 Operator("("),
@@ -703,7 +703,7 @@ namespace Scoop.Parsing
 
         private void InitializeStatements()
         {
-            var constStmtParser = Sequence(
+            var constStmtParser = Rule(
                 // "const" <type> <ident> "=" <expression> ";"
                 Keyword("const"),
                 _requiredType,
@@ -720,12 +720,12 @@ namespace Scoop.Parsing
                 }.WithUnused(c, e, s)
             ).Named("constStmt");
 
-            var varDeclareParser = Sequence(
+            var varDeclareParser = Rule(
                 // <type> <ident> ("=" <expression>)? ";"
                 _declareTypes,
                 _identifiers,
                 Optional(
-                    Sequence(
+                    Rule(
                         Operator("="),
                         Expressions,
                         (op, expr) => expr.WithUnused(op)
@@ -740,13 +740,13 @@ namespace Scoop.Parsing
                 }
             ).Named("varDeclare");
 
-            var varDeclareStmtParser = Sequence(
+            var varDeclareStmtParser = Rule(
                 varDeclareParser,
                 _requiredSemicolon,
                 (v, s) => v.WithUnused(s)
             ).Named("varDeclareStmt");
 
-            var returnStmtParser = Sequence(
+            var returnStmtParser = Rule(
                 // "return" <expression>? ";"
                 Keyword("return"),
                 Optional(Expressions),
@@ -758,7 +758,7 @@ namespace Scoop.Parsing
                 }.WithUnused(s)
             ).Named("returnStmt");
 
-            var usingStmtParser = Sequence(
+            var usingStmtParser = Rule(
                 // "using" "(" <varDeclare> | <expr> ")" <statement>
                 Keyword("using"),
                 _requiredOpenParen,
@@ -786,7 +786,7 @@ namespace Scoop.Parsing
                 returnStmtParser,
                 constStmtParser,
                 varDeclareStmtParser, 
-                Sequence(
+                Rule(
                     Expressions,
                     _requiredSemicolon,
                     (expr, s) => expr.WithUnused(s)
@@ -803,10 +803,10 @@ namespace Scoop.Parsing
             ).Named("typeName");
 
             // generictype = <typeName> ("<" <Type> ("," <Type>)* ">")?
-            var genericType = Sequence(
+            var genericType = Rule(
                 typeName,
                 Optional(
-                    Sequence(
+                    Rule(
                         Operator("<"),
                         Required(
                             SeparatedList(
@@ -841,10 +841,10 @@ namespace Scoop.Parsing
             ).Named("subtype");
 
             // types = <subtype> ("[" ","* "]")*
-            _types = Sequence(
+            _types = Rule(
                 subtype,
                 List(
-                    Sequence(
+                    Rule(
                         Operator("["),
                         List(Operator(","), c => c),
                         _requiredCloseBrace,
@@ -892,7 +892,7 @@ namespace Scoop.Parsing
         private void InitializeGenericTypeArguments()
         {
             _optionalGenericTypeArguments = Optional(
-                Sequence(
+                Rule(
                     Operator("<"),
                     SeparatedList(
                         Types,
@@ -909,7 +909,7 @@ namespace Scoop.Parsing
         private void InitializeGenericTypeParameters()
         {
             _genericTypeParameters = First(
-                Sequence(
+                Rule(
                     Operator("<"),
                     SeparatedList(
                         _identifiers,
@@ -930,7 +930,7 @@ namespace Scoop.Parsing
 
         private void InitializeTypeConstraints()
         {
-            var newConstraint = Sequence(
+            var newConstraint = Rule(
                 Keyword("new"),
                 _requiredOpenParen,
                 _requiredCloseParen,
@@ -939,13 +939,13 @@ namespace Scoop.Parsing
 
             var constraintList = First(
                 Transform(newConstraint, n => new ListNode<AstNode> { Items = new List<AstNode> { n }, Separator = new OperatorNode(",") }),
-                Sequence(
+                Rule(
                     First<Token, AstNode>(
                         Keyword("class"),
                         Types
                     ),
                     List(
-                        Sequence(
+                        Rule(
                             Operator(","),
                             Types,
                             (comma, constraint) => constraint
@@ -953,7 +953,7 @@ namespace Scoop.Parsing
                         c => c
                     ),
                     Optional(
-                        Sequence(
+                        Rule(
                             Operator(","),
                             newConstraint,
                             (comma, n) => n.WithUnused(comma)
@@ -972,7 +972,7 @@ namespace Scoop.Parsing
             ).Named("constraintList");
 
             _typeConstraints = List(
-                Sequence(
+                Rule(
                     Keyword("where"),
                     _requiredIdentifier,
                     _requiredColon,
@@ -991,7 +991,7 @@ namespace Scoop.Parsing
         private void InitializeNew()
         {
             var nonCollectionInitializer = First(
-                Sequence(
+                Rule(
                     // <ident> "=" <Expression>
                     _identifiers,
                     Operator("="),
@@ -1003,7 +1003,7 @@ namespace Scoop.Parsing
                         Value = expr
                     }.WithUnused(e)
                 ),
-                Sequence(
+                Rule(
                     // "[" <args> "]" "=" <Expression>
                     Operator("["),
                     SeparatedList(
@@ -1025,7 +1025,7 @@ namespace Scoop.Parsing
                         Value = value
                     }.WithUnused(o, c, e)
                 ),
-                Sequence(
+                Rule(
                     // "{" <args> "}" 
                     Operator("{"),
                     SeparatedList(
@@ -1046,7 +1046,7 @@ namespace Scoop.Parsing
                     }.WithUnused(o, c)
                 )
             );
-            var initializers = Sequence(
+            var initializers = Rule(
                 Operator("{"),
                 First(
                     SeparatedList(
@@ -1076,7 +1076,7 @@ namespace Scoop.Parsing
 
             _newParser = First(
                 // "new" "{" <initializers> "}"
-                Sequence(
+                Rule(
                     Keyword("new"),
                     initializers,
                     (n, inits) => new NewNode
@@ -1087,7 +1087,7 @@ namespace Scoop.Parsing
                 ),
                 // "new" <type> "{" <initializers> "}"
                 Replaceable(
-                    Sequence(
+                    Rule(
                         Keyword("new"),
                         Types,
                         initializers,
@@ -1102,7 +1102,7 @@ namespace Scoop.Parsing
                 Replaceable<Token, NewNode>().Named("newNamedArgsInitsStub"),
                 // "new" <type> <arguments> <initializers>?
                 Replaceable(
-                    Sequence(
+                    Rule(
                         Keyword("new"),
                         Types,
                         _argumentLists,
@@ -1139,7 +1139,7 @@ namespace Scoop.Parsing
                 Token(TokenType.Decimal, x => new DecimalNode(x)),
                 Token(TokenType.Float, x => new FloatNode(x)),
                 Token(TokenType.Double, x => new DoubleNode(x)),
-                Sequence(
+                Rule(
                     Operator("("),
                     Deferred(() => ExpressionList),
                     _requiredCloseParen,
@@ -1147,7 +1147,7 @@ namespace Scoop.Parsing
                 )
             ).Named("terminal");
 
-            var indexers = Sequence(
+            var indexers = Rule(
                 Operator("["),
                 Required(
                     SeparatedList(
@@ -1170,7 +1170,7 @@ namespace Scoop.Parsing
                 terminal,
                 init => First<Token, AstNode>(
                     // TODO: I think there's a problem where we could do something like <terminal>++() which isn't allowed
-                    Sequence(
+                    Rule(
                         // <terminal> ("++" | "--")
                         init,
                         Operator("++", "--"),
@@ -1181,7 +1181,7 @@ namespace Scoop.Parsing
                             Operator = op
                         }
                     ).Named("postfix.Increment"),
-                    Sequence(
+                    Rule(
                         // Method Invoke
                         // <terminal> ("." | "?.") <identifier> <GenericTypeArgs>? <ArgumentList>
                         init,
@@ -1203,7 +1203,7 @@ namespace Scoop.Parsing
                             Arguments = args
                         }
                     ).Named("postfix.MethodInvoke"),
-                    Sequence(
+                    Rule(
                         // property access
                         // <terminal> ("." | "?.") <identifier>
                         init,
@@ -1217,7 +1217,7 @@ namespace Scoop.Parsing
                             MemberName = name
                         }
                     ).Named("postfix.PropertyAccess"),
-                    Sequence(
+                    Rule(
                         // Invoke operator
                         // <terminal> "(" <args> ")"
                         init,
@@ -1229,7 +1229,7 @@ namespace Scoop.Parsing
                             Arguments = args
                         }
                     ).Named("postfix.Invoke"),
-                    Sequence(
+                    Rule(
                         // Index operator
                         // <terminal> "[" <args> "]"
                         init,
@@ -1246,7 +1246,7 @@ namespace Scoop.Parsing
 
             var expressionUnary = First(
                 // prefix ++ and -- cannot be combined with other prefix operators
-                Sequence(
+                Rule(
                     Operator("++", "--"),
                     expressionPostfix,
                     (op, expr) => (AstNode)new PrefixOperationNode
@@ -1257,12 +1257,12 @@ namespace Scoop.Parsing
                     }
                 ),
                 // ("-" | "+" | "~" | "!" | "await" | "throw" | <cast>)* <postfix>
-                Sequence(
+                Rule(
                     List(
                         First<Token, AstNode>(
                             Operator("-", "+", "!", "~"),
                             Transform(Keyword("await", "throw"), n => new OperatorNode(n.Keyword, n.Location)),
-                            Sequence(
+                            Rule(
                                 Operator("("),
                                 Types,
                                 Operator(")"),
@@ -1340,7 +1340,7 @@ namespace Scoop.Parsing
                 // <additive> (<op> <additive> <ident>?)?
                 expressionAdditive,
                 additive =>
-                    Sequence(
+                    Rule(
                         additive,
                         Transform(Keyword("as", "is"), k => new OperatorNode(k.Keyword, k.Location)),
                         _requiredType,
@@ -1419,7 +1419,7 @@ namespace Scoop.Parsing
                 // <expr> | <expr> "?" <expr> ":"
                 expressionCoalesce,
                 init =>
-                    Sequence(
+                    Rule(
                         init,
                         Operator("?"),
                         Required(
@@ -1462,13 +1462,13 @@ namespace Scoop.Parsing
                 // <assignmentExpression>
                 // <Identifier> "=>" ( <expression> | "{" <methodBody> "}" )
                 // "(" <identifierList> ")"  "=>" ( <expression> | "{" <methodBody> "}" )
-                Sequence(
+                Rule(
                     First(
                         Transform(
                             _identifiers,
                             id => new ListNode<IdentifierNode> { Separator = new OperatorNode(","), [0] = id }
                         ),
-                        Sequence(
+                        Rule(
                             Operator("("),
                             SeparatedList(
                                 _identifiers,

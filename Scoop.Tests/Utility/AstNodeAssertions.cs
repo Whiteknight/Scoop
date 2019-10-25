@@ -64,7 +64,7 @@ namespace Scoop.Tests.Utility
                 // Skip a few bits which aren't germane to most test scenarios.
                 if (property.Name == nameof(AstNode.Location) && property.PropertyType == typeof(Location))
                     continue;
-                if (property.Name == nameof(AstNode.Unused) && property.PropertyType == typeof(IReadOnlyList<AstNode>))
+                if (property.Name == nameof(AstNode.Unused) && property.PropertyType == typeof(IReadOnlyList<ISyntaxElement>))
                     continue;
                 //if (property.Name == nameof(ISqlSymbolScopeNode.Symbols) && property.PropertyType == typeof(SymbolTable))
                 //    continue;

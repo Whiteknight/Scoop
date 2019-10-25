@@ -54,7 +54,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
             return new Result<Token>(true, Token.Operator(op));
         }
 
-        public IParseResult<object> ParseUntyped(ISequence<char> t) => (IParseResult<object>) Parse(t);
+        public IParseResult<object> ParseUntyped(ISequence<char> t) => Parse(t).Untype();
 
         public string Name { get; set; }
 
@@ -64,24 +64,31 @@ namespace Scoop.Parsing.Tokenization.Parsers
 
         public IParser ReplaceChild(IParser find, IParser replace) => this;
 
-        private string ReadOperator(ISequence<char> t, SymbolSequence op)
+        private static string ReadOperator(ISequence<char> t, SymbolSequence op)
         {
-            var x = t.GetNext();
-            if (!char.IsPunctuation(x) && !char.IsSymbol(x))
+            var current = op;
+            while (true)
             {
-                t.PutBack(x);
-                return op.Operator;
-            }
-            var nextOp = op.Get(x);
-            if (nextOp == null)
-            {
-                t.PutBack(x);
-                return op.Operator;
-            }
+                var x = t.GetNext();
+                if (!char.IsPunctuation(x) && !char.IsSymbol(x))
+                {
+                    t.PutBack(x);
+                    return current.Operator;
+                }
 
-            return ReadOperator(t, nextOp);
+                var nextOp = current.Get(x);
+                if (nextOp == null)
+                {
+                    t.PutBack(x);
+                    return current.Operator;
+                }
+
+                current = nextOp;
+            }
         }
 
+        // Operator Trie type to get operator sequences
+        // This might be overkill, because no operators we're trying to get are more than 2 symbols long
         private class SymbolSequence
         {
             private readonly Dictionary<char, SymbolSequence> _next;
