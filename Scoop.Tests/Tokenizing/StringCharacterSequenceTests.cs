@@ -56,13 +56,5 @@ namespace Scoop.Tests.Tokenizing
             target.GetNext().Should().Be('c');
             target.GetNext().Should().Be('\0');
         }
-
-        [Test]
-        public void Expect_Test()
-        {
-            var target = new StringCharacterSequence("abc");
-            Action act = () => target.Expect('x');
-            act.Should().Throw<TokenizingException>();
-        }
     }
 }

@@ -12,6 +12,12 @@ namespace Scoop.Parsing.Tokenization.Parsers
             // Attempt to read through an arbitrary c# code literal. We can largely do this by 
             // counting braces, but we have to get a bit more involved when we deal with 
             // braces which are quoted as chars and strings: '{' and "{".
+
+            // C# is a complicated language and this parser does not want to be complicated. It is expected
+            // that the verbatim contents of this block are passed, opaquely, to roslyn for compilation.
+            // This parser will not attempt in any way to recognize the contents of the C# block or provide
+            // helpful diagnostics/recovery. If the user doesn't balance their {} brackets, they're going
+            // to get an exception and a hard stop.
             var a = _chars.GetNext();
             var b = _chars.Peek();
             if (a != 'c' || b != '#')
@@ -22,7 +28,6 @@ namespace Scoop.Parsing.Tokenization.Parsers
 
             _chars.GetNext();
 
-            // TODO: Need to figure out how to properly handle unexpected end of input
             while (char.IsWhiteSpace(_chars.Peek()))
                 _chars.GetNext();
             _chars.Expect('{');
@@ -31,8 +36,8 @@ namespace Scoop.Parsing.Tokenization.Parsers
             while (true)
             {
                 var c = _chars.GetNext();
-                //if (c == '\0')
-                //    TokenizingException.UnexpectedEndOfInput();
+                if (c == '\0')
+                    TokenizingException.UnexpectedEndOfInput(_chars.CurrentLocation);
                 if (c == '\'')
                 {
                     buffer.Add(c);
@@ -60,8 +65,8 @@ namespace Scoop.Parsing.Tokenization.Parsers
                     while (true)
                     {
                         c = _chars.GetNext();
-                        //if (c == '\0')
-                        //    TokenizingException.UnexpectedEndOfInput(l);
+                        if (c == '\0')
+                            TokenizingException.UnexpectedEndOfInput(_chars.CurrentLocation);
                         if (c == '"')
                             break;
                         if (c == '\\')
@@ -81,8 +86,8 @@ namespace Scoop.Parsing.Tokenization.Parsers
                     while (true)
                     {
                         c = _chars.GetNext();
-                        //if (c == '\0')
-                        //    TokenizingException.UnexpectedEndOfInput(l);
+                        if (c == '\0')
+                            TokenizingException.UnexpectedEndOfInput(_chars.CurrentLocation);
                         if (c == '"')
                         {
                             if (_chars.Peek() != '"')
