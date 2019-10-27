@@ -48,7 +48,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
 
         public IParseResult<Token> Parse(ISequence<char> t)
         {
-            var op = ReadOperator(t, _operators);
+            var op = _operators.GetOperator(t);
             if (string.IsNullOrEmpty(op))
                 return new Result<Token>(false, default);
             return new Result<Token>(true, Token.Operator(op));
@@ -64,35 +64,12 @@ namespace Scoop.Parsing.Tokenization.Parsers
 
         public IParser ReplaceChild(IParser find, IParser replace) => this;
 
-        private static string ReadOperator(ISequence<char> t, SymbolSequence op)
-        {
-            var current = op;
-            while (true)
-            {
-                var x = t.GetNext();
-                if (!char.IsPunctuation(x) && !char.IsSymbol(x))
-                {
-                    t.PutBack(x);
-                    return current.Operator;
-                }
-
-                var nextOp = current.Get(x);
-                if (nextOp == null)
-                {
-                    t.PutBack(x);
-                    return current.Operator;
-                }
-
-                current = nextOp;
-            }
-        }
-
         // Operator Trie type to get operator sequences
         // This might be overkill, because no operators we're trying to get are more than 2 symbols long
         private class SymbolSequence
         {
             private readonly Dictionary<char, SymbolSequence> _next;
-            public string Operator { get; private set; }
+            private string _operator;
 
             public SymbolSequence()
             {
@@ -110,7 +87,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
                 bool isLast = idx == chars.Length;
                 if (isLast)
                 {
-                    Operator = chars;
+                    _operator = chars;
                     return;
                 }
                 var c = chars[idx];
@@ -119,11 +96,16 @@ namespace Scoop.Parsing.Tokenization.Parsers
                 _next[c].Add(chars, idx + 1);
             }
 
-            public SymbolSequence Get(char c)
+            public string GetOperator(ISequence<char> t)
             {
-                if (_next.ContainsKey(c))
-                    return _next[c];
-                return null;
+                var x = t.GetNext();
+                if (!_next.ContainsKey(x))
+                {
+                    t.PutBack(x);
+                    return _operator;
+                }
+
+                return _next[x].GetOperator(t) ?? _operator;
             }
         }
     }
