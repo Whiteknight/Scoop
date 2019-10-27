@@ -19,6 +19,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		L1.md = L1.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utility", "Utility", "{5517C140-5CD2-4244-8B93-5CBC730CD149}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Scoop.GrammarGenerator", "Scoop.GrammarGenerator\Scoop.GrammarGenerator.csproj", "{496F50A9-8396-4520-938E-5457939277B6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,9 +45,16 @@ Global
 		{C29DBF98-EB31-468B-92DA-FDA15790B715}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C29DBF98-EB31-468B-92DA-FDA15790B715}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C29DBF98-EB31-468B-92DA-FDA15790B715}.Release|Any CPU.Build.0 = Release|Any CPU
+		{496F50A9-8396-4520-938E-5457939277B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{496F50A9-8396-4520-938E-5457939277B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{496F50A9-8396-4520-938E-5457939277B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{496F50A9-8396-4520-938E-5457939277B6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{496F50A9-8396-4520-938E-5457939277B6} = {5517C140-5CD2-4244-8B93-5CBC730CD149}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9A2BF2D7-F82A-4E19-B4E3-8EE2E1D87627}

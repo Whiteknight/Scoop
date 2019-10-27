@@ -19,6 +19,8 @@ namespace Scoop.Parsing.Parsers
         {
             _inner = inner;
             _otherwise = otherwise;
+            if (!string.IsNullOrEmpty(_inner.Name))
+                Name = _inner.Name + "!";
         }
 
         public IParseResult<TOutput> Parse(ISequence<TInput> t)

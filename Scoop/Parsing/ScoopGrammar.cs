@@ -208,12 +208,10 @@ namespace Scoop.Parsing
                 _requiredCloseBrace,
                 (a, attrs, b) => attrs.WithUnused(a, b)
             ).Named("attributeTag");
-            
-            Attributes = Optional(
-                List(
-                    _attributeTags,
-                    list => new ListNode<AttributeNode> { Items = list.SelectMany(l => l.Items).ToList() }.WithUnused(list.SelectMany(a => a.Unused.OrEmptyIfNull()).ToArray())
-                )
+
+            Attributes = List(
+                _attributeTags,
+                list => new ListNode<AttributeNode> { Items = list.SelectMany(l => l.Items).ToList() }.WithUnused(list.SelectMany(a => a.Unused.OrEmptyIfNull()).ToArray())
             ).Named("Attributes");
         }
 

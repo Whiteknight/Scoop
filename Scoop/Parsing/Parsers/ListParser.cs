@@ -39,6 +39,8 @@ namespace Scoop.Parsing.Parsers
             return  new Result<TOutput>(true, _produce(items));
         }
 
+        public bool AtLeastOne => _atLeastOne;
+
         IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => Parse(t).Untype();
 
         public string Name { get; set; }

@@ -31,17 +31,29 @@ namespace Scoop.Parsing.Parsers
 
         public static IParser<Token, KeywordNode> Keyword(string firstKeyword, params string[] keywords)
         {
-            return new PredicateParser<Token, KeywordNode>(t => t.IsType(TokenType.Word) && (t.Value == firstKeyword || keywords.Any(k => k == t.Value)), t => new KeywordNode(t));
+            var name = "Keyword:" + firstKeyword;
+            if (keywords.Length > 0)
+                name = name + " " + string.Join(" ", keywords);
+            return new PredicateParser<Token, KeywordNode>(
+                t => t.IsType(TokenType.Word) && (t.Value == firstKeyword || keywords.Any(k => k == t.Value)), 
+                t => new KeywordNode(t)
+            ).Named(name);
         }
 
         public static IParser<Token, TOutput> Keyword<TOutput>(string firstKeyword, Func<Token, TOutput> produce)
         {
-            return new PredicateParser<Token, TOutput>(t => t.IsType(TokenType.Word) && t.Value == firstKeyword, produce);
+            return new PredicateParser<Token, TOutput>(t => t.IsType(TokenType.Word) && t.Value == firstKeyword, produce).Named("Keyword:" + firstKeyword);
         }
 
         public static IParser<Token, OperatorNode> Operator(string firstOp, params string[] operators)
         {
-            return new PredicateParser<Token, OperatorNode>(t => t.IsType(TokenType.Operator) && (t.Value == firstOp || operators.Any(k => k == t.Value)), t => new OperatorNode(t));
+            var name = "Operator:" + firstOp;
+            if (operators.Length > 0)
+                name = name + " " + string.Join(" ", operators);
+            return new PredicateParser<Token, OperatorNode>(
+                t => t.IsType(TokenType.Operator) && (t.Value == firstOp || operators.Any(k => k == t.Value)), 
+                t => new OperatorNode(t)
+            ).Named(name);
         }
 
         /// <summary>
@@ -53,7 +65,7 @@ namespace Scoop.Parsing.Parsers
         /// <returns></returns>
         public static IParser<Token, TOutput> Token<TOutput>(TokenType type, Func<Token, TOutput> produce)
         {
-            return new PredicateParser<Token, TOutput>(t => t.IsType(type), produce);
+            return new PredicateParser<Token, TOutput>(t => t.IsType(type), produce).Named("Token:" + type);
         }
     }
 }
