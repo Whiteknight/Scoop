@@ -127,14 +127,20 @@ namespace Scoop.Parsing.Tokenization
 
         private static IParser<char, Token> BuildNumberParser()
         {
-            // TODO: "_" separator in a number
-            // "0x" <hexDigit>+ | "-"? <digit>+ "." <digit>+ <type>? | "-"? <digit>+ <type>?
+            // "0x" <hexDigit> (("_" <hexDigit>) | <hexDigit>)*
             var hexNumber = Rule(
                 Match("0x", c => c),
+                Match<char>(c => _hexDigits.Contains(c)),
                 List(
-                    Match<char>(c => _hexDigits.Contains(c)),
-                    c => new string(c.ToArray()),
-                    atLeastOne: true
+                    First(
+                        Rule(
+                            Match<char>(c => c == '_'),
+                            Match<char>(c => _hexDigits.Contains(c)),
+                            (sep, digit) => new[] { sep, digit }
+                        ),
+                        Transform(Match<char>(char.IsDigit), c => new[] { c })
+                    ),
+                    x => new string(x.SelectMany(y => y).ToArray())
                 ),
                 First(
                     Match("UL", c => TokenType.ULong),
@@ -142,13 +148,27 @@ namespace Scoop.Parsing.Tokenization
                     Match("L", c => TokenType.Long),
                     Produce<char, TokenType>(() => TokenType.Integer)
                 ),
-                (prefix, body, type) => new Token(int.Parse(body, System.Globalization.NumberStyles.HexNumber).ToString(), type)
+                (prefix, first, rest, type) => new Token(int.Parse(first + rest, System.Globalization.NumberStyles.HexNumber).ToString(), type)
             );
-            var digitList = List(
+
+            // <digit> (("_" <digit>) | <digit>)*
+            var digitList = Rule(
                 Match<char>(char.IsDigit),
-                c => new string(c.ToArray()),
-                atLeastOne: true
+                List(
+                    First(
+                        Rule(
+                            Match<char>(c => c == '_'),
+                            Match<char>(char.IsDigit),
+                            (sep, digit) => new [] { sep, digit }
+                        ),
+                        Transform(Match<char>(char.IsDigit), c => new [] { c })
+                    ),
+                    x => x.SelectMany(y => y)
+                ),
+                (first, rest) => first.ToString() + new string(rest.ToArray())
             );
+
+            // "-"? <digitList> "." <digitList>
             var decimalNumber = Rule(
                 Optional(Match("-", c => "-"), () => ""),
                 digitList,
@@ -161,6 +181,8 @@ namespace Scoop.Parsing.Tokenization
                 ),
                 (neg, whole, dot, fract, type) => new Token(neg + whole + "." + fract, type)
             );
+
+            // "-"? <digitList>
             var integralNumber = Rule(
                 Optional(Match("-", c => "-"), () => ""),
                 digitList,
@@ -172,6 +194,7 @@ namespace Scoop.Parsing.Tokenization
                 ),
                 (neg, whole, type) => new Token(neg + whole, type)
             );
+
             var numbers = First(
                 hexNumber,
                 decimalNumber,
