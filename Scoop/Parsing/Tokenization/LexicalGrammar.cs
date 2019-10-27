@@ -159,9 +159,9 @@ namespace Scoop.Parsing.Tokenization
                         Rule(
                             Match<char>(c => c == '_'),
                             Match<char>(char.IsDigit),
-                            (sep, digit) => new [] { sep, digit }
+                            (sep, digit) => new[] { sep, digit }
                         ),
-                        Transform(Match<char>(char.IsDigit), c => new [] { c })
+                        Transform(Match<char>(char.IsDigit), c => new[] { c })
                     ),
                     x => x.SelectMany(y => y)
                 ),

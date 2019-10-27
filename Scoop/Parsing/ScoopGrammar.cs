@@ -139,21 +139,24 @@ namespace Scoop.Parsing
 
         private void InitializeAttributes()
         {
+            var namedAttributeArgInit = Rule(
+                _identifiers,
+                Operator("="),
+                // TODO: I think these expressions can only be terminals or member accesses (consts or enums, etc)
+                Expressions,
+
+                (name, s, expr) => (AstNode) new NamedArgumentNode { Name = name, Separator = s, Value = expr }
+            );
+
+            // (<identifier> "=" <expr>) | <expr>
             var attributeArgs = First(
-                // (<identifier> "=" <expr>) | <expr>
-                Rule(
-                    _identifiers,
-                    Operator("="),
-                    // TODO: I think these expressions can only be terminals or member accesses (consts or enums, etc)
-                    Expressions,
-                    (name, s, expr) => (AstNode)new NamedArgumentNode { Name = name, Separator = s, Value = expr }
-                ),
+                namedAttributeArgInit,
                 // TODO: I think these expressions can only be terminals or member accesses (consts or enums, etc)
                 Expressions
             ).Named("attributeArgument");
 
+            // ("(" <argumentList> ")"))?
             var argumentListParser = Optional(
-                // ("(" <argumentList> ")"))?
                 Rule(
                     Operator("("),
                     SeparatedList(
@@ -162,39 +165,46 @@ namespace Scoop.Parsing
                         items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") }
                     ),
                     _requiredCloseParen,
+
                     (a, items, c) => items.WithUnused(a, c)
                 ).Named("attributeArgumentList")
             );
 
-            var attrParser = SeparatedList(
+            var attributeTarget = Optional(
                 Rule(
-                    // (<keyword> ":")? <type> <argumentList>
-                    Optional(
-                        Rule(
-                            // We don't support "event" or "property" targets since we don't allow those structures
-                            Keyword("assembly", "module", "field", "method", "param", "return", "type"),
-                            _requiredColon,
-                            (target, o) => target.WithUnused(o)
-                        )
-                    ),
-                    Types,
-                    argumentListParser,
-                    (target, type, args) => new AttributeNode
-                    {
-                        Location = type.Location,
-                        Target = target,
-                        Type = type,
-                        Arguments = args
-                    }
-                ).Named("attribute"),
+                    // We don't support "event" or "property" targets since we don't allow those structures
+                    Keyword("assembly", "module", "field", "method", "param", "return", "type"),
+                    _requiredColon,
+                    (target, o) => target.WithUnused(o)
+                )
+            );
+
+            // (<keyword> ":")? <type> <argumentList>
+            var attribute = Rule(
+                attributeTarget,
+                Types,
+                argumentListParser,
+
+                (target, type, args) => new AttributeNode
+                {
+                    Location = type.Location,
+                    Target = target,
+                    Type = type,
+                    Arguments = args
+                }
+            ).Named("attribute");
+
+            var attributeList = SeparatedList(
+                attribute,
                 Operator(","),
+
                 list => new ListNode<AttributeNode> { Items = list.ToList(), Separator = new OperatorNode(",") }
             ).Named("attributeList");
 
+            // "[" <attributeList> "]"
             _attributeTags = Rule(
-                // "[" <attributeList> "]"
                 Operator("["),
-                attrParser,
+                attributeList,
                 _requiredCloseBrace,
                 (a, attrs, b) => attrs.WithUnused(a, b)
             ).Named("attributeTag");
@@ -221,11 +231,12 @@ namespace Scoop.Parsing
                 Keyword("using"),
                 Required(_dottedIdentifiers, t => new DottedIdentifierNode("").WithDiagnostics(t.CurrentLocation, Errors.MissingNamespaceName)),
                 _requiredSemicolon,
-                (a, b, c) => new UsingDirectiveNode
+
+                (u, ns, sc) => new UsingDirectiveNode
                 {
-                    Location = a.Location,
-                    Namespace = b
-                }.WithUnused(a, c)
+                    Location = u.Location,
+                    Namespace = ns
+                }.WithUnused(u, sc)
             ).Named("usingDirectives");
 
             var namespaceMembers = First<Token, AstNode>(
@@ -235,6 +246,7 @@ namespace Scoop.Parsing
                 Deferred(() => Enums),
                 Deferred(() => Delegates)
             );
+
             var namespaceBody = Rule(
                 Operator("{"),
                 List(
@@ -242,12 +254,15 @@ namespace Scoop.Parsing
                     members => new ListNode<AstNode> { Items = members.ToList() }
                 ),
                 _requiredCloseBracket,
+
                 (a, members, b) => members.WithUnused(a, b)
             );
+
             var namespaces = Rule(
                 Keyword("namespace"),
                 Required(_dottedIdentifiers, t => new DottedIdentifierNode("").WithDiagnostics(t.CurrentLocation, Errors.MissingNamespaceName)),
                 Required(namespaceBody, t=> new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket)),
+
                 (ns, name, members) => new NamespaceNode
                 {
                     Location = ns.Location,
@@ -262,26 +277,32 @@ namespace Scoop.Parsing
                     namespaces,
                     Deferred(() => _attributeTags)
                 ),
+
                 items => new CompilationUnitNode
                 {
                     Members = new ListNode<AstNode> { Items = items.ToList() }
                 }
             ).Named("CompilationUnits");
-            // TODO: Should we have a reule expecting explicit EndOfInput?
+
+            // TODO: Should we have a rule expecting explicit EndOfInput?
         }
 
         private void InitializeEnums()
         {
+            var enumMemberValue = Optional(
+                Rule(
+                    Operator("="),
+                    _requiredExpression,
+
+                    (e, expr) => expr.WithUnused(e)
+                )
+            );
+
             var enumMember = Rule(
                 Attributes,
                 _identifiers,
-                Optional(
-                    Rule(
-                        Operator("="),
-                        _requiredExpression,
-                        (e, expr) => expr.WithUnused(e)
-                    )
-                ),
+                enumMemberValue,
+
                 (attrs, name, value) => new EnumMemberNode
                 {
                     Attributes = attrs.IsNullOrEmpty() ? null : attrs,
@@ -291,18 +312,22 @@ namespace Scoop.Parsing
                 }
             ).Named("enumMember");
 
+            var enumMembers = SeparatedList(
+                enumMember,
+                Operator(","),
+
+                members => new ListNode<EnumMemberNode> { Items = members.ToList(), Separator = new OperatorNode(",") }
+            );
+
             Enums = Rule(
                 Attributes,
                 _accessModifiers,
                 Keyword("enum"),
                 _requiredIdentifier,
                 _requiredOpenBracket,
-                SeparatedList(
-                    enumMember,
-                    Operator(","),
-                    members => new ListNode<EnumMemberNode> { Items = members.ToList(), Separator = new OperatorNode(",") }
-                ),
+                enumMembers,
                 _requiredCloseBracket,
+
                 (attrs, vis, e, name, x, members, y) => new EnumNode
                 {
                     Location = e.Location,
@@ -316,8 +341,8 @@ namespace Scoop.Parsing
 
         private void InitializeDelegates()
         {
+            // <attributes> <accessModifier>? "delegate" <type> <identifier> <genericParameters>? <parameters> <typeConstraints> ";"
             Delegates = Rule(
-                // <attributes> <accessModifier>? "delegate" <type> <identifier> <genericParameters>? <parameters> <typeConstraints> ";"
                 Deferred(() => Attributes),
                 _accessModifiers,
                 Keyword("delegate"),
@@ -327,6 +352,7 @@ namespace Scoop.Parsing
                 _parameterLists,
                 _typeConstraints,
                 _requiredSemicolon,
+
                 (attrs, vis, d, retType, name, gen, param, cons, s) => new DelegateNode
                 {
                     Location = d.Location,
@@ -343,20 +369,21 @@ namespace Scoop.Parsing
 
         private void InitializeClasses()
         {
+            var typeList = SeparatedList(
+                Types,
+                Operator(","),
+                types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") },
+                atLeastOne: true
+            );
+
+            // ":" <commaSeparatedType+>
             var inheritanceList = Optional(
-                // ":" <commaSeparatedType+>
                 Rule(
                     Operator(":"),
-                    Required(
-                        SeparatedList(
-                            Types,
-                            Operator(","),
-                            types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") },
-                            atLeastOne: true
-                        ),
-                        t => new ListNode<TypeNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingType)
-                    ),
-                    (colon, types) => types.WithUnused(colon))
+                    Required(typeList, t => new ListNode<TypeNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingType)),
+
+                    (colon, types) => types.WithUnused(colon)
+                )
             ).Named("inheritanceList");
 
             var interfaceMember = Rule(
@@ -366,6 +393,7 @@ namespace Scoop.Parsing
                 _parameterLists,
                 _typeConstraints,
                 _requiredSemicolon,
+
                 (ret, name, genParm, parm, cons, s) => new MethodDeclareNode
                 {
                     Location = name.Location,
@@ -377,16 +405,20 @@ namespace Scoop.Parsing
                 }.WithUnused(s)
             ).Named("interfaceMember");
 
-            var interfaceBody = Required(
-                Rule(
-                    Operator("{"),
-                    List(
-                        interfaceMember,
-                        members => new ListNode<MethodDeclareNode> { Items = members.ToList() }
-                    ),
-                    _requiredCloseBracket,
-                    (a, members, b) => members.WithUnused(a, b)
-                ),
+            var interfaceMembers = List(
+                interfaceMember,
+                members => new ListNode<MethodDeclareNode> { Items = members.ToList() }
+            );
+
+            var interfaceBody = Rule(
+                Operator("{"),
+                interfaceMembers,
+                _requiredCloseBracket,
+                (a, members, b) => members.WithUnused(a, b)
+            );
+
+            var requiredInterfaceBody = Required(
+                interfaceBody, 
                 t => new ListNode<MethodDeclareNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket)
             ).Named("interfaceBody");
 
@@ -398,7 +430,8 @@ namespace Scoop.Parsing
                 _genericTypeParameters,
                 inheritanceList,
                 _typeConstraints,
-                interfaceBody,
+                requiredInterfaceBody,
+
                 (attrs, vis, i, name, genParm, inh, cons, body) => new InterfaceNode
                 {
                     Location = name.Location,
@@ -420,6 +453,7 @@ namespace Scoop.Parsing
                 _requiredEquals,
                 _requiredExpression,
                 _requiredSemicolon,
+
                 (vis, c, type, name, e, expr, s) => new ConstNode
                 {
                     AccessModifier = vis,
@@ -429,28 +463,6 @@ namespace Scoop.Parsing
                     Value = expr
                 }.WithUnused(c, e, s)
             ).Named("constants");
-
-            var exprMethodBody = Rule(
-                Operator("=>"),
-                First(
-                    Rule(
-                        Operator("{"),
-                        List(
-                            Statements,
-                            stmts => new ListNode<AstNode> { Items = stmts.ToList() }
-                        ),
-                        _requiredCloseBracket,
-                        (a, stmts, b) => stmts.WithUnused(a, b)
-                    ),
-                    Rule(
-                        Expressions,
-                        _requiredSemicolon,
-                        (expr, s) => new ListNode<AstNode> { new ReturnNode { Expression = expr } }.WithUnused(s)
-                    ),
-                    Error<ListNode<AstNode>>(Errors.MissingOpenBracket)
-                ),
-                (lambda, body) => body.WithUnused(lambda)
-            ).Named("exprMethodBody");
 
             _normalMethodBody = Rule(
                 Operator("{"),
@@ -462,39 +474,62 @@ namespace Scoop.Parsing
                 (a, body, b) => body.WithUnused(a, b)
             ).Named("NormalMethodBody");
 
+            var semicolonTerminatedExpression = Rule(
+                Expressions,
+                _requiredSemicolon,
+
+                (expr, s) => new ListNode<AstNode> { new ReturnNode { Expression = expr } }.WithUnused(s)
+            );
+
+            var expressionBodiedMethodBody = Rule(
+                Operator("=>"),
+                First(
+                    _normalMethodBody,
+                    semicolonTerminatedExpression,
+                    Error<ListNode<AstNode>>(Errors.MissingOpenBracket)
+                ),
+
+                (lambda, body) => body.WithUnused(lambda)
+            ).Named("exprMethodBody");
+
             var methodBody = First(
-                exprMethodBody,
+                expressionBodiedMethodBody,
                 _normalMethodBody,
                 Error<ListNode<AstNode>>(Errors.MissingOpenBracket)
             ).Named("methodBody");
 
+            var constructorThisArgs = Optional(
+                Rule(
+                    Operator(":"),
+                    Required(Keyword("this"), t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
+                    _argumentLists,
+                    (a, b, args) => args.WithUnused(a, b)
+                )
+            ).Named("thisArgs");
+
+            var constructor = Rule(
+                Attributes,
+                _accessModifiers,
+                _identifiers,
+                _parameterLists,
+                constructorThisArgs,
+                methodBody,
+
+                (attrs, vis, name, param, targs, body) => new ConstructorNode
+                {
+                    Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                    Location = name.Location,
+                    AccessModifier = vis,
+                    ClassName = name,
+                    Parameters = param,
+                    ThisArgs = targs,
+                    Statements = body
+                }
+            ).Named("constructor");
+
             var constructors = First(
                 Replaceable<Token, ConstructorNode>().Named("constructorNamedStub"),
-                Rule(
-                    Attributes,
-                    _accessModifiers,
-                    _identifiers,
-                    _parameterLists,
-                    Optional(
-                        Rule(
-                            Operator(":"),
-                            Required(Keyword("this"), t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
-                            _argumentLists,
-                            (a, b, args) => args.WithUnused(a, b)
-                        )
-                    ).Named("thisArgs"),
-                    methodBody,
-                    (attrs, vis, name, param, targs, body) => new ConstructorNode
-                    {
-                        Attributes = attrs.IsNullOrEmpty() ? null : attrs,
-                        Location = name.Location,
-                        AccessModifier = vis,
-                        ClassName = name,
-                        Parameters = param,
-                        ThisArgs = targs,
-                        Statements = body
-                    }
-                ).Named("constructorNormal")
+                constructor
             ).Named("constructors");
 
             var methods = Rule(
@@ -510,6 +545,7 @@ namespace Scoop.Parsing
                 _parameterLists,
                 _typeConstraints,
                 methodBody,
+
                 (attrs, vis, isAsync, retType, name, genParam, param, cons, body) => new MethodNode
                 {
                     Location = name.Location,
@@ -530,6 +566,7 @@ namespace Scoop.Parsing
                 Types,
                 _identifiers,
                 _requiredSemicolon,
+
                 (attrs, type, name, s) => new FieldNode
                 {
                     Attributes = attrs.IsNullOrEmpty() ? null : attrs,
@@ -573,6 +610,7 @@ namespace Scoop.Parsing
                 inheritanceList,
                 _typeConstraints,
                 Required(classBody, t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket)),
+
                 (attrs, vis, isPartial, obj, name, genParm, contracts, cons, body) => new ClassNode
                 {
                     Attributes = attrs.IsNullOrEmpty() ? null : attrs,
@@ -597,6 +635,7 @@ namespace Scoop.Parsing
                 inheritanceList,
                 _typeConstraints,
                 Required(classBody, t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket)),
+
                 (attrs, vis, isPartial, obj, name, genParm, contracts, cons, body) => new ClassNode
                 {
                     Attributes = attrs.IsNullOrEmpty() ? null : attrs,
@@ -614,19 +653,20 @@ namespace Scoop.Parsing
 
         private void InitializeParameters()
         {
+            var parameterDefaultValueExpression = Rule(
+                Operator("="),
+                _requiredExpression,
+                (op, expr) => expr.WithUnused(op)
+            );
+
             var parameter = Rule(
                 // <attributes> "params"? <type> <ident> ("=" <expr>)?
                 Attributes,
                 Optional(Keyword("params")),
                 Types,
                 _requiredIdentifier,
-                Optional(
-                    Rule(
-                        Operator("="),
-                        _requiredExpression,
-                        (op, expr) => expr.WithUnused(op)
-                    )
-                ),
+                Optional(parameterDefaultValueExpression),
+
                 (attrs, isparams, type, name, value) => new ParameterNode
                 {
                     Location = type.Location,
@@ -656,61 +696,61 @@ namespace Scoop.Parsing
 
         private void InitializeArgumentLists()
         {
+            var namedArgument = Rule(
+                _identifiers,
+                Operator(":"),
+                _requiredExpression,
+
+                (name, s, expr) => (AstNode) new NamedArgumentNode { Name = name, Separator = s, Value = expr }
+            );
+
             var arguments = First(
-                Rule(
-                    _identifiers,
-                    Operator(":"),
-                    _requiredExpression,
-                    (name, s, expr) => (AstNode)new NamedArgumentNode { Name = name, Separator = s, Value = expr }
-                ),
+                namedArgument,
                 Expressions
             ).Named("arguments");
 
+            var commaSeparatedArguments = SeparatedList(
+                arguments,
+                Operator(","),
+                items => new ListNode<AstNode>
+                {
+                    Items = items.ToList(),
+                    Separator = new OperatorNode(",")
+                }
+            );
+
+            // A required argument list
+            // "(" <commaSeparatedArgs>? ")"
             _argumentLists = Rule(
-                // A required argument list
-                // "(" <commaSeparatedArgs>? ")"
                 _requiredOpenParen,
-                SeparatedList(
-                    arguments,
-                    Operator(","),
-                    items => new ListNode<AstNode>
-                    {
-                        Items = items.ToList(),
-                        Separator = new OperatorNode(",")
-                    }
-                ),
+                commaSeparatedArguments,
                 _requiredCloseParen,
+
                 (a, items, c) => items.WithUnused(a, c)
             ).Named("ArgumentLists");
 
+            // An optional argument list, is able to fail without diagnostics
+            // "(" <commaSeparatedArgs>? ")"
             _maybeArgumentLists = Rule(
-                // An optional argument list, is able to fail without diagnostics
-                // "(" <commaSeparatedArgs>? ")"
                 Operator("("),
-                SeparatedList(
-                    arguments,
-                    Operator(","),
-                    items => new ListNode<AstNode>
-                    {
-                        Items = items.ToList(),
-                        Separator = new OperatorNode(",")
-                    }
-                ),
+                commaSeparatedArguments,
                 _requiredCloseParen,
+
                 (a, items, c) => items.WithUnused(a, c)
             ).Named("maybeArgumentLists");
         }
 
         private void InitializeStatements()
         {
-            var constStmtParser = Rule(
-                // "const" <type> <ident> "=" <expression> ";"
+            // "const" <type> <ident> "=" <expression> ";"
+            var constStatements = Rule(
                 Keyword("const"),
                 _requiredType,
                 _requiredIdentifier,
                 _requiredEquals,
                 _requiredExpression,
                 _requiredSemicolon,
+
                 (c, type, name, e, expr, s) => new ConstNode
                 {
                     Location = c.Location,
@@ -720,17 +760,19 @@ namespace Scoop.Parsing
                 }.WithUnused(c, e, s)
             ).Named("constStmt");
 
-            var varDeclareParser = Rule(
-                // <type> <ident> ("=" <expression>)? ";"
+            var variableDeclareInitializer = Rule(
+                Operator("="),
+                Expressions,
+
+                (op, expr) => expr.WithUnused(op)
+            );
+
+            // <type> <ident> ("=" <expression>)? ";"
+            var variableDeclareStatements = Rule(
                 _declareTypes,
                 _identifiers,
-                Optional(
-                    Rule(
-                        Operator("="),
-                        Expressions,
-                        (op, expr) => expr.WithUnused(op)
-                    )
-                ),
+                Optional(variableDeclareInitializer),
+
                 (type, name, value) => new VariableDeclareNode
                 {
                     Location = type.Location,
@@ -741,8 +783,9 @@ namespace Scoop.Parsing
             ).Named("varDeclare");
 
             var varDeclareStmtParser = Rule(
-                varDeclareParser,
+                variableDeclareStatements,
                 _requiredSemicolon,
+
                 (v, s) => v.WithUnused(s)
             ).Named("varDeclareStmt");
 
@@ -751,6 +794,7 @@ namespace Scoop.Parsing
                 Keyword("return"),
                 Optional(Expressions),
                 _requiredSemicolon,
+
                 (r, expr, s) => new ReturnNode
                 {
                     Location = r.Location,
@@ -758,15 +802,17 @@ namespace Scoop.Parsing
                 }.WithUnused(s)
             ).Named("returnStmt");
 
-            var usingStmtParser = Rule(
+            var usingStatementGetDisposableClause = First(
+                variableDeclareStatements,
+                Expressions,
+                Error<EmptyNode>(Errors.MissingExpression)
+            );
+
+            var usingStatement = Rule(
                 // "using" "(" <varDeclare> | <expr> ")" <statement>
                 Keyword("using"),
                 _requiredOpenParen,
-                First(
-                    varDeclareParser,
-                    Expressions,
-                    Error<EmptyNode>(Errors.MissingExpression)
-                ),
+                usingStatementGetDisposableClause,
                 _requiredCloseParen,
                 Required(Deferred(() => Statements), t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingStatement)),
                 (u, a, disposable, b, stmt) => new UsingStatementNode
@@ -782,9 +828,9 @@ namespace Scoop.Parsing
                 // <csharpLiteral> | <usingStatement>
                 Transform(Operator(";"), o => new EmptyNode().WithUnused(o)).Named("emptyStmt"),
                 Token(TokenType.CSharpLiteral, x => new CSharpNode(x)),
-                usingStmtParser,
+                usingStatement,
                 returnStmtParser,
-                constStmtParser,
+                constStatements,
                 varDeclareStmtParser, 
                 Rule(
                     Expressions,
@@ -802,29 +848,32 @@ namespace Scoop.Parsing
                 id => new TypeNode(id)
             ).Named("typeName");
 
+            var atLeastOneCommaSeparatedType = SeparatedList(
+                Types,
+                Operator(","),
+                list => new ListNode<TypeNode>
+                {
+                    Items = list.ToList(),
+                    Separator = new OperatorNode(",")
+                },
+                atLeastOne: true
+            );
+
+            var genericTypeArgumentsList = Rule(
+                Operator("<"),
+                Required(
+                    atLeastOneCommaSeparatedType,
+                    t => new ListNode<TypeNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingType)
+                ),
+                _requiredCloseAngle,
+                (b, genericArgs, d) => genericArgs.WithUnused(b, d)
+            );
+
             // generictype = <typeName> ("<" <Type> ("," <Type>)* ">")?
             var genericType = Rule(
                 typeName,
-                Optional(
-                    Rule(
-                        Operator("<"),
-                        Required(
-                            SeparatedList(
-                                Types,
-                                Operator(","),
-                                list => new ListNode<TypeNode>
-                                {
-                                    Items = list.ToList(),
-                                    Separator = new OperatorNode(",")
-                                },
-                                atLeastOne: true
-                            ), 
-                            t => new ListNode<TypeNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingType)
-                        ),
-                        _requiredCloseAngle,
-                        (b, genericArgs, d) => genericArgs.WithUnused(b, d)
-                    )
-                ),
+                Optional(genericTypeArgumentsList),
+
                 (type, genericArgs) =>
                 {
                     type.GenericArguments = genericArgs;
@@ -840,26 +889,29 @@ namespace Scoop.Parsing
                 atLeastOne: true
             ).Named("subtype");
 
+            var arrayTypeDesignator = Rule(
+                Operator("["),
+                List(Operator(","), c => c),
+                _requiredCloseBrace,
+
+                (open, commas, close) => new ArrayTypeNode
+                {
+                    Location = open.Location,
+                    Dimensions = commas.Count + 1
+                }.WithUnused(open, close)
+            );
+
             // types = <subtype> ("[" ","* "]")*
             _types = Rule(
                 subtype,
                 List(
-                    Rule(
-                        Operator("["),
-                        List(Operator(","), c => c),
-                        _requiredCloseBrace,
-                        (open, commas, close) => new ArrayTypeNode 
-                        { 
-                            Location = open.Location,
-                            Dimensions = commas.Count + 1
-                        }.WithUnused(open, close)
-                    ),
+                    arrayTypeDesignator,
                     items => new ListNode<ArrayTypeNode> { Items = items.ToList() }
                 ),
+
                 (subtypes, arraySpecs) =>
                 {
-                    if (subtypes.Count == 0)
-                        return null;
+                    // TODO: Figure this out and clean it up
                     if (subtypes.Count == 1)
                     {
                         subtypes[0].ArrayTypes = arraySpecs.Count == 0 ? null : arraySpecs;
@@ -875,7 +927,8 @@ namespace Scoop.Parsing
 
                     subtypes[0].ArrayTypes = arraySpecs.Count == 0 ? null : arraySpecs;
                     return subtypes[0];
-                }).Named("_types");
+                }
+            ).Named("_types");
         }
 
         private void InitializeDeclareTypes()
@@ -937,6 +990,7 @@ namespace Scoop.Parsing
                 (n, a, b) => (AstNode) new KeywordNode { Keyword = "new()", Location = n.Location }.WithUnused(a, b)
             ).Named("newConstraint");
 
+            // "new()" | (("class" | <Type>) ("," <Types>)* ("," "new()")?)
             var constraintList = First(
                 Transform(newConstraint, n => new ListNode<AstNode> { Items = new List<AstNode> { n }, Separator = new OperatorNode(",") }),
                 Rule(
@@ -959,6 +1013,7 @@ namespace Scoop.Parsing
                             (comma, n) => n.WithUnused(comma)
                         )
                     ),
+
                     (first, most, last) =>
                     {
                         var list = new List<AstNode> { first };
@@ -971,156 +1026,182 @@ namespace Scoop.Parsing
                 Error<ListNode<AstNode>>(Errors.MissingExpression)
             ).Named("constraintList");
 
+            var genericTypeConstraint = Rule(
+                Keyword("where"),
+                _requiredIdentifier,
+                _requiredColon,
+                constraintList,
+
+                (w, type, o, constraints) => new TypeConstraintNode
+                {
+                    Location = w.Location,
+                    Type = type,
+                    Constraints = constraints
+                }.WithUnused(w, o)
+            );
+
             _typeConstraints = List(
-                Rule(
-                    Keyword("where"),
-                    _requiredIdentifier,
-                    _requiredColon,
-                    constraintList,
-                    (w, type, o, constraints) => new TypeConstraintNode
-                    {
-                        Location = w.Location,
-                        Type = type,
-                        Constraints = constraints
-                    }.WithUnused(w, o)
-                ),
+                genericTypeConstraint,
                 allConstraints => new ListNode<TypeConstraintNode> { Items = allConstraints.ToList() }
             ).Named("TypeConstraints");
         }
 
         private void InitializeNew()
         {
-            var nonCollectionInitializer = First(
-                Rule(
-                    // <ident> "=" <Expression>
-                    _identifiers,
-                    Operator("="),
-                    _requiredExpression, 
-                    (name, e, expr) => (AstNode)new PropertyInitializerNode
-                    {
-                        Location = name.Location,
-                        Property = name,
-                        Value = expr
-                    }.WithUnused(e)
-                ),
-                Rule(
-                    // "[" <args> "]" "=" <Expression>
-                    Operator("["),
-                    SeparatedList(
-                        Expressions,
-                        Operator(","),
-                        items => new ListNode<AstNode>
-                        {
-                            Items = items.ToList(),
-                            Separator = new OperatorNode(",")
-                        }
-                    ),
-                    _requiredCloseBrace,
-                    _requiredEquals,
-                    _requiredExpression,
-                    (o, args, c, e, value) => (AstNode)new IndexerInitializerNode
-                    {
-                        Location = o.Location,
-                        Arguments = args,
-                        Value = value
-                    }.WithUnused(o, c, e)
-                ),
-                Rule(
-                    // "{" <args> "}" 
-                    Operator("{"),
-                    SeparatedList(
-                        Expressions,
-                        Operator(","),
-                        items => new ListNode<AstNode>
-                        {
-                            Items = items.ToList(),
-                            Separator = new OperatorNode(",")
-                        },
-                        atLeastOne: true
-                    ),
-                    _requiredCloseBracket,
-                    (o, args, c) => (AstNode)new AddInitializerNode
-                    {
-                        Location = o.Location,
-                        Arguments = args
-                    }.WithUnused(o, c)
-                )
+            var propertyInitializer = Rule(
+                // <ident> "=" <Expression>
+                _identifiers,
+                Operator("="),
+                _requiredExpression,
+                (name, e, expr) => (AstNode) new PropertyInitializerNode
+                {
+                    Location = name.Location,
+                    Property = name,
+                    Value = expr
+                }.WithUnused(e)
             );
+
+            var indexerInitializer = Rule(
+                // "[" <args> "]" "=" <Expression>
+                Operator("["),
+                SeparatedList(
+                    Expressions,
+                    Operator(","),
+                    items => new ListNode<AstNode>
+                    {
+                        Items = items.ToList(),
+                        Separator = new OperatorNode(",")
+                    }
+                ),
+                _requiredCloseBrace,
+                _requiredEquals,
+                _requiredExpression,
+                (o, args, c, e, value) => (AstNode) new IndexerInitializerNode
+                {
+                    Location = o.Location,
+                    Arguments = args,
+                    Value = value
+                }.WithUnused(o, c, e)
+            );
+            var addInitializer = Rule(
+                // "{" <args> "}" 
+                Operator("{"),
+                SeparatedList(
+                    Expressions,
+                    Operator(","),
+                    items => new ListNode<AstNode>
+                    {
+                        Items = items.ToList(),
+                        Separator = new OperatorNode(",")
+                    },
+                    atLeastOne: true
+                ),
+                _requiredCloseBracket,
+                (o, args, c) => (AstNode) new AddInitializerNode
+                {
+                    Location = o.Location,
+                    Arguments = args
+                }.WithUnused(o, c)
+            );
+
+            var nonCollectionInitializer = First(
+                propertyInitializer,
+                indexerInitializer,
+                addInitializer
+            );
+
+            var nonCollectionInitializerList = SeparatedList(
+                nonCollectionInitializer,
+                Operator(","),
+                items => new ListNode<AstNode>
+                {
+                    Items = items.ToList(),
+                    Separator = new OperatorNode(",")
+                },
+                atLeastOne: true
+            );
+
+            var collectionInitializerList = SeparatedList(
+                Expressions,
+                Operator(","),
+                items => new ListNode<AstNode>
+                {
+                    Items = items.ToList(),
+                    Separator = new OperatorNode(",")
+                }
+            ).Named("initializers.Collection");
+
             var initializers = Rule(
                 Operator("{"),
                 First(
-                    SeparatedList(
-                        nonCollectionInitializer,
-                        Operator(","),
-                        items => new ListNode<AstNode>
-                        {
-                            Items = items.ToList(),
-                            Separator = new OperatorNode(",")
-                        },
-                        atLeastOne: true
-                    ),
-                    SeparatedList(
-                        Expressions,
-                        Operator(","),
-                        items => new ListNode<AstNode>
-                        {
-                            Items = items.ToList(),
-                            Separator = new OperatorNode(",")
-                        }
-                    ).Named("initializers.Collection"),
+                    nonCollectionInitializerList,
+                    collectionInitializerList,
                     Produce<Token, ListNode<AstNode>>(() => ListNode<AstNode>.Default()).Named("initializers.Empty")
                 ),
                 _requiredCloseBracket,
                 (a, inits, b) => inits.WithUnused(a, b)
             ).Named("initializers");
 
+            // "new" "{" <initializers> "}"
+            var newAnonymousObject = Rule(
+                Keyword("new"),
+                initializers,
+
+                (n, inits) => new NewNode
+                {
+                    Location = n.Location,
+                    Initializers = inits
+                }
+            );
+
+            // "new" <type> "{" <initializers> "}"
+            var newTypeInitializers = Rule(
+                Keyword("new"),
+                Types,
+                initializers,
+
+                (n, type, inits) => new NewNode
+                {
+                    Location = n.Location,
+                    Type = type,
+                    Initializers = inits
+                }
+            );
+
+            // "new" <type> <arguments> <initializers>?
+            var newTypeArgsInitializers = Rule(
+                Keyword("new"),
+                Types,
+                _argumentLists,
+                Optional(initializers),
+
+                (n, type, args, inits) => new NewNode
+                {
+                    Location = n.Location,
+                    Type = type,
+                    Arguments = args,
+                    Initializers = inits
+                }
+            );
+
             _newParser = First(
-                // "new" "{" <initializers> "}"
-                Rule(
-                    Keyword("new"),
-                    initializers,
-                    (n, inits) => new NewNode
-                    {
-                        Location = n.Location,
-                        Initializers = inits
-                    }
-                ),
-                // "new" <type> "{" <initializers> "}"
-                Replaceable(
-                    Rule(
-                        Keyword("new"),
-                        Types,
-                        initializers,
-                        (n, type, inits) => new NewNode
-                        {
-                            Location = n.Location,
-                            Type = type,
-                            Initializers = inits
-                        }
-                    )
-                ).Named("newInits"),
+                newAnonymousObject,
+                Replaceable(newTypeInitializers).Named("newInits"),
                 Replaceable<Token, NewNode>().Named("newNamedArgsInitsStub"),
-                // "new" <type> <arguments> <initializers>?
-                Replaceable(
-                    Rule(
-                        Keyword("new"),
-                        Types,
-                        _argumentLists,
-                        Optional(initializers),
-                        (n, type, args, inits) => new NewNode
-                        {
-                            Location = n.Location,
-                            Type = type,
-                            Arguments = args,
-                            Initializers = inits
-                        }
-                    )
-                ).Named("newArgsInits")
+                Replaceable(newTypeArgsInitializers).Named("newArgsInits")
             ).Named("new");
         }
 
         private void InitializeExpressions()
         {
+            var parenthesizedExpressionList = Rule(
+                Operator("("),
+                Deferred(() => ExpressionList),
+                _requiredCloseParen,
+
+                (a, expr, b) => expr.WithUnused(a, b)
+            );
+
             // TODO: A proper precedence-based parser for expressions to try and save performance and stack space.
             var terminal = First<Token, AstNode>(
                 // Terminal expression
@@ -1139,30 +1220,28 @@ namespace Scoop.Parsing
                 Token(TokenType.Decimal, x => new DecimalNode(x)),
                 Token(TokenType.Float, x => new FloatNode(x)),
                 Token(TokenType.Double, x => new DoubleNode(x)),
-                Rule(
-                    Operator("("),
-                    Deferred(() => ExpressionList),
-                    _requiredCloseParen,
-                    (a, expr, b) => expr.WithUnused(a, b)
-                )
+                parenthesizedExpressionList
             ).Named("terminal");
+
+            var atLeastOneCommaSeparatedExpression = SeparatedList(
+                Expressions,
+                Operator(","),
+                items => new ListNode<AstNode>
+                {
+                    Items = items.ToList(),
+                    Separator = new OperatorNode(",")
+                },
+                atLeastOne: true
+            );
 
             var indexers = Rule(
                 Operator("["),
                 Required(
-                    SeparatedList(
-                        Expressions,
-                        Operator(","),
-                        items => new ListNode<AstNode>
-                        {
-                            Items = items.ToList(),
-                            Separator = new OperatorNode(",")
-                        },
-                        atLeastOne: true
-                    ),
+                    atLeastOneCommaSeparatedExpression,
                     t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)
                 ),
                 _requiredCloseBrace,
+
                 (a, items, b) => items.WithUnused(a, b)
             ).Named("indexers");
 
@@ -1244,8 +1323,8 @@ namespace Scoop.Parsing
                 )
             ).Named("postfix");
 
+            // prefix ++ and -- cannot be combined with other prefix operators
             var expressionUnary = First(
-                // prefix ++ and -- cannot be combined with other prefix operators
                 Rule(
                     Operator("++", "--"),
                     expressionPostfix,
@@ -1311,6 +1390,7 @@ namespace Scoop.Parsing
                 expressionUnary,
                 Operator("*", "/", "%"),
                 Required(expressionUnary, t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+
                 (left, op, right) => new InfixOperationNode
                 {
                     Location = op.Location,
@@ -1326,6 +1406,7 @@ namespace Scoop.Parsing
                 expressionMultiplicative,
                 Operator("+", "-"),
                 Required(expressionMultiplicative, t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+
                 (left, op, right) => new InfixOperationNode
                 {
                     Location = op.Location,
@@ -1345,6 +1426,7 @@ namespace Scoop.Parsing
                         Transform(Keyword("as", "is"), k => new OperatorNode(k.Keyword, k.Location)),
                         _requiredType,
                         Optional(_identifiers),
+
                         (left, op, type, name) => (AstNode)new TypeCoerceNode
                         {
                             Left = left,
@@ -1361,6 +1443,7 @@ namespace Scoop.Parsing
                 expressionTypeCoerce,
                 Operator("==", "!=", ">=", "<=", "<", ">"),
                 Required(expressionTypeCoerce, t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+
                 (left, op, right) => new InfixOperationNode
                 {
                     Location = op.Location,
@@ -1376,6 +1459,7 @@ namespace Scoop.Parsing
                 expressionEquality,
                 Operator("&", "^", "|"),
                 Required(expressionEquality, t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+
                 (left, op, right) => new InfixOperationNode
                 {
                     Location = op.Location,
@@ -1391,6 +1475,7 @@ namespace Scoop.Parsing
                 expressionBitwise,
                 Operator("&&", "||"),
                 Required(expressionBitwise, t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+
                 (left, op, right) => new InfixOperationNode
                 {
                     Location = op.Location,
@@ -1406,6 +1491,7 @@ namespace Scoop.Parsing
                 expressionLogical,
                 Operator("??"),
                 Required(expressionLogical, t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+
                 (left, op, right) => new InfixOperationNode
                 {
                     Location = op.Location,
@@ -1448,6 +1534,7 @@ namespace Scoop.Parsing
                 _expressionConditional,
                 Operator("=", "+=", "-=", "/=", "%="),
                 _expressionConditional,
+
                 (left, op, right) => new InfixOperationNode
                 {
                     Location = op.Location,
@@ -1489,6 +1576,7 @@ namespace Scoop.Parsing
                         ),
                         Error<ListNode<AstNode>>(Errors.MissingExpression)
                     ),
+
                     (parameters, x, body) => (AstNode)new LambdaNode
                     {
                         Parameters = parameters,
