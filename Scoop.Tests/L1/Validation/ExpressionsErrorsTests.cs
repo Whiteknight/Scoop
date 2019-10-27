@@ -168,5 +168,59 @@ namespace Scoop.Tests.L1.Validation
             result.Count.Should().Be(1);
             result[0].ErrorMessage.Should().Be(Errors.UnrecognizedCharLiteral);
         }
+
+        [TestCase("\"\\q\"")]
+        [TestCase("$\"\\q\"")]
+        [TestCase("\"\\xZ\"")]
+        [TestCase("$\"\\xZ\"")]
+        [TestCase("\"\\u1\"")]
+        [TestCase("\"\\u12\"")]
+        [TestCase("\"\\u123\"")]
+        [TestCase("$\"\\u1\"")]
+        [TestCase("$\"\\u12\"")]
+        [TestCase("$\"\\u123\"")]
+        [TestCase("\"\\U1\"")]
+        [TestCase("\"\\U12\"")]
+        [TestCase("\"\\U123\"")]
+        [TestCase("\"\\U1234\"")]
+        [TestCase("\"\\U12345\"")]
+        [TestCase("\"\\U123456\"")]
+        [TestCase("\"\\U1234567\"")]
+        [TestCase("$\"\\U1\"")]
+        [TestCase("$\"\\U12\"")]
+        [TestCase("$\"\\U123\"")]
+        [TestCase("$\"\\U1234\"")]
+        [TestCase("$\"\\U12345\"")]
+        [TestCase("$\"\\U123456\"")]
+        [TestCase("$\"\\U1234567\"")]
+        public void Expressions_StringLiteral_UnrecognizedEscape(string syntax)
+        {
+            var ast = TestSuite.GetGrammar().Expressions.Parse(syntax);
+            var result = ast.Validate();
+            result.Count.Should().Be(1);
+            result[0].ErrorMessage.Should().Be(Errors.UnrecognizedCharEscape);
+        }
+
+        [TestCase("$")]
+        [TestCase("$@")]
+        public void Expressions_StringLiteral_ExpectedDoubleQuote(string syntax)
+        {
+            
+
+            var ast = TestSuite.GetGrammar().Expressions.Parse(syntax);
+            var result = ast.Validate();
+            result.Count.Should().Be(1);
+            result[0].ErrorMessage.Should().Be(Errors.MissingDoubleQuote);
+        }
+
+        [Test]
+        public void Expressions_StringLiteral_EndOfInput()
+        {
+            const string syntax = "\"";
+            var ast = TestSuite.GetGrammar().Expressions.Parse(syntax);
+            var result = ast.Validate();
+            result.Count.Should().Be(1);
+            result[0].ErrorMessage.Should().Be(Errors.UnexpectedEndOfInput);
+        }
     }
 }

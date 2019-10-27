@@ -1,21 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Scoop.Parsing.Parsers;
-using Scoop.Parsing.Sequences;
 
 namespace Scoop.Parsing.Tokenization.Parsers
 {
     public class StringParser : IParser<char, Token>
     {
+        private static readonly HashSet<char> _hexChars = new HashSet<char>("abcdefABCDEF0123456789");
+        private static readonly HashSet<char> _escapeChars = new HashSet<char>("abfnrtv0'\"\\");
+
         public IParseResult<Token> Parse(ISequence<char> t)
         {
-            var buffer = new List<char>();
-            var ok = AdvanceThroughString(t, buffer);
-            if (!ok)
-                return Result<Token>.Fail();
-
-            var str = new string(buffer.ToArray());
-            return new Result<Token>(true, Token.String(str));
+            var token = ReadStringToken(t);
+            return token == null ? Result<Token>.Fail() : new Result<Token>(true, token);
         }
 
         public IParseResult<object> ParseUntyped(ISequence<char> t) => Parse(t);
@@ -28,64 +25,89 @@ namespace Scoop.Parsing.Tokenization.Parsers
 
         public IParser ReplaceChild(IParser find, IParser replace) => this;
 
-        private bool AdvanceThroughString(ISequence<char> _chars, List<char> buffer)
+        private Token ReadStringToken(ISequence<char> t)
         {
+            var buffer = new List<char>();
             // TODO: Don't .Expect chars here. If we don't see something we want, back out and fail
-            var c = _chars.GetNext();
+            var c = t.GetNext();
             if (c == '$')
             {
                 buffer.Add(c);
-                var d = _chars.Peek();
+                var d = t.GetNext();
                 if (d == '@')
                 {
-                    buffer.Add(_chars.GetNext());
-                    buffer.Add(_chars.Expect('"'));
-                    AdvanceThroughString(_chars, StringReadState.InterpolatedBlockString, buffer);
-                    return true;
+                    buffer.Add(d);
+                    var e = t.GetNext();
+                    if (e == '"')
+                    {
+                        buffer.Add(e);
+                        return AdvanceThroughString(t, StringReadState.InterpolatedBlockString, buffer);
+                    }
+
+                    return Token.String(new string(buffer.ToArray())).WithDiagnostics(Errors.MissingDoubleQuote);
                 }
 
-                buffer.Add(_chars.Expect('"'));
-                AdvanceThroughString(_chars, StringReadState.InterpolatedString, buffer);
-                return true;
+                if (d == '"')
+                {
+                    buffer.Add(d);
+                    return AdvanceThroughString(t, StringReadState.InterpolatedString, buffer);
+                }
+
+                return Token.String(new string(buffer.ToArray())).WithDiagnostics(Errors.MissingDoubleQuote);
             }
 
             if (c == '@')
             {
                 buffer.Add(c);
-                buffer.Add(_chars.Expect('"'));
-                AdvanceThroughString(_chars, StringReadState.BlockString, buffer);
-                return true;
+                var d = t.GetNext();
+                if (d == '"')
+                {
+                    buffer.Add(d);
+                    return AdvanceThroughString(t, StringReadState.BlockString, buffer);
+                }
+
+                return Token.String(new string(buffer.ToArray())).WithDiagnostics(Errors.MissingDoubleQuote);
             }
 
             if (c == '"')
             {
                 buffer.Add(c);
-                AdvanceThroughString(_chars, StringReadState.String, buffer);
-                return true;
+                return AdvanceThroughString(t, StringReadState.String, buffer);
             }
 
-            _chars.PutBack(c);
-            return false;
+            t.PutBack(c);
+            return null;
         }
 
         private enum StringReadState
         {
+            // At the end of the string
             End,
+
+            // Inside {} brackes for interpolation
             Brackets,
+
+            // Inside a normal string
             String,
+
+            // Inside a @ string
             BlockString,
+
+            // Inside a $ interpolated string
             InterpolatedString,
+
+            // Inside a @$ block-interpolated string
             InterpolatedBlockString,
         }
 
         // This method is a large mess. We can consider breaking it up into a proper state machine
         // with classes per state
-        private void AdvanceThroughString(ISequence<char> _chars, StringReadState initialState, List<char> chars)
+        private Token AdvanceThroughString(ISequence<char> t, StringReadState initialState, List<char> buffer)
         {
-            var l = _chars.CurrentLocation;
             var nesting = new Stack<StringReadState>();
             nesting.Push(StringReadState.End);
             var current = initialState;
+            var errors = new List<Diagnostic>();
 
             void PushState(StringReadState next)
             {
@@ -100,19 +122,30 @@ namespace Scoop.Parsing.Tokenization.Parsers
 
             while (true)
             {
+                // We're at the end of the string successfully, return the token
                 if (current == StringReadState.End)
-                    return;
-                var c = _chars.GetNext();
+                    return Token.String(new string(buffer.ToArray())).WithDiagnostics(errors);
+
+                var c = t.GetNext();
                 if (c == '\0')
-                    throw TokenizingException.UnexpectedEndOfInput(l);
-                chars.Add(c);
+                {
+                    errors.Add(new Diagnostic(Errors.UnexpectedEndOfInput, t.CurrentLocation));
+                    return Token.String(new string(buffer.ToArray())).WithDiagnostics(errors);
+                }
+
+                buffer.Add(c);
 
                 switch (current)
                 {
                     case StringReadState.Brackets:
                         // basic state-machine to try and scan through this block
-                        // TODO: I think it's possible for the expression to contain a {} pair, so we should 
-                        // count the number of brackets and only PopState() when we've hit 0
+                        // It's possible to have {} pairs inside brackets, so we'll push them to keep track
+                        // of balance on the stack.
+                        if (c == '{')
+                        {
+                            PushState(StringReadState.Brackets);
+                            continue;
+                        }
                         if (c == '}')
                         {
                             PopState();
@@ -121,27 +154,29 @@ namespace Scoop.Parsing.Tokenization.Parsers
 
                         if (c == '$')
                         {
-                            var d = _chars.GetNext();
+                            var d = t.GetNext();
                             if (d == '"')
                             {
-                                chars.Add(d);
+                                buffer.Add(d);
                                 PushState(StringReadState.InterpolatedString);
                                 continue;
                             }
 
-                            if (d == '@' && _chars.Peek() == '"')
+                            if (d == '@' && t.Peek() == '"')
                             {
-                                chars.Add(d);
-                                chars.Add(_chars.GetNext());
+                                buffer.Add(d);
+                                buffer.Add(t.GetNext());
                                 PushState(StringReadState.InterpolatedBlockString);
+                                continue;
                             }
 
+                            errors.Add(new Diagnostic(Errors.UnexpectedToken, t.CurrentLocation));
                             continue;
                         }
 
-                        if (c == '@' && _chars.Peek() == '"')
+                        if (c == '@' && t.Peek() == '"')
                         {
-                            chars.Add(_chars.GetNext());
+                            buffer.Add(t.GetNext());
                             PushState(StringReadState.BlockString);
                             continue;
                         }
@@ -156,7 +191,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
                     case StringReadState.String:
                         if (c == '\\')
                         {
-                            chars.Add(_chars.GetNext());
+                            AdvanceThroughSlashEscapeSequence(t, buffer, errors);
                             continue;
                         }
 
@@ -170,9 +205,10 @@ namespace Scoop.Parsing.Tokenization.Parsers
                     case StringReadState.InterpolatedString:
                         if (c == '\\')
                         {
-                            chars.Add(_chars.GetNext());
+                            AdvanceThroughSlashEscapeSequence(t, buffer, errors);
                             continue;
                         }
+
                         if (c == '{')
                         {
                             PushState(StringReadState.Brackets);
@@ -189,14 +225,14 @@ namespace Scoop.Parsing.Tokenization.Parsers
                     case StringReadState.BlockString:
                         if (c == '"')
                         {
-                            var d = _chars.GetNext();
+                            var d = t.GetNext();
                             if (d == '"')
                             {
-                                chars.Add(d);
+                                buffer.Add(d);
                                 continue;
                             }
 
-                            _chars.PutBack(d);
+                            t.PutBack(d);
                             PopState();
                             continue;
                         }
@@ -205,14 +241,14 @@ namespace Scoop.Parsing.Tokenization.Parsers
                     case StringReadState.InterpolatedBlockString:
                         if (c == '"')
                         {
-                            var d = _chars.GetNext();
+                            var d = t.GetNext();
                             if (d == '"')
                             {
-                                chars.Add(d);
+                                buffer.Add(d);
                                 continue;
                             }
 
-                            _chars.PutBack(d);
+                            t.PutBack(d);
                             PopState();
                             continue;
                         }
@@ -224,6 +260,94 @@ namespace Scoop.Parsing.Tokenization.Parsers
 
                         break;
                 }
+            }
+        }
+
+        private static void AdvanceThroughSlashEscapeSequence(ISequence<char> t, List<char> buffer, List<Diagnostic> errors)
+        {
+            var d = t.GetNext();
+            buffer.Add(d);
+
+            // "\" "x" <hexChar>{1, 4}
+            if (d == 'x')
+            {
+                AdvanceThroughHexEscapeSequence(t, buffer, errors);
+                return;
+            }
+
+            // "\" "u" <hexChar>{4}
+            if (d == 'u')
+            {
+                AdvanceThroughShortUnicodeEscapeSequence(t, buffer, errors);
+                return;
+            }
+
+            // "\" "u" <hexChar>{8}
+            if (d == 'U')
+            {
+                AdvanceThroughLongUnicodeEscapeSequence(t, buffer, errors);
+                return;
+            }
+
+            if (_escapeChars.Contains(d))
+                return;
+            
+            errors.Add(new Diagnostic(Errors.UnrecognizedCharEscape, t.CurrentLocation));
+        }
+
+        private static void AdvanceThroughLongUnicodeEscapeSequence(ISequence<char> t, List<char> buffer, List<Diagnostic> errors)
+        {
+            // TODO: Should we test for a valid sequence?
+            // \U can go from 00000000-0010FFFF (and I think there's a range or two in there which are also invalid)
+            // Should we check for formatting and valid values or just leave it for Roslyn?
+            for (int i = 0; i < 8; i++)
+            {
+                var e = t.GetNext();
+                buffer.Add(e);
+                if (!_hexChars.Contains(e))
+                {
+                    t.PutBack(e);
+                    errors.Add(new Diagnostic(Errors.UnrecognizedCharEscape, t.CurrentLocation));
+                    break;
+                }
+            }
+        }
+
+        private static void AdvanceThroughShortUnicodeEscapeSequence(ISequence<char> t, List<char> buffer, List<Diagnostic> errors)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                var e = t.GetNext();
+                buffer.Add(e);
+                if (!_hexChars.Contains(e))
+                {
+                    t.PutBack(e);
+                    errors.Add(new Diagnostic(Errors.UnrecognizedCharEscape, t.CurrentLocation));
+                    break;
+                }
+            }
+        }
+
+        private static void AdvanceThroughHexEscapeSequence(ISequence<char> t, List<char> buffer, List<Diagnostic> errors)
+        {
+            var e = t.GetNext();
+            buffer.Add(e);
+            if (!_hexChars.Contains(e))
+            {
+                errors.Add(new Diagnostic(Errors.UnrecognizedCharEscape, t.CurrentLocation));
+                return;
+            }
+
+            for (int i = 0; i < 3; i++)
+            {
+                e = t.GetNext();
+                if (!_hexChars.Contains(e))
+                {
+                    t.PutBack(e);
+                    break;
+                }
+
+                buffer.Add(e);
             }
         }
     }

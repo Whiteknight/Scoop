@@ -43,6 +43,14 @@ namespace Scoop
             return element;
         }
 
+        public static TElement WithDiagnostics<TElement>(this TElement element, ICollection<Diagnostic> diagnostics)
+            where TElement : ISyntaxElement
+        {
+            if (!diagnostics.IsNullOrEmpty())
+                element.AddDiagnostics(diagnostics.ToArray());
+            return element;
+        }
+
         /// <summary>
         /// Add diagnostic/error messages to this node
         /// </summary>
@@ -54,6 +62,8 @@ namespace Scoop
         public static TElement WithDiagnostics<TElement>(this TElement element, Location l, params string[] diagnostics)
             where TElement : ISyntaxElement
         {
+            if (diagnostics.IsNullOrEmpty())
+                return element;
             element.AddDiagnostics(diagnostics.Select(d => new Diagnostic(d, l)).ToArray());
             return element;
         }

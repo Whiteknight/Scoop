@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using FluentAssertions;
+using NUnit.Framework;
 using Scoop.Parsing;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
@@ -145,6 +146,17 @@ namespace Scoop.Tests.L1.Parsing
             var result = target.Expressions.Parse("$@\"{5}\"");
             result.Should().MatchAst(
                 new StringNode("$@\"{5}\"")
+            );
+        }
+
+        [Test]
+        public void InterpolatedString_NestedCurlies()
+        {
+            // This does seem to be a string that Roslyn will accept, so we want Scoop to deal with it too
+            const string syntax = "$\"{new CharNode(null) { Location = null }.Value}\"";
+            var result = TestSuite.GetGrammar().Expressions.Parse(syntax);
+            result.Should().MatchAst(
+                new StringNode(syntax)
             );
         }
     }

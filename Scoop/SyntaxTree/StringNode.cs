@@ -1,4 +1,5 @@
-﻿using Scoop.Parsing.Tokenization;
+﻿using System.Linq;
+using Scoop.Parsing.Tokenization;
 using Scoop.SyntaxTree.Visiting;
 
 namespace Scoop.SyntaxTree
@@ -15,6 +16,8 @@ namespace Scoop.SyntaxTree
         {
             Value = t.Value;
             Location = t.Location;
+            if (!t.Diagnostics.IsNullOrEmpty())
+                AddDiagnostics(t.Diagnostics.ToArray());
         }
 
         public string Value { get; set; }
