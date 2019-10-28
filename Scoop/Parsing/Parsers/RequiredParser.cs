@@ -30,7 +30,7 @@ namespace Scoop.Parsing.Parsers
                 return result;
 
             // Otherwise, create the fallback production at the location where _inner would have started
-            return new Result<TOutput>(true, _otherwise(t));
+            return Result<TOutput>.Ok(_otherwise(t));
         }
 
         IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => Parse(t).Untype();

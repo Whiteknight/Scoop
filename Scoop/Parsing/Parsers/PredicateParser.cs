@@ -20,7 +20,7 @@ namespace Scoop.Parsing.Parsers
             var next = t.Peek();
             if (!_predicate(next))
                 return Result<TOutput>.Fail();
-            return new Result<TOutput>(true, _produce(t.GetNext()));
+            return Result<TOutput>.Ok(_produce(t.GetNext()));
         }
 
         public IParseResult<object> ParseUntyped(ISequence<TInput> t)
@@ -28,7 +28,7 @@ namespace Scoop.Parsing.Parsers
             var next = t.Peek();
             if (!_predicate(next))
                 return Result<object>.Fail();
-            return new Result<object>(true, _produce(t.GetNext()));
+            return Result<object>.Ok(_produce(t.GetNext()));
         }
 
         public string Name { get; set; }

@@ -19,7 +19,7 @@ namespace Scoop.Parsing.Parsers
         {
             // small optimization, don't allocate a buffer if we only need one item
             if (_find.Length == 1)
-                return t.Peek().Equals(_find[0]) ? new Result<TOutput>(true, _produce(new[] { t.GetNext() })) : Result<TOutput>.Fail();
+                return t.Peek().Equals(_find[0]) ? Result<TOutput>.Ok(_produce(new[] { t.GetNext() })) : Result<TOutput>.Fail();
 
             var buffer = new TInput[_find.Length];
             for (var i = 0; i < _find.Length; i++)
@@ -34,7 +34,7 @@ namespace Scoop.Parsing.Parsers
                 return Result<TOutput>.Fail();
             }
 
-            return new Result<TOutput>(true, _produce(buffer));
+            return Result<TOutput>.Ok(_produce(buffer));
         }
 
         public IParseResult<object> ParseUntyped(ISequence<TInput> t) => (IParseResult<object>)Parse(t);

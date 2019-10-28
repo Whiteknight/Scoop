@@ -25,7 +25,7 @@ namespace Scoop.Parsing.Parsers
             var result = _parser.Parse(t);
             if (!result.Success)
                 return Result<TOutput>.Fail();
-            return new Result<TOutput>(true, _transform(result.Value));
+            return Result<TOutput>.Ok(_transform(result.Value));
         }
 
         IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => Parse(t).Untype();

@@ -1530,7 +1530,7 @@ namespace Scoop.Parsing
                 // <logical> (<op> <local>)+
                 // TODO: assignment operators are right associative, so this rule does chained assignments backwards
                 _expressionConditional,
-                Operator("=", "+=", "-=", "/=", "%="),
+                Operator("=", "+=", "-=", "/=", "%=", "??="),
                 _expressionConditional,
 
                 (left, op, right) => new InfixOperationNode

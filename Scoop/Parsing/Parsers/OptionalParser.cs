@@ -21,7 +21,7 @@ namespace Scoop.Parsing.Parsers
         public IParseResult<TOutput> Parse(ISequence<TInput> t)
         {
             var result = _parser.Parse(t);
-            return result.Success ? result : new Result<TOutput>(true, _getDefault());
+            return result.Success ? result : Result<TOutput>.Ok(_getDefault());
         }
 
         IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => Parse(t).Untype();

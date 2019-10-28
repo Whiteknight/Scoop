@@ -42,7 +42,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
             }
 
             var x = new string(chars.ToArray());
-            return new Result<Token>(true, Token.Comment(x));
+            return Result<Token>.Ok(Token.Comment(x));
         }
 
         public IParseResult<object> ParseUntyped(ISequence<char> t) => Parse(t).Untype();

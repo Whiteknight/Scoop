@@ -33,8 +33,8 @@ namespace Scoop.Parsing.Tokenization.Parsers
             // Lambda operators
             _operators.Add("=>");
 
-            // Coalesce operator
-            _operators.Add("??");
+            // Coalesce operator and coalesce-assign
+            _operators.Add("??", "??=");
 
             // Ternary/Conditional operators
             _operators.Add("?", ":");
@@ -50,8 +50,8 @@ namespace Scoop.Parsing.Tokenization.Parsers
         {
             var op = _operators.GetOperator(t);
             if (string.IsNullOrEmpty(op))
-                return new Result<Token>(false, default);
-            return new Result<Token>(true, Token.Operator(op));
+                return Result<Token>.Fail();
+            return Result<Token>.Ok(Token.Operator(op));
         }
 
         public IParseResult<object> ParseUntyped(ISequence<char> t) => Parse(t).Untype();

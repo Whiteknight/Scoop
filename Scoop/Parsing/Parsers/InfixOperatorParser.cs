@@ -36,7 +36,7 @@ namespace Scoop.Parsing.Parsers
             {
                 var opResult  = _operatorParser.Parse(t);
                 if (!opResult.Success)
-                    return new Result<AstNode>(true, left);
+                    return Result<AstNode>.Ok(left);
                 result = _right.Parse(t);
                 var right = result.Value;
                 if (!result.Success)

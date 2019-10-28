@@ -19,7 +19,7 @@ namespace Scoop.Parsing.Parsers
             _produce = produce;
         }
 
-        public IParseResult<TOutput> Parse(ISequence<TInput> t) => new Result<TOutput>(true, _produce(t));
+        public IParseResult<TOutput> Parse(ISequence<TInput> t) => Result<TOutput>.Ok(_produce(t));
 
         IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => Parse(t).Untype();
 

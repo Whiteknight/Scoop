@@ -36,7 +36,7 @@ namespace Scoop.Parsing.Parsers
             {
                 var rhsResult = _right.Parse(t);
                 if (!rhsResult.Success)
-                    return new Result<TOutput>(true, current);
+                    return Result<TOutput>.Ok(current);
 
                 current = rhsResult.Value;
                 _left.Value = current;
@@ -71,7 +71,7 @@ namespace Scoop.Parsing.Parsers
         {
             public TOutput Value { get; set; }
 
-            public IParseResult<TOutput> Parse(ISequence<TInput> t) => new Result<TOutput>(true, Value);
+            public IParseResult<TOutput> Parse(ISequence<TInput> t) => Result<TOutput>.Ok(Value);
 
             IParseResult<object> IParser<TInput>.ParseUntyped(ISequence<TInput> t) => Parse(t).Untype();
 

@@ -12,7 +12,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
         public IParseResult<Token> Parse(ISequence<char> t)
         {
             var token = ReadStringToken(t);
-            return token == null ? Result<Token>.Fail() : new Result<Token>(true, token);
+            return token == null ? Result<Token>.Fail() : Result<Token>.Ok(token);
         }
 
         public IParseResult<object> ParseUntyped(ISequence<char> t) => Parse(t);
@@ -29,6 +29,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
         {
             var buffer = new List<char>();
             // TODO: Don't .Expect chars here. If we don't see something we want, back out and fail
+            // TODO: C# 8.0 allows "$" and "@" to appear in any order
             var c = t.GetNext();
             if (c == '$')
             {

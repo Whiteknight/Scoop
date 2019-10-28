@@ -122,7 +122,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
             }
 
             //_chars.Expect('}');
-            return new Result<Token>(true, Token.CSharpLiteral(new string(buffer.ToArray())));
+            return Result<Token>.Ok(Token.CSharpLiteral(new string(buffer.ToArray())));
         }
 
         public IParseResult<object> ParseUntyped(ISequence<char> t) => Parse(t);
