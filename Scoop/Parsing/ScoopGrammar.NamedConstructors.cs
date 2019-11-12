@@ -29,6 +29,7 @@ namespace Scoop.Parsing
                     identifiers,
                     argumentLists,
                     Optional(initializers),
+
                     (n, type, o, name, args, inits) => new NewNode
                     {
                         Location = n.Location,
@@ -47,33 +48,35 @@ namespace Scoop.Parsing
             var namedConstructor = compilationUnits.FindNamed("constructorNamedStub") as ReplaceableParser<Token, ConstructorNode>;
             namedConstructor.SetParser(
                 Rule(
-                    l1.Attributes,
-                    accessModifiers,
-                    identifiers,
-                    Operator(":"),
-                    identifiers,
-                    parameterLists,
-                    Optional(
+                        l1.Attributes,
+                        accessModifiers,
+                        identifiers,
+                        Operator(":"),
+                        identifiers,
+                        parameterLists,
                         Rule(
-                            Operator(":"),
-                            Required(Keyword("this"), t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
-                            argumentLists,
-                            (a, b, args) => args.WithUnused(a, b)
-                        )
-                    ).Named("thisArgs"),
-                    methodBody,
-                    (attrs, vis, type, c, name, param, targs, body) => new ConstructorNode
-                    {
-                        Attributes = attrs.IsNullOrEmpty() ? null : attrs,
-                        Location = type.Location,
-                        AccessModifier = vis,
-                        ClassName = type,
-                        Name = name,
-                        Parameters = param,
-                        ThisArgs = targs,
-                        Statements = body
-                    }.WithUnused(c)
-                ).Named("constructorNamed")
+                                Operator(":"),
+                                Keyword("this").Or(t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
+                                argumentLists,
+                                (a, b, args) => args.WithUnused(a, b)
+                            )
+                            .Optional()
+                            .Named("thisArgs"),
+                        methodBody,
+
+                        (attrs, vis, type, c, name, param, targs, body) => new ConstructorNode
+                        {
+                            Attributes = attrs.IsNullOrEmpty() ? null : attrs,
+                            Location = type.Location,
+                            AccessModifier = vis,
+                            ClassName = type,
+                            Name = name,
+                            Parameters = param,
+                            ThisArgs = targs,
+                            Statements = body
+                        }.WithUnused(c)
+                    )
+                    .Named("constructorNamed")
             );
 
             var newParser = compilationUnits.FindNamed("new");
