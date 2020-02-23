@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using ParserObjects;
 using Scoop.SyntaxTree.Visiting;
 
 namespace Scoop.SyntaxTree

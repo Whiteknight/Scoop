@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ParserObjects;
 using Scoop.Parsing.Tokenization;
 using Scoop.SyntaxTree;
 
@@ -29,14 +30,14 @@ namespace Scoop.Parsing.Parsers
         {
             var result = _left.Parse(t);
             if (!result.Success)
-                return Result<AstNode>.Fail();
+                return new FailResult<AstNode>();
             var left = result.Value;
 
             while (true)
             {
                 var opResult  = _operatorParser.Parse(t);
                 if (!opResult.Success)
-                    return Result<AstNode>.Ok(left);
+                    return new SuccessResult<AstNode>(left, result.Location);
                 result = _right.Parse(t);
                 var right = result.Value;
                 if (!result.Success)
@@ -49,11 +50,9 @@ namespace Scoop.Parsing.Parsers
             }
         }
 
-        IParseResult<object> IParser<Token>.ParseUntyped(ISequence<Token> t) => (IParseResult<object>)Parse(t);
+        IParseResult<object> IParser<Token>.ParseUntyped(ISequence<Token> t) => Parse(t).Untype();
 
         public string Name { get; set; }
-
-        public IParser Accept(IParserVisitorImplementation visitor) => visitor.VisitInfix(this);
 
         public IEnumerable<IParser> GetChildren() => new IParser[] { _left, _operatorParser, _right };
 

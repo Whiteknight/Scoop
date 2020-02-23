@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
-using Scoop.Parsing;
 using Scoop.Tests.Utility;
 
 namespace Scoop.Tests.L1.Transpiling

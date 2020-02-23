@@ -5,6 +5,7 @@ using System.Reflection;
 using FluentAssertions;
 using FluentAssertions.Common;
 using FluentAssertions.Primitives;
+using ParserObjects;
 using Scoop.SyntaxTree;
 
 namespace Scoop.Tests.Utility

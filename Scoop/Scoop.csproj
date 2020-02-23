@@ -5,4 +5,8 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="ParserObjects" Version="0.2.1" />
+  </ItemGroup>
+
 </Project>

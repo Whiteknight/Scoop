@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Scoop.Parsing.Parsers;
+using ParserObjects;
 using Scoop.Parsing.Sequences;
 
 namespace Scoop.Parsing.Tokenization.Parsers
@@ -23,7 +23,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
             if (a != 'c' || b != '#')
             {
                 _chars.PutBack(a);
-                return Result<Token>.Fail();
+                return new FailResult<Token>();
             }
 
             _chars.GetNext();
@@ -122,14 +122,12 @@ namespace Scoop.Parsing.Tokenization.Parsers
             }
 
             //_chars.Expect('}');
-            return Result<Token>.Ok(Token.CSharpLiteral(new string(buffer.ToArray())));
+            return new SuccessResult<Token>(Token.CSharpLiteral(new string(buffer.ToArray())), _chars.CurrentLocation);
         }
 
         public IParseResult<object> ParseUntyped(ISequence<char> t) => Parse(t);
 
         public string Name { get; set; }
-
-        public IParser Accept(IParserVisitorImplementation visitor) => this;
 
         public IEnumerable<IParser> GetChildren() => Enumerable.Empty<IParser>();
 

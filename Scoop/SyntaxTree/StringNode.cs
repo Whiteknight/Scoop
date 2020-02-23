@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using ParserObjects;
 using Scoop.Parsing.Tokenization;
 using Scoop.SyntaxTree.Visiting;
 

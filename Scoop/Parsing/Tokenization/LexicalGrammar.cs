@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Scoop.Parsing.Parsers;
+using ParserObjects;
+using ParserObjects.Parsers;
 using Scoop.Parsing.Tokenization.Parsers;
-using static Scoop.Parsing.Parsers.ParserMethods;
+using static ParserObjects.Parsers.ParserMethods;
 using static Scoop.Parsing.Tokenization.Parsers.TokenParserMethods;
 
 namespace Scoop.Parsing.Tokenization
@@ -13,6 +14,7 @@ namespace Scoop.Parsing.Tokenization
 
         public static IParser<char, Token> GetParser()
         {
+            // TODO: Cache this, we don't need to re-initialize it over and over again
             var numbers = BuildNumberParser();
 
             var wordMaybeAt = First(
@@ -25,7 +27,7 @@ namespace Scoop.Parsing.Tokenization
             var words = Rule(
                 wordMaybeAt,
                 wordStartChar,
-                wordBodyChar.List(c => c.ToArray()),
+                wordBodyChar.List().Transform(c => c.ToArray()),
 
                 (prefix, start, rest) => new Token(prefix + start + new string(rest), TokenType.Word)
             );
@@ -36,9 +38,9 @@ namespace Scoop.Parsing.Tokenization
 
             var singleLineComments = Rule(
                     Match("//", c => new string(c)),
-                    notNewlineChar.List(l => new string(l.ToArray())),
+                    notNewlineChar.List().Transform(l => new string(l.ToArray())),
 
-                    (prefix, content) => Token.Comment(prefix + content)
+                    (prefix, content) => prefix + content
                 )
                 .Named("SingleLineComment");
 
@@ -51,9 +53,7 @@ namespace Scoop.Parsing.Tokenization
             var strings = new StringParser();
 
             var allTokens = First(
-                Match("\0", c => Token.EndOfInput()),
-                singleLineComments,
-                multiLineComments,
+                End<char>().Transform(x => Token.EndOfInput()),
                 cSharpLiterals,
                 words,
                 operators,
@@ -63,17 +63,23 @@ namespace Scoop.Parsing.Tokenization
                 Produce<char, Token>(t => new Token(t.GetNext().ToString(), TokenType.Unknown))
             );
 
-            var whitespace = Match<char>(char.IsWhiteSpace);
+            var whitespace = Match<char>(char.IsWhiteSpace).ListCharToString(true);
+            var whitespaceOrComment = First(
+                whitespace,
+                singleLineComments,
+                multiLineComments
+            );
 
             return Rule(
                 // TODO: Get a list of all whitespace and comments, and include those in the Token we return
-                whitespace.List(t => (object) null),
+                whitespaceOrComment.List(),
                 Produce<char, Location>(t => t.CurrentLocation),
                 allTokens,
 
                 (ws, location, token) =>
                 {
                     token.Location = location;
+                    token.Frontmatter = ws.ToList();
                     // TODO: Should we keep track of the leading whitespace at all?
                     return token;
                 }
@@ -88,7 +94,7 @@ namespace Scoop.Parsing.Tokenization
                 Match<char>(c => c == '\\'),
                 Match<char>(c => c == 'x'),
                 // TODO: 1-4 of these only
-                hexDigits.List(t => new string(t.ToArray())),
+                hexDigits.ListCharToString(),
 
                 (slash, x, c) => "\\x" + c
             );
@@ -97,7 +103,7 @@ namespace Scoop.Parsing.Tokenization
                 Match<char>(c => c == '\\'),
                 Match<char>(c => c == 'u'),
                 // TODO: 1-4 of these or exactly-4 of these?
-                hexDigits.List(t => new string(t.ToArray())),
+                hexDigits.ListCharToString(),
 
                 (slash, u, c) => "\\u" + c
             );
@@ -154,7 +160,7 @@ namespace Scoop.Parsing.Tokenization
                         ),
                         digits.Transform(c => new[] { c })
                     )
-                    .List(x => new string(x.SelectMany(y => y).ToArray())),
+                    .List().Transform(x => new string(x.SelectMany(y => y).ToArray())),
                 First(
                     Match("UL", c => TokenType.ULong),
                     Match("U", c => TokenType.UInteger),
@@ -177,7 +183,7 @@ namespace Scoop.Parsing.Tokenization
                         ),
                         digits.Transform(c => new[] { c })
                     )
-                    .List(x => x.SelectMany(y => y)),
+                    .List().Transform(x => x.SelectMany(y => y)),
 
                 (first, rest) => first + new string(rest.ToArray())
             );

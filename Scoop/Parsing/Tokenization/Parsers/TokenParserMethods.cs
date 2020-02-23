@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Scoop.Parsing.Parsers;
+using System.Linq;
+using ParserObjects;
+using ParserObjects.Parsers;
 
 namespace Scoop.Parsing.Tokenization.Parsers
 {
@@ -8,7 +10,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
     {
         public static IParser<TInput, TOutput> Match<TInput, TOutput>(IEnumerable<TInput> c, Func<TInput[], TOutput> produce)
         {
-            return new MatchSequenceParser<TInput, TOutput>(c, produce);
+            return new MatchSequenceParser<TInput>(c).Transform(x => produce(x.ToArray()));
         }
     }
 }

@@ -1,13 +1,12 @@
-using System;
 using FluentAssertions;
 using NUnit.Framework;
-using Scoop.Parsing.Sequences;
+using ParserObjects.Sequences;
 using Scoop.Parsing.Tokenization;
 using Scoop.Tests.Utility;
 
 namespace Scoop.Tests.Tokenizing
 {
-    public class TokenScannerTests
+    public class LexicalGrammarTests
     {
         [Test]
         public void ParseNext_EOF()
@@ -28,12 +27,14 @@ namespace Scoop.Tests.Tokenizing
         [Test]
         public void ParseNext_SingleLineComment()
         {
+            //Assert.Inconclusive("Comments aren't returned from the lexer right now");
             var target = LexicalGrammar.GetParser();
             var source = new StringCharacterSequence(@"
                 // This is a comment
 ");
             var result = target.Parse(source).Value;
-            result.Should().Match(TokenType.Comment, "// This is a comment");
+            result.Type.Should().Be(TokenType.EndOfInput);
+            result.Frontmatter[1].Should().Be("// This is a comment");
         }
 
         [Test]
@@ -44,7 +45,8 @@ namespace Scoop.Tests.Tokenizing
                 /* This is a comment */
 ");
             var result = target.Parse(source).Value;
-            result.Should().Match(TokenType.Comment, "/* This is a comment */");
+            result.Type.Should().Be(TokenType.EndOfInput);
+            result.Frontmatter[1].Should().Be("/* This is a comment */");
         }
 
         [Test]
@@ -57,7 +59,9 @@ is
 a
 comment */
 ");
-            target.Parse(source).Value.Should().Match(TokenType.Comment, @"/* This
+            var result = target.Parse(source).Value;
+            result.Type.Should().Be(TokenType.EndOfInput);
+            result.Frontmatter[1].Should().Be(@"/* This
 is
 a
 comment */");

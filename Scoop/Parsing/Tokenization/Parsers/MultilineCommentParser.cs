@@ -1,19 +1,19 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Scoop.Parsing.Parsers;
+using ParserObjects;
 
 namespace Scoop.Parsing.Tokenization.Parsers
 {
-    public class MultilineCommentParser : IParser<char, Token>
+    public class MultilineCommentParser : IParser<char, string>
     {
-        public IParseResult<Token> Parse(ISequence<char> t)
+        public IParseResult<string> Parse(ISequence<char> t)
         {
             var a = t.GetNext();
             var b = t.Peek();
             if (a != '/' || b != '*')
             {
                 t.PutBack(a);
-                return Result<Token>.Fail();
+                return new FailResult<string>();
             }
 
             var chars = new List<char> { '/', t.GetNext() };
@@ -42,14 +42,12 @@ namespace Scoop.Parsing.Tokenization.Parsers
             }
 
             var x = new string(chars.ToArray());
-            return Result<Token>.Ok(Token.Comment(x));
+            return new SuccessResult<string>(x, t.CurrentLocation);
         }
 
         public IParseResult<object> ParseUntyped(ISequence<char> t) => Parse(t).Untype();
 
         public string Name { get; set; }
-
-        public IParser Accept(IParserVisitorImplementation visitor) => this;
 
         public IEnumerable<IParser> GetChildren() => Enumerable.Empty<IParser>();
 

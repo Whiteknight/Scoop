@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Linq;
+using ParserObjects;
+using ParserObjects.Parsers;
 using Scoop.Parsing.Tokenization;
 using Scoop.SyntaxTree;
+using static ParserObjects.Parsers.ParserMethods;
 
 namespace Scoop.Parsing.Parsers
 {
@@ -9,11 +12,6 @@ namespace Scoop.Parsing.Parsers
     // TODO: We want to move as much logic as possible out of this class to make more parsers and parser methods general-purpose
     public static class TokenParserMethods
     {
-        public static IParser<Token, AstNode> ApplyPostfix(IParser<Token, AstNode> left, Func<IParser<Token, AstNode>, IParser<Token, AstNode>> getRight)
-        {
-            return new ApplyPostfixParser<Token, AstNode>(left, getRight);
-        }
-
         /// <summary>
         /// Parse a left-associative single operator precedence level. Parse an item as the left-hand-side,
         /// then try to parse an operator and a right-hand-side. If possible, reduce to a single node, set
@@ -34,15 +32,16 @@ namespace Scoop.Parsing.Parsers
             var name = "Keyword:" + firstKeyword;
             if (keywords.Length > 0)
                 name = name + " " + string.Join(" ", keywords);
-            return new PredicateParser<Token, KeywordNode>(
-                t => t.IsType(TokenType.Word) && (t.Value == firstKeyword || keywords.Any(k => k == t.Value)), 
-                t => new KeywordNode(t)
-            ).Named(name);
+            return Match<Token>(t => t.IsType(TokenType.Word) && (t.Value == firstKeyword || keywords.Any(k => k == t.Value)))
+                .Transform(t => new KeywordNode(t))
+                .Named(name);
         }
 
         public static IParser<Token, TOutput> Keyword<TOutput>(string firstKeyword, Func<Token, TOutput> produce)
         {
-            return new PredicateParser<Token, TOutput>(t => t.IsType(TokenType.Word) && t.Value == firstKeyword, produce).Named("Keyword:" + firstKeyword);
+            return Match<Token>(t => t.IsType(TokenType.Word) && t.Value == firstKeyword)
+                .Transform(produce)
+                .Named("Keyword:" + firstKeyword);
         }
 
         public static IParser<Token, OperatorNode> Operator(string firstOp, params string[] operators)
@@ -50,10 +49,9 @@ namespace Scoop.Parsing.Parsers
             var name = "Operator:" + firstOp;
             if (operators.Length > 0)
                 name = name + " " + string.Join(" ", operators);
-            return new PredicateParser<Token, OperatorNode>(
-                t => t.IsType(TokenType.Operator) && (t.Value == firstOp || operators.Any(k => k == t.Value)), 
-                t => new OperatorNode(t)
-            ).Named(name);
+            return Match<Token>(t => t.IsType(TokenType.Operator) && (t.Value == firstOp || operators.Any(k => k == t.Value)))
+                .Transform(t => new OperatorNode(t))
+                .Named(name);
         }
 
         /// <summary>
@@ -65,7 +63,9 @@ namespace Scoop.Parsing.Parsers
         /// <returns></returns>
         public static IParser<Token, TOutput> Token<TOutput>(TokenType type, Func<Token, TOutput> produce)
         {
-            return new PredicateParser<Token, TOutput>(t => t.IsType(type), produce).Named("Token:" + type);
+            return Match<Token>(t => t.IsType(type))
+                .Transform(produce)
+                .Named("Token:" + type);
         }
     }
 }

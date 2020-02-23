@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using NUnit.Framework;
-using Scoop.Parsing;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
 

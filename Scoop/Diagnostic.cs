@@ -1,4 +1,6 @@
-﻿namespace Scoop
+﻿using ParserObjects;
+
+namespace Scoop
 {
     public class Diagnostic
     {

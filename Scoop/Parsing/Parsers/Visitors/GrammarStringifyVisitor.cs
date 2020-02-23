@@ -1,13 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ParserObjects;
+using ParserObjects.Parsers.Visitors;
 using Scoop.Parsing.Tokenization;
 using Scoop.SyntaxTree;
 
 namespace Scoop.Parsing.Parsers.Visitors
 {
-    public class GrammarStringifyVisitor : IParserVisitor, IParserVisitorImplementation
+    public class GrammarStringifyVisitor : IParserVisitor
     {
+        private readonly TypedParserVisitor _visitor;
         private readonly StringBuilder _builder;
         private readonly Stack<StringBuilder> _history;
         private readonly HashSet<IParser> _seen;
@@ -15,6 +18,18 @@ namespace Scoop.Parsing.Parsers.Visitors
 
         public GrammarStringifyVisitor(StringBuilder sb)
         {
+            _visitor = new TypedParserVisitor();
+            //_visitor.AddHandler(VisitApplyPostfix);
+            //_visitor.AddHandler(VisitFirst);
+            //_visitor.AddHandler(VisitInfix);
+            //_visitor.AddHandler(VisitList);
+            //_visitor.AddHandler(VisitOptional);
+            //_visitor.AddHandler(VisitReplaceable);
+            //_visitor.AddHandler(VisitRequired);
+            //_visitor.AddHandler(VisitSequence);
+            //_visitor.AddHandler(VisitTransform);
+
+
             _builder = sb;
             _history = new Stack<StringBuilder>();
             _seen = new HashSet<IParser>();
@@ -30,148 +45,142 @@ namespace Scoop.Parsing.Parsers.Visitors
 
         private void VisitChild(IParser parser)
         {
-            if (parser == null)
-                return;
-            if (_seen.Contains(parser))
-            {
-                if (string.IsNullOrEmpty(parser.Name))
-                    _current.Append("<ALREADY SEEN UNNAMED PARSER>");
-                else
-                {
-                    _current.Append("<");
-                    _current.Append(parser.Name);
-                    _current.Append(">");
-                }
+            //if (parser == null)
+            //    return;
+            //if (_seen.Contains(parser))
+            //{
+            //    if (string.IsNullOrEmpty(parser.Name))
+            //        _current.Append("<ALREADY SEEN UNNAMED PARSER>");
+            //    else
+            //    {
+            //        _current.Append("<");
+            //        _current.Append(parser.Name);
+            //        _current.Append(">");
+            //    }
 
-                return;
-            }
+            //    return;
+            //}
 
-            _seen.Add(parser);
+            //_seen.Add(parser);
 
-            if (string.IsNullOrEmpty(parser.Name))
-            {
-                parser.Accept(this);
-                return;
-            }
+            //if (string.IsNullOrEmpty(parser.Name))
+            //{
+            //    parser.Accept(this);
+            //    return;
+            //}
 
-            // 1. Append a tag to the current builder
-            _current.Append("<");
-            _current.Append(parser.Name);
-            _current.Append(">");
+            //// 1. Append a tag to the current builder
+            //_current.Append("<");
+            //_current.Append(parser.Name);
+            //_current.Append(">");
 
-            // 2. Start a new builder to write out the child rule
-            _history.Push(_current);
-            _current = new StringBuilder();
-            parser.Accept(this);
+            //// 2. Start a new builder to write out the child rule
+            //_history.Push(_current);
+            //_current = new StringBuilder();
+            //parser.Accept(this);
 
-            // 3. Write the child rule to the overall builder, then pop it
-            var rule = _current.ToString();
-            if (!string.IsNullOrEmpty(rule))
-            {
-                _builder.Append(parser.Name);
-                _builder.Append(" = ");
-                _builder.AppendLine(_current.ToString());
-            }
+            //// 3. Write the child rule to the overall builder, then pop it
+            //var rule = _current.ToString();
+            //if (!string.IsNullOrEmpty(rule))
+            //{
+            //    _builder.Append(parser.Name);
+            //    _builder.Append(" = ");
+            //    _builder.AppendLine(_current.ToString());
+            //}
 
-            _current = _history.Pop();
+            //_current = _history.Pop();
         }
 
-        public IParser<TInput, TOutput> VisitApplyPostfix<TInput, TOutput>(ApplyPostfixParser<TInput, TOutput> p)
-        {
-            _current.Append("POSTFIX");
-            return p;
-        }
+        //public IParser<TInput, TOutput> VisitApplyPostfix<TInput, TOutput>(ApplyPostfixParser<TInput, TOutput> p)
+        //{
+        //    _current.Append("POSTFIX");
+        //    return p;
+        //}
 
-        public IParser<TInput, TOutput> VisitDeferred<TInput, TOutput>(DeferredParser<TInput, TOutput> p)
-        {
-            VisitChild(p.GetChildren().First());
-            return p;
-        }
+        //public IParser<TInput, TOutput> VisitFirst<TInput, TOutput>(FirstParser<TInput, TOutput> p)
+        //{
+        //    var children = p.GetChildren();
+        //    _current.Append("(");
+        //    VisitChild(children.First());
 
-        public IParser<TInput, TOutput> VisitFirst<TInput, TOutput>(FirstParser<TInput, TOutput> p)
-        {
-            var children = p.GetChildren();
-            _current.Append("(");
-            VisitChild(children.First());
+        //    foreach (var child in children.Skip(1))
+        //    {
+        //        _current.Append(" | ");
+        //        VisitChild(child);
+        //    }
+        //    _current.Append(")");
 
-            foreach (var child in children.Skip(1))
-            {
-                _current.Append(" | ");
-                VisitChild(child);
-            }
-            _current.Append(")");
+        //    return p;
+        //}
 
-            return p;
-        }
+        //public IParser<Token, AstNode> VisitInfix(InfixOperatorParser p)
+        //{
+        //    var children = p.GetChildren().ToArray();
+        //    VisitChild(children[0]);
+        //    _current.Append(" ");
+        //    VisitChild(children[1]);
+        //    _current.Append(" ");
+        //    VisitChild(children[2]);
+        //    return p;
+        //}
 
-        public IParser<Token, AstNode> VisitInfix(InfixOperatorParser p)
-        {
-            var children = p.GetChildren().ToArray();
-            VisitChild(children[0]);
-            _current.Append(" ");
-            VisitChild(children[1]);
-            _current.Append(" ");
-            VisitChild(children[2]);
-            return p;
-        }
+        //public IParser<TInput, TOutput> VisitList<TInput, TItem, TOutput>(ListParser<TInput, TItem, TOutput> p)
+        //{
+        //    VisitChild(p.GetChildren().First());
+        //    _current.Append(p.AtLeastOne ? "+" : "*");
+        //    return p;
+        //}
 
-        public IParser<TInput, TOutput> VisitList<TInput, TItem, TOutput>(ListParser<TInput, TItem, TOutput> p)
-        {
-            VisitChild(p.GetChildren().First());
-            _current.Append(p.AtLeastOne ? "+" : "*");
-            return p;
-        }
+        //public IParser<TInput, TOutput> VisitOptional<TInput, TOutput>(OptionalParser<TInput, TOutput> p)
+        //{
+        //    VisitChild(p.GetChildren().First());
+        //    _current.Append("?");
+        //    return p;
+        //}
 
-        public IParser<TInput, TOutput> VisitOptional<TInput, TOutput>(OptionalParser<TInput, TOutput> p)
-        {
-            VisitChild(p.GetChildren().First());
-            _current.Append("?");
-            return p;
-        }
+        //public IParser<TInput, TOutput> VisitPredicate<TInput, TOutput>(PredicateParser<TInput, TOutput> p)
+        //{
+        //    //_current.Append("PREDICATE");
+        //    return p;
+        //}
 
-        public IParser<TInput, TOutput> VisitPredicate<TInput, TOutput>(PredicateParser<TInput, TOutput> p)
-        {
-            //_current.Append("PREDICATE");
-            return p;
-        }
+        //public IParser<TInput, TOutput> VisitProduce<TInput, TOutput>(ProduceParser<TInput, TOutput> p)
+        //{
+        //    _current.Append("PRODUCE");
+        //    return p;
+        //}
 
-        public IParser<TInput, TOutput> VisitProduce<TInput, TOutput>(ProduceParser<TInput, TOutput> p)
-        {
-            _current.Append("PRODUCE");
-            return p;
-        }
+        //public IParser<TInput, TOutput> VisitReplaceable<TInput, TOutput>(ReplaceableParser<TInput, TOutput> p)
+        //{
+        //    VisitChild(p.GetChildren().First());
+        //    return p;
+        //}
 
-        public IParser<TInput, TOutput> VisitReplaceable<TInput, TOutput>(ReplaceableParser<TInput, TOutput> p)
-        {
-            VisitChild(p.GetChildren().First());
-            return p;
-        }
+        //public IParser<TInput, TOutput> VisitRequired<TInput, TOutput>(RequiredParser<TInput, TOutput> p)
+        //{
+        //    VisitChild(p.GetChildren().First());
+        //    return p;
+        //}
 
-        public IParser<TInput, TOutput> VisitRequired<TInput, TOutput>(RequiredParser<TInput, TOutput> p)
-        {
-            VisitChild(p.GetChildren().First());
-            return p;
-        }
+        //public IParser<TInput, TOutput> VisitSequence<TInput, TOutput>(RuleParser<TInput, TOutput> p)
+        //{
+        //    _current.Append("(");
+        //    var children = p.GetChildren().ToArray();
+        //    VisitChild(children[0]);
+        //    foreach (var child in children.Skip(1))
+        //    {
+        //        _current.Append(" ");
+        //        VisitChild(child);
+        //    }
 
-        public IParser<TInput, TOutput> VisitSequence<TInput, TOutput>(RuleParser<TInput, TOutput> p)
-        {
-            _current.Append("(");
-            var children = p.GetChildren().ToArray();
-            VisitChild(children[0]);
-            foreach (var child in children.Skip(1))
-            {
-                _current.Append(" ");
-                VisitChild(child);
-            }
+        //    _current.Append(")");
+        //    return p;
+        //}
 
-            _current.Append(")");
-            return p;
-        }
-
-        public IParser<TInput, TOutput> VisitTransform<TInput, TMiddle, TOutput>(TransformParser<TInput, TMiddle, TOutput> p)
-        {
-            VisitChild(p.GetChildren().First());
-            return p;
-        }
+        //public IParser<TInput, TOutput> VisitTransform<TInput, TMiddle, TOutput>(TransformParser<TInput, TMiddle, TOutput> p)
+        //{
+        //    VisitChild(p.GetChildren().First());
+        //    return p;
+        //}
     }
 }

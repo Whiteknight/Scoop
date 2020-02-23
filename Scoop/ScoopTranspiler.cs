@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using ParserObjects;
+using ParserObjects.Sequences;
 using Scoop.Parsing;
 using Scoop.Parsing.Sequences;
 using Scoop.Parsing.Tokenization;
@@ -33,7 +35,11 @@ namespace Scoop
 
             using (var source = new StreamCharacterSequence(inputFileName, Encoding.UTF8))
             {
-                var tokenizer = new Tokenizer(source);
+                var lexicalGrammar = LexicalGrammar.GetParser();
+                var tokenizer = lexicalGrammar
+                    .ToSequence(source)
+                    .Where(t => t.Value.Type != TokenType.Comment)
+                    .Select(r => r.Value);
                 var result = _grammar.CompilationUnits.Parse(tokenizer);
                 ast = result.Value;
                 ast.FileName = inputFileName;

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Scoop.Parsing.Parsers;
+using ParserObjects;
 
 namespace Scoop.Parsing.Tokenization.Parsers
 {
@@ -50,15 +50,13 @@ namespace Scoop.Parsing.Tokenization.Parsers
         {
             var op = _operators.GetOperator(t);
             if (string.IsNullOrEmpty(op))
-                return Result<Token>.Fail();
-            return Result<Token>.Ok(Token.Operator(op));
+                return new FailResult<Token>();
+            return new SuccessResult<Token>(Token.Operator(op), t.CurrentLocation);
         }
 
         public IParseResult<object> ParseUntyped(ISequence<char> t) => Parse(t).Untype();
 
         public string Name { get; set; }
-
-        public IParser Accept(IParserVisitorImplementation visitor) => this;
 
         public IEnumerable<IParser> GetChildren() => Enumerable.Empty<IParser>();
 

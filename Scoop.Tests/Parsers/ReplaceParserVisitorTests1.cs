@@ -1,14 +1,14 @@
 ﻿using NUnit.Framework;
+using ParserObjects;
 using Scoop.Parsing;
 using Scoop.Parsing.Tokenization;
 using Scoop.SyntaxTree;
 using Scoop.Tests.Utility;
-using static Scoop.Parsing.Parsers.ParserMethods;
+using static ParserObjects.Parsers.ParserMethods;
 using static Scoop.Parsing.Parsers.TokenParserMethods;
 
 namespace Scoop.Tests.Parsers
 {
-
     [TestFixture]
     public class ReplaceParserVisitorTests
     {
@@ -54,7 +54,7 @@ namespace Scoop.Tests.Parsers
         {
             Assert.Inconclusive("Can't test this right now because of strong typing problems");
             // Replace the "new(..)" parser with an Operator("."), then parse an expression with dots as terminals
-            var parser = new ScoopGrammar().Expressions.FindNamed("Expressions") as IParser<Token, AstNode>;
+            var parser = new ScoopGrammar().Expressions.FindNamed("Expressions") as ParserObjects.IParser<Token, AstNode>;
 
 
             // ERROR: We can't replace IPArser<Token,NewNode> with IParser<Token,OperatorNode> because of strong typing in the tree

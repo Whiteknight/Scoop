@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using ParserObjects;
 
 namespace Scoop.Parsing.Tokenization
 {
@@ -10,6 +11,8 @@ namespace Scoop.Parsing.Tokenization
             Value = value;
             Type = type;
         }
+
+        public List<string> Frontmatter { get; set; }
 
         public string Value { get; }
         public Location Location { get; set; }

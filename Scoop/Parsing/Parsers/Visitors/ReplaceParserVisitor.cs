@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using ParserObjects;
 
 namespace Scoop.Parsing.Parsers.Visitors
 {

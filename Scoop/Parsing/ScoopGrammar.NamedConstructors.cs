@@ -1,7 +1,8 @@
-﻿using Scoop.Parsing.Parsers;
+﻿using ParserObjects;
+using ParserObjects.Parsers;
 using Scoop.Parsing.Tokenization;
 using Scoop.SyntaxTree;
-using static Scoop.Parsing.Parsers.ParserMethods;
+using static ParserObjects.Parsers.ParserMethods;
 using static Scoop.Parsing.Parsers.TokenParserMethods;
 
 namespace Scoop.Parsing
@@ -56,7 +57,7 @@ namespace Scoop.Parsing
                         parameterLists,
                         Rule(
                                 Operator(":"),
-                                Keyword("this").Or(t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
+                                Keyword("this").Required(t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
                                 argumentLists,
                                 (a, b, args) => args.WithUnused(a, b)
                             )

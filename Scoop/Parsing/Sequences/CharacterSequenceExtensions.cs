@@ -1,4 +1,5 @@
-﻿using Scoop.Parsing.Tokenization;
+﻿using ParserObjects;
+using Scoop.Parsing.Tokenization;
 
 namespace Scoop.Parsing.Sequences
 {
