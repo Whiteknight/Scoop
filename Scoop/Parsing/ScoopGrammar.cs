@@ -2,7 +2,6 @@
 using System.Linq;
 using ParserObjects;
 using ParserObjects.Parsers;
-using Scoop.Parsing.Parsers;
 using Scoop.Parsing.Tokenization;
 using Scoop.SyntaxTree;
 using static ParserObjects.Parsers.ParserMethods;
@@ -108,8 +107,7 @@ namespace Scoop.Parsing
             // Setup some parsers for requiring operators or communicating helpful errors
             _requiredSemicolon = Operator(";").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingSemicolon));
             _requiredOpenBracket = Operator("{").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket));
-            _requiredCloseBracket = Operator("}").Required(t => 
-                new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseBracket));
+            _requiredCloseBracket = Operator("}").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseBracket));
             _requiredOpenParen = Operator("(").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenParen));
             _requiredCloseParen = Operator(")").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseParen));
             _requiredColon = Operator(":").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingColon));
@@ -231,7 +229,7 @@ namespace Scoop.Parsing
                 )
                 .Named("_dottedIdentifiers");
 
-            // TODO: Suppor the C# 8.0 using declaration syntax instead of the using statement syntax.
+            // TODO: Support the C# 8.0 using declaration syntax instead of the using statement syntax.
             var usingDirectives = Rule(
                     // "using" <namespaceName> ";"
                     Keyword("using"),
@@ -472,10 +470,13 @@ namespace Scoop.Parsing
                 )
                 .Named("constants");
 
+            var statementList = Statements
+                .List()
+                .Transform(stmts => new ListNode<AstNode> { Items = stmts.ToList() });
+
             _normalMethodBody = Rule(
                 Operator("{"),
-                Statements.List().Transform(stmts => 
-                    new ListNode<AstNode> { Items = stmts.ToList() }),
+                statementList,
                 _requiredCloseBracket,
 
                 (a, body, b) => body.WithUnused(a, b)
@@ -508,9 +509,12 @@ namespace Scoop.Parsing
                 .Required(t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket))
                 .Named("methodBody");
 
+            var requiredThis = Keyword("this")
+                .Required(t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis));
+
             var constructorThisArgs = Rule(
                     Operator(":"),
-                    Keyword("this").Required(t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
+                    requiredThis,
                     _argumentLists,
 
                     (a, b, args) => args.WithUnused(a, b)
@@ -606,13 +610,20 @@ namespace Scoop.Parsing
                 )
                 .Named("ClassMembers");
 
+            var classMemberList = ClassMembers
+                .List()
+                .Transform(members => new ListNode<AstNode> { Items = members.ToList() });
+
             var classBody = Rule(
                 Operator("{"),
-                ClassMembers.List().Transform(members => new ListNode<AstNode> { Items = members.ToList() }),
+                classMemberList,
                 _requiredCloseBracket,
 
                 (a, members, b) => members.WithUnused(a, b)
             ).Named("classBody");
+
+            var requiredClassBody = classBody
+                .Required(t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket));
 
             Classes = Rule(
                     Attributes,
@@ -623,7 +634,7 @@ namespace Scoop.Parsing
                     _genericTypeParameters,
                     inheritanceList,
                     _typeConstraints,
-                    classBody.Required(t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket)),
+                    requiredClassBody,
 
                     (attrs, vis, isPartial, obj, name, genParm, contracts, cons, body) => new ClassNode
                     {
@@ -649,7 +660,7 @@ namespace Scoop.Parsing
                     _genericTypeParameters,
                     inheritanceList,
                     _typeConstraints,
-                    classBody.Required(t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket)),
+                    requiredClassBody,
 
                     (attrs, vis, isPartial, obj, name, genParm, contracts, cons, body) => new ClassNode
                     {
@@ -678,10 +689,10 @@ namespace Scoop.Parsing
             var parameter = Rule(
                     // <attributes> "params"? <type> <ident> ("=" <expr>)?
                     Attributes,
-                    Optional(Keyword("params")),
+                    Keyword("params").Optional(),
                     Types,
                     _requiredIdentifier,
-                    Optional(parameterDefaultValueExpression),
+                    parameterDefaultValueExpression.Optional(),
 
                     (attrs, isparams, type, name, value) => new ParameterNode
                     {
@@ -849,6 +860,14 @@ namespace Scoop.Parsing
                 )
                 .Named("usingStmt");
 
+            var expressionStatement = Rule(
+                    Expressions,
+                    _requiredSemicolon,
+
+                    (expr, s) => expr.WithUnused(s)
+                )
+                .Named("expressionStmt");
+
             Statements = First(
                     // ";" | <returnStatement> | <declaration> | <constDeclaration> | <expression>
                     // <csharpLiteral> | <usingStatement>
@@ -858,13 +877,7 @@ namespace Scoop.Parsing
                     returnStmtParser,
                     constStatements,
                     varDeclareStmtParser,
-                    Rule(
-                            Expressions,
-                            _requiredSemicolon,
-
-                            (expr, s) => expr.WithUnused(s)
-                        )
-                        .Named("expressionStmt")
+                    expressionStatement
                 )
                 .Named("Statements");
         }
@@ -872,7 +885,9 @@ namespace Scoop.Parsing
         private void InitializeTypes()
         {
             // <ypeName = <identifier>
-            var typeName = _identifiers.Transform(id => new TypeNode(id)).Named("typeName");
+            var typeName = _identifiers
+                .Transform(id => new TypeNode(id))
+                .Named("typeName");
 
             var atLeastOneCommaSeparatedType = SeparatedList(
                 Types,
