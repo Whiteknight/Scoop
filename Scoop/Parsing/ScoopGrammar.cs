@@ -162,9 +162,8 @@ namespace Scoop.Parsing
                     Operator("("),
                     SeparatedList(
                         attributeArgs,
-                        Operator(","),
-                        items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") }
-                    ),
+                        Operator(",")
+                    ).Transform(items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") }),
                     _requiredCloseParen,
 
                     (a, items, c) => items.WithUnused(a, c)
@@ -198,10 +197,9 @@ namespace Scoop.Parsing
 
             var attributeList = SeparatedList(
                     attribute,
-                    Operator(","),
-
-                    list => new ListNode<AttributeNode> { Items = list.ToList(), Separator = new OperatorNode(",") }
+                    Operator(",")
                 )
+                .Transform(list => new ListNode<AttributeNode> { Items = list.ToList(), Separator = new OperatorNode(",") })
                 .Named("attributeList");
 
             // "[" <attributeList> "]"
@@ -224,9 +222,9 @@ namespace Scoop.Parsing
             _dottedIdentifiers = SeparatedList(
                     Token(TokenType.Word, t => t.Value),
                     Operator("."),
-                    items => new DottedIdentifierNode(items),
                     atLeastOne: true
                 )
+                .Transform(items => new DottedIdentifierNode(items))
                 .Named("_dottedIdentifiers");
 
             // TODO: Support the C# 8.0 using declaration syntax instead of the using statement syntax.
@@ -315,11 +313,10 @@ namespace Scoop.Parsing
                 .Named("enumMember");
 
             var enumMembers = SeparatedList(
-                enumMember,
-                Operator(","),
-
-                members => new ListNode<EnumMemberNode> { Items = members.ToList(), Separator = new OperatorNode(",") }
-            );
+                    enumMember,
+                    Operator(",")
+                )
+                .Transform(members => new ListNode<EnumMemberNode> { Items = members.ToList(), Separator = new OperatorNode(",") });
 
             Enums = Rule(
                     Attributes,
@@ -374,11 +371,11 @@ namespace Scoop.Parsing
         private void InitializeClasses()
         {
             var typeList = SeparatedList(
-                Types,
-                Operator(","),
-                types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") },
-                atLeastOne: true
-            );
+                    Types,
+                    Operator(","),
+                    atLeastOne: true
+                )
+                .Transform(types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") });
 
             // ":" <commaSeparatedType+>
             var inheritanceList = Rule(
@@ -711,9 +708,8 @@ namespace Scoop.Parsing
                     _requiredOpenParen,
                     SeparatedList(
                         parameter,
-                        Operator(","),
-                        parameters => new ListNode<ParameterNode> { Items = parameters.ToList(), Separator = new OperatorNode(",") }
-                    ),
+                        Operator(",")
+                    ).Transform(parameters => new ListNode<ParameterNode> { Items = parameters.ToList(), Separator = new OperatorNode(",") }),
                     _requiredCloseParen,
 
                     (a, parameters, b) => parameters.WithUnused(a, b)
@@ -739,14 +735,14 @@ namespace Scoop.Parsing
                 .Named("arguments");
 
             var commaSeparatedArguments = SeparatedList(
-                arguments,
-                Operator(","),
-                items => new ListNode<AstNode>
+                    arguments,
+                    Operator(",")
+                )
+                .Transform(items => new ListNode<AstNode>
                 {
                     Items = items.ToList(),
                     Separator = new OperatorNode(",")
-                }
-            );
+                });
 
             // A required argument list
             // "(" <commaSeparatedArgs>? ")"
@@ -890,15 +886,15 @@ namespace Scoop.Parsing
                 .Named("typeName");
 
             var atLeastOneCommaSeparatedType = SeparatedList(
-                Types,
-                Operator(","),
-                list => new ListNode<TypeNode>
+                    Types,
+                    Operator(","),
+                    atLeastOne: true
+                )
+                .Transform(list => new ListNode<TypeNode>
                 {
                     Items = list.ToList(),
                     Separator = new OperatorNode(",")
-                },
-                atLeastOne: true
-            );
+                });
 
             var genericTypeArgumentsList = Rule(
                 Operator("<"),
@@ -925,9 +921,9 @@ namespace Scoop.Parsing
             var subtype = SeparatedList(
                     genericType,
                     Operator("."),
-                    t => new ListNode<TypeNode> { Items = t.ToList(), Separator = new OperatorNode(".") },
                     atLeastOne: true
                 )
+                .Transform(t => new ListNode<TypeNode> { Items = t.ToList(), Separator = new OperatorNode(".") })
                 .Named("subtype");
 
             var arrayTypeDesignator = Rule(
@@ -986,9 +982,8 @@ namespace Scoop.Parsing
                     SeparatedList(
                         Types,
                         Operator(","),
-                        types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") },
                         atLeastOne: true
-                    ),
+                    ).Transform(types => new ListNode<TypeNode> { Items = types.ToList(), Separator = new OperatorNode(",") }),
                     Operator(">"),
 
                     (a, types, b) => types.WithUnused(a, b)
@@ -1005,13 +1000,12 @@ namespace Scoop.Parsing
                         SeparatedList(
                             _identifiers,
                             Operator(","),
-                            types => new ListNode<IdentifierNode>
-                            {
-                                Items = types.ToList(),
-                                Separator = new OperatorNode(",")
-                            },
                             atLeastOne: true
-                        ),
+                        ).Transform(types => new ListNode<IdentifierNode>
+                        {
+                            Items = types.ToList(),
+                            Separator = new OperatorNode(",")
+                        }),
                         _requiredCloseAngle,
 
                         (a, types, b) => types.WithUnused(a, b)
@@ -1110,13 +1104,12 @@ namespace Scoop.Parsing
                 Operator("["),
                 SeparatedList(
                     Expressions,
-                    Operator(","),
-                    items => new ListNode<AstNode>
-                    {
-                        Items = items.ToList(),
-                        Separator = new OperatorNode(",")
-                    }
-                ),
+                    Operator(",")
+                ).Transform(items => new ListNode<AstNode>
+                {
+                    Items = items.ToList(),
+                    Separator = new OperatorNode(",")
+                }),
                 _requiredCloseBrace,
                 _requiredEquals,
                 _requiredExpression,
@@ -1135,13 +1128,12 @@ namespace Scoop.Parsing
                 SeparatedList(
                     Expressions,
                     Operator(","),
-                    items => new ListNode<AstNode>
-                    {
-                        Items = items.ToList(),
-                        Separator = new OperatorNode(",")
-                    },
                     atLeastOne: true
-                ),
+                ).Transform(items => new ListNode<AstNode>
+                {
+                    Items = items.ToList(),
+                    Separator = new OperatorNode(",")
+                }),
                 _requiredCloseBracket,
 
                 (o, args, c) => (AstNode) new AddInitializerNode
@@ -1158,26 +1150,25 @@ namespace Scoop.Parsing
             );
 
             var nonCollectionInitializerList = SeparatedList(
-                nonCollectionInitializer,
-                Operator(","),
-                items => new ListNode<AstNode>
+                    nonCollectionInitializer,
+                    Operator(","),
+                    atLeastOne: true
+                )
+                .Transform(items => new ListNode<AstNode>
                 {
                     Items = items.ToList(),
                     Separator = new OperatorNode(",")
-                },
-                atLeastOne: true
-            );
+                });
 
             var collectionInitializerList = SeparatedList(
                     Expressions,
-                    Operator(","),
-
-                    items => new ListNode<AstNode>
-                    {
-                        Items = items.ToList(),
-                        Separator = new OperatorNode(",")
-                    }
+                    Operator(",")
                 )
+                .Transform(items => new ListNode<AstNode>
+                {
+                    Items = items.ToList(),
+                    Separator = new OperatorNode(",")
+                })
                 .Named("initializers.Collection");
 
             var initializers = Rule(
@@ -1276,15 +1267,15 @@ namespace Scoop.Parsing
             ).Named("terminal");
 
             var atLeastOneCommaSeparatedExpression = SeparatedList(
-                Expressions,
-                Operator(","),
-                items => new ListNode<AstNode>
+                    Expressions,
+                    Operator(","),
+                    atLeastOne: true
+                )
+                .Transform(items => new ListNode<AstNode>
                 {
                     Items = items.ToList(),
                     Separator = new OperatorNode(",")
-                },
-                atLeastOne: true
-            );
+                });
 
             var indexers = Rule(
                 Operator("["),
@@ -1502,12 +1493,12 @@ namespace Scoop.Parsing
                 )
                 .Named("typeCoerce");
 
-            var expressionEquality = Infix(
+            var expressionEquality = RightApply(
                     // Equality/comparison operators
                     // <typeCoerce> (<op> <typeCoerce>)+
                     expressionTypeCoerce,
                     Operator("==", "!=", ">=", "<=", "<", ">"),
-                    expressionTypeCoerce.Required(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                    //expressionTypeCoerce.Required(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
 
                     (left, op, right) => new InfixOperationNode
                     {
@@ -1622,9 +1613,8 @@ namespace Scoop.Parsing
                                 Operator("("),
                                 SeparatedList(
                                     _identifiers,
-                                    Operator(","),
-                                    args => new ListNode<IdentifierNode> { Items = args.ToList(), Separator = new OperatorNode(",") }
-                                ),
+                                    Operator(",")
+                                ).Transform(args => new ListNode<IdentifierNode> { Items = args.ToList(), Separator = new OperatorNode(",") }),
                                 Operator(")"),
 
                                 (a, items, c) => items.WithUnused(a, c)
@@ -1653,9 +1643,9 @@ namespace Scoop.Parsing
             ExpressionList = SeparatedList(
                     Expressions,
                     Operator(","),
-                    items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") },
                     atLeastOne: true
                 )
+                .Transform(items => new ListNode<AstNode> { Items = items.ToList(), Separator = new OperatorNode(",") })
                 .Named("ExpressionList");
         }
 

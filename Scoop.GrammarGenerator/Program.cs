@@ -11,10 +11,11 @@ namespace Scoop.GrammarGenerator
         {
             var grammar = new ScoopGrammar();
             var result = new StringBuilder();
-            var target = new GrammarStringifyVisitor(result);
+            var target = new ScoopBnfStringifyVisitor(result);
             target.Visit(grammar.CompilationUnits);
             var s = result.ToString();
             Console.WriteLine(s);
+            Console.ReadKey();
         }
     }
 }
