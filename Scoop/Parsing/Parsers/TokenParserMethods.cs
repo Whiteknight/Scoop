@@ -12,6 +12,7 @@ namespace Scoop.Parsing.Parsers
     // TODO: We want to move as much logic as possible out of this class to make more parsers and parser methods general-purpose
     public static class TokenParserMethods
     {
+        // TODO: We should replace Infix with LeftApply()
         /// <summary>
         /// Parse a left-associative single operator precedence level. Parse an item as the left-hand-side,
         /// then try to parse an operator and a right-hand-side. If possible, reduce to a single node, set

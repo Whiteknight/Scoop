@@ -57,7 +57,7 @@ namespace Scoop.Parsing
                         parameterLists,
                         Rule(
                                 Operator(":"),
-                                Keyword("this").Required(t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
+                                Keyword("this").Optional(t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
                                 argumentLists,
                                 (a, b, args) => args.WithUnused(a, b)
                             )

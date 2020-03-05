@@ -48,7 +48,20 @@ namespace Scoop.Parsing.Tokenization
 
             var cSharpLiterals = new CSharpLiteralParser();
 
-            var operators = new OperatorParser();
+            var operators = Trie<char, string>(trie => trie
+                    .AddMany(".", "?.", ",", ";")
+                    .AddMany("(", ")", "{", "}", "[", "]")
+                    .AddMany("+", "-", "/", "*", "&", "|", "^")
+                    .AddMany("&&", "||")
+                    .AddMany("~", "!")
+                    .AddMany("++", "--")
+                    .AddMany("=>")
+                    .AddMany("??", "??=")
+                    .AddMany("?", ":")
+                    .AddMany("=", "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=")
+                    .AddMany("==", "!=", ">", "<", ">=", "<=")
+                )
+                .Transform(op => new Token(op, TokenType.Operator));
 
             var strings = new StringParser();
 

@@ -135,8 +135,7 @@ namespace Scoop.Tests.L1.Validation
             var ast = TestSuite.GetGrammar().Expressions.Parse(syntax);
             var result = ast.Validate();
             result.Count.Should().Be(1);
-            // This one gives a different error message from what it should do, we'll revisit when we fix this rule
-            //result[0].ErrorMessage.Should().Be(Errors.MissingExpression);
+            result[0].ErrorMessage.Should().Be(Errors.MissingExpression);
         }
 
         [Test]

@@ -16,6 +16,7 @@ namespace Scoop.Parsing
             Initialize();
         }
 
+        // TODO: Move these out to a separate file for language info and constants
         private static readonly HashSet<string> _keywords = new HashSet<string>
         {
             // C# Keywords which are still allowed
@@ -105,20 +106,20 @@ namespace Scoop.Parsing
                 .Named("accessModifiers");
 
             // Setup some parsers for requiring operators or communicating helpful errors
-            _requiredSemicolon = Operator(";").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingSemicolon));
-            _requiredOpenBracket = Operator("{").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket));
-            _requiredCloseBracket = Operator("}").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseBracket));
-            _requiredOpenParen = Operator("(").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenParen));
-            _requiredCloseParen = Operator(")").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseParen));
-            _requiredColon = Operator(":").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingColon));
-            _requiredCloseBrace = Operator("]").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseBrace));
-            _requiredCloseAngle = Operator(">").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseAngle));
-            _requiredIdentifier = _identifiers.Required(t => new IdentifierNode().WithDiagnostics(t.CurrentLocation, Errors.MissingIdentifier));
-            _requiredEquals = Operator("=").Required(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingEquals));
+            _requiredSemicolon = Operator(";").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingSemicolon));
+            _requiredOpenBracket = Operator("{").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket));
+            _requiredCloseBracket = Operator("}").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseBracket));
+            _requiredOpenParen = Operator("(").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenParen));
+            _requiredCloseParen = Operator(")").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseParen));
+            _requiredColon = Operator(":").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingColon));
+            _requiredCloseBrace = Operator("]").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseBrace));
+            _requiredCloseAngle = Operator(">").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseAngle));
+            _requiredIdentifier = _identifiers.Optional(t => new IdentifierNode().WithDiagnostics(t.CurrentLocation, Errors.MissingIdentifier));
+            _requiredEquals = Operator("=").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingEquals));
 
             // Parsers to require certain productions or add a helpful error
-            _requiredType = Types.Required(t => new TypeNode().WithDiagnostics(t.CurrentLocation, Errors.MissingType));
-            _requiredExpression = Expressions.Required(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression));
+            _requiredType = Types.Optional(t => new TypeNode().WithDiagnostics(t.CurrentLocation, Errors.MissingType));
+            _requiredExpression = Expressions.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression));
 
             // Setup individual sections of the grammar
             InitializeTopLevel();
@@ -231,7 +232,7 @@ namespace Scoop.Parsing
             var usingDirectives = Rule(
                     // "using" <namespaceName> ";"
                     Keyword("using"),
-                    _dottedIdentifiers.Required(t => new DottedIdentifierNode("").WithDiagnostics(t.CurrentLocation, Errors.MissingNamespaceName)),
+                    _dottedIdentifiers.Optional(t => new DottedIdentifierNode("").WithDiagnostics(t.CurrentLocation, Errors.MissingNamespaceName)),
                     _requiredSemicolon,
 
                     (u, ns, sc) => new UsingDirectiveNode
@@ -260,8 +261,8 @@ namespace Scoop.Parsing
 
             var namespaces = Rule(
                     Keyword("namespace"),
-                    _dottedIdentifiers.Required(t => new DottedIdentifierNode("").WithDiagnostics(t.CurrentLocation, Errors.MissingNamespaceName)),
-                    namespaceBody.Required(t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket)),
+                    _dottedIdentifiers.Optional(t => new DottedIdentifierNode("").WithDiagnostics(t.CurrentLocation, Errors.MissingNamespaceName)),
+                    namespaceBody.Optional(t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket)),
 
                     (ns, name, members) => new NamespaceNode
                     {
@@ -380,7 +381,7 @@ namespace Scoop.Parsing
             // ":" <commaSeparatedType+>
             var inheritanceList = Rule(
                     Operator(":"),
-                    typeList.Required(t => new ListNode<TypeNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingType)),
+                    typeList.Optional(t => new ListNode<TypeNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingType)),
 
                     (colon, types) => types.WithUnused(colon)
                 )
@@ -420,7 +421,7 @@ namespace Scoop.Parsing
             );
 
             var requiredInterfaceBody = interfaceBody
-                .Required(t => new ListNode<MethodDeclareNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket))
+                .Optional(t => new ListNode<MethodDeclareNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket))
                 .Named("interfaceBody");
 
             Interfaces = Rule(
@@ -503,11 +504,11 @@ namespace Scoop.Parsing
                     expressionBodiedMethodBody,
                     _normalMethodBody
                 )
-                .Required(t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket))
+                .Optional(t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket))
                 .Named("methodBody");
 
             var requiredThis = Keyword("this")
-                .Required(t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis));
+                .Optional(t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis));
 
             var constructorThisArgs = Rule(
                     Operator(":"),
@@ -620,7 +621,7 @@ namespace Scoop.Parsing
             ).Named("classBody");
 
             var requiredClassBody = classBody
-                .Required(t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket));
+                .Optional(t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket));
 
             Classes = Rule(
                     Attributes,
@@ -714,7 +715,7 @@ namespace Scoop.Parsing
 
                     (a, parameters, b) => parameters.WithUnused(a, b)
                 )
-                .Required(t => new ListNode<ParameterNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingParameterList))
+                .Optional(t => new ListNode<ParameterNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingParameterList))
                 .Named("ParameterList");
         }
 
@@ -845,7 +846,7 @@ namespace Scoop.Parsing
                     _requiredOpenParen,
                     usingStatementGetDisposableClause,
                     _requiredCloseParen,
-                    Deferred(() => Statements).Required(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingStatement)),
+                    Deferred(() => Statements).Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingStatement)),
 
                     (u, a, disposable, b, stmt) => new UsingStatementNode
                     {
@@ -898,7 +899,7 @@ namespace Scoop.Parsing
 
             var genericTypeArgumentsList = Rule(
                 Operator("<"),
-                atLeastOneCommaSeparatedType.Required(t => new ListNode<TypeNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingType)),
+                atLeastOneCommaSeparatedType.Optional(t => new ListNode<TypeNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingType)),
                 _requiredCloseAngle,
 
                 (b, genericArgs, d) => genericArgs.WithUnused(b, d)
@@ -1279,7 +1280,7 @@ namespace Scoop.Parsing
 
             var indexers = Rule(
                 Operator("["),
-                atLeastOneCommaSeparatedExpression.Required(t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                atLeastOneCommaSeparatedExpression.Optional(t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
                 _requiredCloseBrace,
 
                 (a, items, b) => items.WithUnused(a, b)
@@ -1375,6 +1376,7 @@ namespace Scoop.Parsing
                 .Named("postfix");
 
             // prefix ++ and -- cannot be combined with other prefix operators
+            // TODO: Make this RightApply() so we can recurse properly, right-associative
             var expressionUnary = First(
                     Rule(
                         Operator("++", "--"),
@@ -1443,7 +1445,7 @@ namespace Scoop.Parsing
                 // <Unary> (<op> <Unary>)+
                 expressionUnary,
                 Operator("*", "/", "%"),
-                expressionUnary.Required(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                expressionUnary.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
 
                 (left, op, right) => new InfixOperationNode
                 {
@@ -1459,7 +1461,7 @@ namespace Scoop.Parsing
                     // <multiplicative> (<op> <multiplicative>)+
                     expressionMultiplicative,
                     Operator("+", "-"),
-                    expressionMultiplicative.Required(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                    expressionMultiplicative.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
 
                     (left, op, right) => new InfixOperationNode
                     {
@@ -1479,6 +1481,7 @@ namespace Scoop.Parsing
                         Rule(
                             additive,
                             Keyword("as", "is").Transform(k => new OperatorNode(k.Keyword, k.Location)),
+                            // TODO: Convert this into a pattern rule
                             _requiredType,
                             Optional(_identifiers),
 
@@ -1493,12 +1496,12 @@ namespace Scoop.Parsing
                 )
                 .Named("typeCoerce");
 
-            var expressionEquality = RightApply(
+            var expressionEquality = Infix(
                     // Equality/comparison operators
                     // <typeCoerce> (<op> <typeCoerce>)+
                     expressionTypeCoerce,
                     Operator("==", "!=", ">=", "<=", "<", ">"),
-                    //expressionTypeCoerce.Required(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                    expressionTypeCoerce.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
 
                     (left, op, right) => new InfixOperationNode
                     {
@@ -1515,7 +1518,7 @@ namespace Scoop.Parsing
                     // <equality> (<op> <equality>)+
                     expressionEquality,
                     Operator("&", "^", "|"),
-                    expressionEquality.Required(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                    expressionEquality.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
 
                     (left, op, right) => new InfixOperationNode
                     {
@@ -1532,7 +1535,7 @@ namespace Scoop.Parsing
                     // <bitwise> (<op> <bitwise>)+
                     expressionBitwise,
                     Operator("&&", "||"),
-                    expressionBitwise.Required(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                    expressionBitwise.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
 
                     (left, op, right) => new InfixOperationNode
                     {
@@ -1549,7 +1552,7 @@ namespace Scoop.Parsing
                     // <logical> (<op> <local>)+
                     expressionLogical,
                     Operator("??"),
-                    expressionLogical.Required(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                    expressionLogical.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
 
                     (left, op, right) => new InfixOperationNode
                     {
@@ -1568,9 +1571,9 @@ namespace Scoop.Parsing
                         Rule(
                             init,
                             Operator("?"),
-                            Deferred(() => _expressionConditional).Required(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                            Deferred(() => _expressionConditional).Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
                             _requiredColon,
-                            Deferred(() => _expressionConditional).Required(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                            Deferred(() => _expressionConditional).Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
 
                             (condition, q, consequent, c, alternative) => (AstNode) new ConditionalNode
                             {
@@ -1583,13 +1586,12 @@ namespace Scoop.Parsing
                 )
                 .Named("conditional");
 
-            var expressionAssignment = Infix(
+            var expressionAssignment = RightApply(
                     // null-coalesce operator
                     // <logical> (<op> <local>)+
-                    // TODO: assignment operators are right associative, so this rule does chained assignments backwards
+
                     _expressionConditional,
                     Operator("=", "+=", "-=", "/=", "%=", "??="),
-                    _expressionConditional,
 
                     (left, op, right) => new InfixOperationNode
                     {
@@ -1597,7 +1599,8 @@ namespace Scoop.Parsing
                         Left = left,
                         Operator = op,
                         Right = right
-                    }
+                    },
+                    t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)
                 )
                 .Named("assignment");
 
@@ -1606,6 +1609,7 @@ namespace Scoop.Parsing
                     // <assignmentExpression>
                     // <Identifier> "=>" ( <expression> | "{" <methodBody> "}" )
                     // "(" <identifierList> ")"  "=>" ( <expression> | "{" <methodBody> "}" )
+                    // TODO: Clean this up
                     Rule(
                         First(
                             _identifiers.Transform(id => new ListNode<IdentifierNode> { Separator = new OperatorNode(","), [0] = id }),
