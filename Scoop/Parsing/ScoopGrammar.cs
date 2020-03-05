@@ -1440,36 +1440,43 @@ namespace Scoop.Parsing
                 )
                 .Named("unary");
 
-            var expressionMultiplicative = Infix(
-                // Operators with * / % precidence
-                // <Unary> (<op> <Unary>)+
-                expressionUnary,
-                Operator("*", "/", "%"),
-                expressionUnary.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+            var expressionMultiplicative = LeftApply(
+                    // Operators with * / % precidence
+                    // <Unary> (<op> <Unary>)+
+                    expressionUnary,
+                    unary => Rule(
+                        unary,
+                        Operator("*", "/", "%"),
+                        expressionUnary.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
 
-                (left, op, right) => new InfixOperationNode
-                {
-                    Location = op.Location,
-                    Left = left,
-                    Operator = op,
-                    Right = right
-                }
-            ).Named("multiplicative");
+                        (left, op, right) => new InfixOperationNode
+                        {
+                            Location = op.Location,
+                            Left = left,
+                            Operator = op,
+                            Right = right
+                        }
+                    )
+                )
+                .Named("multiplicative");
 
-            var expressionAdditive = Infix(
+            var expressionAdditive = LeftApply(
                     // Operators with + - precidence
                     // <multiplicative> (<op> <multiplicative>)+
                     expressionMultiplicative,
-                    Operator("+", "-"),
-                    expressionMultiplicative.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                    multiplicative => Rule(
+                        multiplicative,
+                        Operator("+", "-"),
+                        expressionMultiplicative.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
 
-                    (left, op, right) => new InfixOperationNode
-                    {
-                        Location = op.Location,
-                        Left = left,
-                        Operator = op,
-                        Right = right
-                    }
+                        (left, op, right) => new InfixOperationNode
+                        {
+                            Location = op.Location,
+                            Left = left,
+                            Operator = op,
+                            Right = right
+                        }
+                    )
                 )
                 .Named("additive");
 
@@ -1496,71 +1503,83 @@ namespace Scoop.Parsing
                 )
                 .Named("typeCoerce");
 
-            var expressionEquality = Infix(
+            var expressionEquality = LeftApply(
                     // Equality/comparison operators
                     // <typeCoerce> (<op> <typeCoerce>)+
                     expressionTypeCoerce,
-                    Operator("==", "!=", ">=", "<=", "<", ">"),
-                    expressionTypeCoerce.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                    typeCoerce => Rule(
+                        typeCoerce,
+                        Operator("==", "!=", ">=", "<=", "<", ">"),
+                        expressionTypeCoerce.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
 
-                    (left, op, right) => new InfixOperationNode
-                    {
-                        Location = op.Location,
-                        Left = left,
-                        Operator = op,
-                        Right = right
-                    }
+                        (left, op, right) => new InfixOperationNode
+                        {
+                            Location = op.Location,
+                            Left = left,
+                            Operator = op,
+                            Right = right
+                        }
+                    )
                 )
                 .Named("equality");
 
-            var expressionBitwise = Infix(
+            var expressionBitwise = LeftApply(
                     // Bitwise operators
                     // <equality> (<op> <equality>)+
                     expressionEquality,
-                    Operator("&", "^", "|"),
-                    expressionEquality.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                    equality => Rule(
+                        equality,
+                        Operator("&", "^", "|"),
+                        expressionEquality.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
 
-                    (left, op, right) => new InfixOperationNode
-                    {
-                        Location = op.Location,
-                        Left = left,
-                        Operator = op,
-                        Right = right
-                    }
+                        (left, op, right) => new InfixOperationNode
+                        {
+                            Location = op.Location,
+                            Left = left,
+                            Operator = op,
+                            Right = right
+                        }
+                    )
                 )
                 .Named("bitwise");
 
-            var expressionLogical = Infix(
+            var expressionLogical = LeftApply(
                     // Logical operators
                     // <bitwise> (<op> <bitwise>)+
                     expressionBitwise,
-                    Operator("&&", "||"),
-                    expressionBitwise.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                    bitwise => Rule(
+                        bitwise,
+                        Operator("&&", "||"),
+                        expressionBitwise.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
 
-                    (left, op, right) => new InfixOperationNode
-                    {
-                        Location = op.Location,
-                        Left = left,
-                        Operator = op,
-                        Right = right
-                    }
+                        (left, op, right) => new InfixOperationNode
+                        {
+                            Location = op.Location,
+                            Left = left,
+                            Operator = op,
+                            Right = right
+                        }
+                    )
                 )
                 .Named("logical");
 
-            var expressionCoalesce = Infix(
+            var expressionCoalesce = LeftApply(
                     // null-coalesce operator
                     // <logical> (<op> <local>)+
                     expressionLogical,
-                    Operator("??"),
-                    expressionLogical.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
+                    logical => Rule(
+                        logical,
+                        Operator("??"),
+                        expressionLogical.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression)),
 
-                    (left, op, right) => new InfixOperationNode
-                    {
-                        Location = op.Location,
-                        Left = left,
-                        Operator = op,
-                        Right = right
-                    }
+                        (left, op, right) => new InfixOperationNode
+                        {
+                            Location = op.Location,
+                            Left = left,
+                            Operator = op,
+                            Right = right
+                        }
+                    )
                 )
                 .Named("coalesce");
 
