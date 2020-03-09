@@ -15,9 +15,9 @@ namespace Scoop.Parsing.Parsers
         // TODO: We should replace Infix with LeftApply()
         public static IParser<Token, KeywordNode> Keyword(string firstKeyword, params string[] keywords)
         {
-            var name = "Keyword:" + firstKeyword;
+            var name = $"'{firstKeyword}'";
             if (keywords.Length > 0)
-                name = name + " " + string.Join(" ", keywords);
+                name = "(" + name + " | " + string.Join(" | ", keywords.Select(op => $"'{op}'")) + ")";
             return Match<Token>(t => t.IsType(TokenType.Word) && (t.Value == firstKeyword || keywords.Any(k => k == t.Value)))
                 .Transform(t => new KeywordNode(t))
                 .Named(name);
@@ -25,12 +25,20 @@ namespace Scoop.Parsing.Parsers
 
         public static IParser<Token, OperatorNode> Operator(string firstOp, params string[] operators)
         {
-            var name = "Operator:" + firstOp;
+            var name = $"'{firstOp}'";
             if (operators.Length > 0)
-                name = name + " " + string.Join(" ", operators);
+                name = name + " " + string.Join(" ", operators.Select(op => $"'{op}'"));
             return Match<Token>(t => t.IsType(TokenType.Operator) && (t.Value == firstOp || operators.Any(k => k == t.Value)))
                 .Transform(t => new OperatorNode(t))
                 .Named(name);
+        }
+
+        public static IParser<Token, OperatorNode> RequiredOperator(string op, string errorMessageOnMissing)
+        {
+            return Match<Token>(t => t.IsType(TokenType.Operator) && t.Value == op)
+                .Transform(t => new OperatorNode(t))
+                .Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, errorMessageOnMissing))
+                .Named($"'{op}'");
         }
 
         /// <summary>
@@ -44,7 +52,7 @@ namespace Scoop.Parsing.Parsers
         {
             return Match<Token>(t => t.IsType(type))
                 .Transform(produce)
-                .Named("Token:" + type);
+                .Named(type.ToString());
         }
     }
 }

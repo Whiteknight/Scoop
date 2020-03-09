@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using Scoop.Parsing;
 using Scoop.Parsing.Parsers.Visitors;
 
@@ -10,10 +9,8 @@ namespace Scoop.GrammarGenerator
         static void Main(string[] args)
         {
             var grammar = new ScoopGrammar();
-            var result = new StringBuilder();
-            var target = new ScoopBnfStringifyVisitor(result);
-            target.Visit(grammar.CompilationUnits);
-            var s = result.ToString();
+            var target = new ScoopBnfStringifyVisitor();
+            var s = target.ToBnf(grammar.CompilationUnits);
             Console.WriteLine(s);
             Console.ReadKey();
         }

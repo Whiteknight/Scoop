@@ -6,7 +6,7 @@ namespace Scoop.Parsing.Parsers.Visitors
 {
     public class ScoopBnfStringifyVisitor : BnfStringifyVisitor
     {
-        public ScoopBnfStringifyVisitor(StringBuilder sb) : base(sb)
+        public ScoopBnfStringifyVisitor()
         {
         }
     }

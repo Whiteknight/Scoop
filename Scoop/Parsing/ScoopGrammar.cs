@@ -106,20 +106,27 @@ namespace Scoop.Parsing
                 .Named("accessModifiers");
 
             // Setup some parsers for requiring operators or communicating helpful errors
-            _requiredSemicolon = Operator(";").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingSemicolon));
-            _requiredOpenBracket = Operator("{").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket));
-            _requiredCloseBracket = Operator("}").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseBracket));
-            _requiredOpenParen = Operator("(").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenParen));
-            _requiredCloseParen = Operator(")").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseParen));
-            _requiredColon = Operator(":").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingColon));
-            _requiredCloseBrace = Operator("]").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseBrace));
-            _requiredCloseAngle = Operator(">").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingCloseAngle));
-            _requiredIdentifier = _identifiers.Optional(t => new IdentifierNode().WithDiagnostics(t.CurrentLocation, Errors.MissingIdentifier));
-            _requiredEquals = Operator("=").Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, Errors.MissingEquals));
+            _requiredSemicolon = RequiredOperator(";", Errors.MissingSemicolon);
+            _requiredOpenBracket = RequiredOperator("{", Errors.MissingOpenBracket);
+            _requiredCloseBracket = RequiredOperator("}", Errors.MissingCloseBracket);
+            _requiredOpenParen = RequiredOperator("(", Errors.MissingOpenParen);
+            _requiredCloseParen = RequiredOperator(")", Errors.MissingCloseParen);
+            _requiredColon = RequiredOperator(":", Errors.MissingColon);
+            _requiredCloseBrace = RequiredOperator("]", Errors.MissingCloseBrace);
+            _requiredCloseAngle = RequiredOperator(">", Errors.MissingCloseAngle);
+            _requiredEquals = RequiredOperator("=", Errors.MissingEquals);
+
+            _requiredIdentifier = _identifiers
+                .Optional(t => new IdentifierNode().WithDiagnostics(t.CurrentLocation, Errors.MissingIdentifier))
+                .Named(_identifiers.Name);
 
             // Parsers to require certain productions or add a helpful error
-            _requiredType = Types.Optional(t => new TypeNode().WithDiagnostics(t.CurrentLocation, Errors.MissingType));
-            _requiredExpression = Expressions.Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression));
+            _requiredType = Types
+                .Optional(t => new TypeNode().WithDiagnostics(t.CurrentLocation, Errors.MissingType))
+                .Named("Types");
+            _requiredExpression = Expressions
+                .Optional(t => new EmptyNode().WithDiagnostics(t.CurrentLocation, Errors.MissingExpression))
+                .Named("Expressions");
 
             // Setup individual sections of the grammar
             InitializeTopLevel();
@@ -244,20 +251,22 @@ namespace Scoop.Parsing
                 .Named("usingDirectives");
 
             var namespaceMembers = First<Token, AstNode>(
-                Token(TokenType.CSharpLiteral, t => new CSharpNode(t)),
-                Deferred(() => Classes),
-                Deferred(() => Interfaces),
-                Deferred(() => Enums),
-                Deferred(() => Delegates)
-            );
+                    Token(TokenType.CSharpLiteral, t => new CSharpNode(t)),
+                    Deferred(() => Classes),
+                    Deferred(() => Interfaces),
+                    Deferred(() => Enums),
+                    Deferred(() => Delegates)
+                )
+                .Named("namespaceMembers");
 
             var namespaceBody = Rule(
-                Operator("{"),
-                namespaceMembers.List().Transform(members => new ListNode<AstNode> { Items = members.ToList() }),
-                _requiredCloseBracket,
+                    Operator("{"),
+                    namespaceMembers.List().Transform(members => new ListNode<AstNode> { Items = members.ToList() }),
+                    _requiredCloseBracket,
 
-                (a, members, b) => members.WithUnused(a, b)
-            );
+                    (a, members, b) => members.WithUnused(a, b)
+                )
+                .Named("namespaceBody");
 
             var namespaces = Rule(
                     Keyword("namespace"),
@@ -621,7 +630,8 @@ namespace Scoop.Parsing
             ).Named("classBody");
 
             var requiredClassBody = classBody
-                .Optional(t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket));
+                .Optional(t => new ListNode<AstNode>().WithDiagnostics(t.CurrentLocation, Errors.MissingOpenBracket))
+                .Named(classBody.Name);
 
             Classes = Rule(
                     Attributes,
@@ -743,7 +753,8 @@ namespace Scoop.Parsing
                 {
                     Items = items.ToList(),
                     Separator = new OperatorNode(",")
-                });
+                })
+                .Named("commaSeparatedArguments");
 
             // A required argument list
             // "(" <commaSeparatedArgs>? ")"
@@ -1087,62 +1098,65 @@ namespace Scoop.Parsing
         private void InitializeNew()
         {
             var propertyInitializer = Rule(
-                // <ident> "=" <Expression>
-                _identifiers,
-                Operator("="),
-                _requiredExpression,
+                    // <ident> "=" <Expression>
+                    _identifiers,
+                    Operator("="),
+                    _requiredExpression,
 
-                (name, e, expr) => (AstNode) new PropertyInitializerNode
-                {
-                    Location = name.Location,
-                    Property = name,
-                    Value = expr
-                }.WithUnused(e)
-            );
+                    (name, e, expr) => (AstNode) new PropertyInitializerNode
+                    {
+                        Location = name.Location,
+                        Property = name,
+                        Value = expr
+                    }.WithUnused(e)
+                )
+                .Named("propertyInitializer");
 
             var indexerInitializer = Rule(
-                // "[" <args> "]" "=" <Expression>
-                Operator("["),
-                SeparatedList(
-                    Expressions,
-                    Operator(",")
-                ).Transform(items => new ListNode<AstNode>
-                {
-                    Items = items.ToList(),
-                    Separator = new OperatorNode(",")
-                }),
-                _requiredCloseBrace,
-                _requiredEquals,
-                _requiredExpression,
+                    // "[" <args> "]" "=" <Expression>
+                    Operator("["),
+                    SeparatedList(
+                        Expressions,
+                        Operator(",")
+                    ).Transform(items => new ListNode<AstNode>
+                    {
+                        Items = items.ToList(),
+                        Separator = new OperatorNode(",")
+                    }),
+                    _requiredCloseBrace,
+                    _requiredEquals,
+                    _requiredExpression,
 
-                (o, args, c, e, value) => (AstNode) new IndexerInitializerNode
-                {
-                    Location = o.Location,
-                    Arguments = args,
-                    Value = value
-                }.WithUnused(o, c, e)
-            );
+                    (o, args, c, e, value) => (AstNode) new IndexerInitializerNode
+                    {
+                        Location = o.Location,
+                        Arguments = args,
+                        Value = value
+                    }.WithUnused(o, c, e)
+                )
+                .Named("indexerInitializer");
 
             var addInitializer = Rule(
-                // "{" <args> "}" 
-                Operator("{"),
-                SeparatedList(
-                    Expressions,
-                    Operator(","),
-                    atLeastOne: true
-                ).Transform(items => new ListNode<AstNode>
-                {
-                    Items = items.ToList(),
-                    Separator = new OperatorNode(",")
-                }),
-                _requiredCloseBracket,
+                    // "{" <args> "}" 
+                    Operator("{"),
+                    SeparatedList(
+                        Expressions,
+                        Operator(","),
+                        atLeastOne: true
+                    ).Transform(items => new ListNode<AstNode>
+                    {
+                        Items = items.ToList(),
+                        Separator = new OperatorNode(",")
+                    }),
+                    _requiredCloseBracket,
 
-                (o, args, c) => (AstNode) new AddInitializerNode
-                {
-                    Location = o.Location,
-                    Arguments = args
-                }.WithUnused(o, c)
-            );
+                    (o, args, c) => (AstNode) new AddInitializerNode
+                    {
+                        Location = o.Location,
+                        Arguments = args
+                    }.WithUnused(o, c)
+                )
+                .Named("addInitializer");
 
             var nonCollectionInitializer = First(
                 propertyInitializer,
@@ -1159,7 +1173,8 @@ namespace Scoop.Parsing
                 {
                     Items = items.ToList(),
                     Separator = new OperatorNode(",")
-                });
+                })
+                .Named("nonCollectionInitializerList");
 
             var collectionInitializerList = SeparatedList(
                     Expressions,
