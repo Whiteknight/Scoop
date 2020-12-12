@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using System.Text;
-using ParserObjects.Parsers.Visitors;
+using ParserObjects.Visitors;
 
 namespace Scoop.Parsing.Parsers.Visitors
 {

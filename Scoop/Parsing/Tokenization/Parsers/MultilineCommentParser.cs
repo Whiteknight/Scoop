@@ -6,14 +6,16 @@ namespace Scoop.Parsing.Tokenization.Parsers
 {
     public class MultilineCommentParser : IParser<char, string>
     {
-        public IParseResult<string> Parse(ISequence<char> t)
+        public IResult<string> Parse(ParseState<char> state)
         {
+            var t = state.Input;
+            int startConsumed = t.Consumed;
             var a = t.GetNext();
             var b = t.Peek();
             if (a != '/' || b != '*')
             {
                 t.PutBack(a);
-                return new FailResult<string>();
+                return state.Fail(this, "");
             }
 
             var chars = new List<char> { '/', t.GetNext() };
@@ -42,15 +44,15 @@ namespace Scoop.Parsing.Tokenization.Parsers
             }
 
             var x = new string(chars.ToArray());
-            return new SuccessResult<string>(x, t.CurrentLocation);
+            return state.Success(this, x, t.Consumed - startConsumed);
         }
-
-        public IParseResult<object> ParseUntyped(ISequence<char> t) => Parse(t).Untype();
 
         public string Name { get; set; }
 
         public IEnumerable<IParser> GetChildren() => Enumerable.Empty<IParser>();
 
         public IParser ReplaceChild(IParser find, IParser replace) => this;
+
+        IResult IParser<char>.Parse(ParseState<char> state) => Parse(state);
     }
 }

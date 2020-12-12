@@ -3,6 +3,7 @@ using NUnit.Framework;
 using ParserObjects.Sequences;
 using Scoop.Parsing.Tokenization;
 using Scoop.Tests.Utility;
+using ParserObjects;
 
 namespace Scoop.Tests.Tokenizing
 {

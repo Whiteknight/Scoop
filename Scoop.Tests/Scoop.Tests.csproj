@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
 
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -12,11 +12,10 @@
     <PackageReference Include="nunit" Version="3.11.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.11.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
-    <PackageReference Include="ParserObjects" Version="0.4.1" />
+    <PackageReference Include="ParserObjects" Version="3.0.0-alpha5" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Scoop\Scoop.csproj" />
   </ItemGroup>
-
 </Project>

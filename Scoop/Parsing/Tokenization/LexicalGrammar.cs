@@ -1,10 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using ParserObjects;
-using ParserObjects.Parsers;
 using Scoop.Parsing.Tokenization.Parsers;
-using static ParserObjects.Parsers.ParserMethods;
-using static Scoop.Parsing.Tokenization.Parsers.TokenParserMethods;
+using static ParserObjects.ParserMethods<char>;
 
 namespace Scoop.Parsing.Tokenization
 {
@@ -18,11 +16,11 @@ namespace Scoop.Parsing.Tokenization
             var numbers = BuildNumberParser();
 
             var wordMaybeAt = First(
-                Match("@", c => "@"),
-                Produce<char, string>(() => "")
+                Match('@').Transform(c => "@"),
+                Produce(() => "")
             );
-            var wordStartChar = Match<char>(c => char.IsLetter(c) || c == '_');
-            var wordBodyChar = Match<char>(c => char.IsLetter(c) || char.IsDigit(c) || c == '_');
+            var wordStartChar = Match(c => char.IsLetter(c) || c == '_');
+            var wordBodyChar = Match(c => char.IsLetter(c) || char.IsDigit(c) || c == '_');
 
             var words = Rule(
                 wordMaybeAt,
@@ -34,10 +32,10 @@ namespace Scoop.Parsing.Tokenization
 
             var chars = BuildCharacterLiteralParser();
 
-            var notNewlineChar = Match<char>(c => c != '\r' && c != '\n');
+            var notNewlineChar = Match(c => c != '\r' && c != '\n');
 
             var singleLineComments = Rule(
-                    Match("//", c => new string(c)),
+                    Match("//").Transform(c => new string(c.ToArray())),
                     notNewlineChar.List().Transform(l => new string(l.ToArray())),
 
                     (prefix, content) => prefix + content
@@ -48,7 +46,7 @@ namespace Scoop.Parsing.Tokenization
 
             var cSharpLiterals = new CSharpLiteralParser();
 
-            var operators = Trie<char, string>(trie => trie
+            var operators = Trie<string>(trie => trie
                     .AddMany(".", "?.", ",", ";")
                     .AddMany("(", ")", "{", "}", "[", "]")
                     .AddMany("+", "-", "/", "*", "&", "|", "^")
@@ -66,17 +64,17 @@ namespace Scoop.Parsing.Tokenization
             var strings = new StringParser();
 
             var allTokens = First(
-                End<char>().Transform(x => Token.EndOfInput()),
+                If(End(), Produce(() => Token.EndOfInput())),
                 cSharpLiterals,
                 words,
                 operators,
                 numbers,
                 strings,
                 chars,
-                Produce<char, Token>(t => new Token(t.GetNext().ToString(), TokenType.Unknown))
+                Produce((t, d) => new Token(t.GetNext().ToString(), TokenType.Unknown))
             );
 
-            var whitespace = Match<char>(char.IsWhiteSpace).ListCharToString(true);
+            var whitespace = Match(char.IsWhiteSpace).ListCharToString(true);
             var whitespaceOrComment = First(
                 whitespace,
                 singleLineComments,
@@ -86,7 +84,7 @@ namespace Scoop.Parsing.Tokenization
             return Rule(
                 // TODO: Get a list of all whitespace and comments, and include those in the Token we return
                 whitespaceOrComment.List(),
-                Produce<char, Location>(t => t.CurrentLocation),
+                Produce((t, d) => t.CurrentLocation),
                 allTokens,
 
                 (ws, location, token) =>
@@ -101,11 +99,11 @@ namespace Scoop.Parsing.Tokenization
 
         private static IParser<char, Token> BuildCharacterLiteralParser()
         {
-            var hexDigits = Match<char>(c => _hexDigits.Contains(c));
+            var hexDigits = Match(c => _hexDigits.Contains(c));
 
             var hexCharLiteral = Rule(
-                Match<char>(c => c == '\\'),
-                Match<char>(c => c == 'x'),
+                Match(c => c == '\\'),
+                Match(c => c == 'x'),
                 // TODO: 1-4 of these only
                 hexDigits.ListCharToString(),
 
@@ -113,8 +111,8 @@ namespace Scoop.Parsing.Tokenization
             );
 
             var unicodeCharLiteral = Rule(
-                Match<char>(c => c == '\\'),
-                Match<char>(c => c == 'u'),
+                Match(c => c == '\\'),
+                Match(c => c == 'u'),
                 // TODO: 1-4 of these or exactly-4 of these?
                 hexDigits.ListCharToString(),
 
@@ -122,24 +120,24 @@ namespace Scoop.Parsing.Tokenization
             );
 
             var charEscape = Rule(
-                Match<char>(c => c == '\\'),
-                Match<char>(c => "abfnrtv\\'\"0".Contains(c)),
+                Match(c => c == '\\'),
+                Match(c => "abfnrtv\\'\"0".Contains(c)),
 
                 (slash, c) => "\\" + c
             );
 
             var chars = Rule(
-                Match<char>(c => c == '\''),
+                Match(c => c == '\''),
                 First(
                     hexCharLiteral,
                     unicodeCharLiteral,
                     charEscape,
-                    Transform(Match<char>(c => c != '\0' && c != '\''), c => c.ToString()),
-                    Produce<char, string>(() => (string) null)
+                    Transform(Match(c => c != '\0' && c != '\''), c => c.ToString()),
+                    Produce(() => (string)null)
                 ),
                 First(
-                    Match<char>(c => c == '\''),
-                    Produce<char, char>(t => '\0')
+                    Match(c => c == '\''),
+                    Produce(() => '\0')
                 ),
 
                 (start, content, end) =>
@@ -157,16 +155,16 @@ namespace Scoop.Parsing.Tokenization
 
         private static IParser<char, Token> BuildNumberParser()
         {
-            var hexDigits = Match<char>(c => _hexDigits.Contains(c));
-            var digits = Match<char>(char.IsDigit);
+            var hexDigits = Match(c => _hexDigits.Contains(c));
+            var digits = Match(char.IsDigit);
 
             // "0x" <hexDigit> (("_" <hexDigit>) | <hexDigit>)*
             var hexNumber = Rule(
-                Match("0x", c => c),
+                Match("0x"),
                 hexDigits,
                 First(
                         Rule(
-                            Match<char>(c => c == '_'),
+                            Match(c => c == '_'),
                             hexDigits,
 
                             (sep, digit) => new[] { sep, digit }
@@ -175,10 +173,10 @@ namespace Scoop.Parsing.Tokenization
                     )
                     .List().Transform(x => new string(x.SelectMany(y => y).ToArray())),
                 First(
-                    Match("UL", c => TokenType.ULong),
-                    Match("U", c => TokenType.UInteger),
-                    Match("L", c => TokenType.Long),
-                    Produce<char, TokenType>(() => TokenType.Integer)
+                    Match("UL").Transform(c => TokenType.ULong),
+                    Match("U").Transform(c => TokenType.UInteger),
+                    Match("L").Transform(c => TokenType.Long),
+                    Produce(() => TokenType.Integer)
                 ),
 
                 (prefix, first, rest, type) => new Token(int.Parse(first + rest, System.Globalization.NumberStyles.HexNumber).ToString(), type)
@@ -189,7 +187,7 @@ namespace Scoop.Parsing.Tokenization
                 digits,
                 First(
                         Rule(
-                            Match<char>(c => c == '_'),
+                            Match(c => c == '_'),
                             digits,
 
                             (sep, digit) => new[] { sep, digit }
@@ -203,14 +201,14 @@ namespace Scoop.Parsing.Tokenization
 
             // "-"? <digitList> "." <digitList>
             var decimalNumber = Rule(
-                Optional(Match("-", c => "-"), () => ""),
+                Optional(Match("-").Transform(c => "-"), () => ""),
                 digitList,
-                Match(".", c => "."),
+                Match(".").Transform(c => "."),
                 digitList,
                 First(
-                    Match("F", c => TokenType.Float),
-                    Match("M", c => TokenType.Decimal),
-                    Produce<char, TokenType>(() => TokenType.Double)
+                    Match("F").Transform(c => TokenType.Float),
+                    Match("M").Transform(c => TokenType.Decimal),
+                    Produce(() => TokenType.Double)
                 ),
 
                 (neg, whole, dot, fract, type) => new Token(neg + whole + "." + fract, type)
@@ -218,13 +216,13 @@ namespace Scoop.Parsing.Tokenization
 
             // "-"? <digitList>
             var integralNumber = Rule(
-                Optional(Match("-", c => "-"), () => ""),
+                Optional(Match("-").Transform(c => "-"), () => ""),
                 digitList,
                 First(
-                    Match("UL", c => TokenType.ULong),
-                    Match("U", c => TokenType.UInteger),
-                    Match("L", c => TokenType.Long),
-                    Produce<char, TokenType>(() => TokenType.Integer)
+                    Match("UL").Transform(c => TokenType.ULong),
+                    Match("U").Transform(c => TokenType.UInteger),
+                    Match("L").Transform(c => TokenType.Long),
+                    Produce(() => TokenType.Integer)
                 ),
 
                 (neg, whole, type) => new Token(neg + whole, type)

@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Linq;
 using ParserObjects;
-using ParserObjects.Parsers;
 using Scoop.Parsing.Tokenization;
 using Scoop.SyntaxTree;
-using static ParserObjects.Parsers.ParserMethods;
+using static ParserObjects.ParserMethods<Scoop.Parsing.Tokenization.Token>;
 
 namespace Scoop.Parsing.Parsers
 {
@@ -18,7 +17,7 @@ namespace Scoop.Parsing.Parsers
             var name = $"'{firstKeyword}'";
             if (keywords.Length > 0)
                 name = "(" + name + " | " + string.Join(" | ", keywords.Select(op => $"'{op}'")) + ")";
-            return Match<Token>(t => t.IsType(TokenType.Word) && (t.Value == firstKeyword || keywords.Any(k => k == t.Value)))
+            return Match(t => t.IsType(TokenType.Word) && (t.Value == firstKeyword || keywords.Any(k => k == t.Value)))
                 .Transform(t => new KeywordNode(t))
                 .Named(name);
         }
@@ -28,16 +27,16 @@ namespace Scoop.Parsing.Parsers
             var name = $"'{firstOp}'";
             if (operators.Length > 0)
                 name = name + " " + string.Join(" ", operators.Select(op => $"'{op}'"));
-            return Match<Token>(t => t.IsType(TokenType.Operator) && (t.Value == firstOp || operators.Any(k => k == t.Value)))
+            return Match(t => t.IsType(TokenType.Operator) && (t.Value == firstOp || operators.Any(k => k == t.Value)))
                 .Transform(t => new OperatorNode(t))
                 .Named(name);
         }
 
         public static IParser<Token, OperatorNode> RequiredOperator(string op, string errorMessageOnMissing)
         {
-            return Match<Token>(t => t.IsType(TokenType.Operator) && t.Value == op)
+            return Match(t => t.IsType(TokenType.Operator) && t.Value == op)
                 .Transform(t => new OperatorNode(t))
-                .Optional(t => new OperatorNode().WithDiagnostics(t.CurrentLocation, errorMessageOnMissing))
+                .Optional((t, d) => new OperatorNode().WithDiagnostics(t.CurrentLocation, errorMessageOnMissing))
                 .Named($"'{op}'");
         }
 
@@ -50,7 +49,7 @@ namespace Scoop.Parsing.Parsers
         /// <returns></returns>
         public static IParser<Token, TOutput> Token<TOutput>(TokenType type, Func<Token, TOutput> produce)
         {
-            return Match<Token>(t => t.IsType(type))
+            return Match(t => t.IsType(type))
                 .Transform(produce)
                 .Named(type.ToString());
         }

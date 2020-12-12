@@ -7,10 +7,11 @@ namespace Scoop.Parsing.Tokenization.Parsers
 {
     public class CSharpLiteralParser : IParser<char, Token>
     {
-        public IParseResult<Token> Parse(ISequence<char> _chars)
+        public IResult<Token> Parse(ParseState<char> state)
         {
-            // Attempt to read through an arbitrary c# code literal. We can largely do this by 
-            // counting braces, but we have to get a bit more involved when we deal with 
+            var input = state.Input;
+            // Attempt to read through an arbitrary c# code literal. We can largely do this by
+            // counting braces, but we have to get a bit more involved when we deal with
             // braces which are quoted as chars and strings: '{' and "{".
 
             // C# is a complicated language and this parser does not want to be complicated. It is expected
@@ -18,44 +19,45 @@ namespace Scoop.Parsing.Tokenization.Parsers
             // This parser will not attempt in any way to recognize the contents of the C# block or provide
             // helpful diagnostics/recovery. If the user doesn't balance their {} brackets, they're going
             // to get an exception and a hard stop.
-            var a = _chars.GetNext();
-            var b = _chars.Peek();
+            var startConsumed = input.Consumed;
+            var a = input.GetNext();
+            var b = input.Peek();
             if (a != 'c' || b != '#')
             {
-                _chars.PutBack(a);
-                return new FailResult<Token>();
+                input.PutBack(a);
+                return state.Fail(this, "");
             }
 
-            _chars.GetNext();
+            input.GetNext();
 
-            while (char.IsWhiteSpace(_chars.Peek()))
-                _chars.GetNext();
-            _chars.Expect('{');
+            while (char.IsWhiteSpace(input.Peek()))
+                input.GetNext();
+            input.Expect('{');
             int braceCount = 1;
             var buffer = new List<char>();
             while (true)
             {
-                var c = _chars.GetNext();
+                var c = input.GetNext();
                 if (c == '\0')
-                    TokenizingException.UnexpectedEndOfInput(_chars.CurrentLocation);
+                    TokenizingException.UnexpectedEndOfInput(input.CurrentLocation);
                 if (c == '\'')
                 {
                     buffer.Add(c);
-                    c = _chars.GetNext();
+                    c = input.GetNext();
                     buffer.Add(c);
                     if (c == '\\')
                     {
-                        c = _chars.GetNext();
+                        c = input.GetNext();
                         buffer.Add(c);
-                        c = _chars.GetNext();
+                        c = input.GetNext();
                         while (c != '\'')
                         {
                             buffer.Add(c);
-                            c = _chars.GetNext();
+                            c = input.GetNext();
                         }
                     }
                     else
-                        c = _chars.Expect('\'');
+                        c = input.Expect('\'');
                     buffer.Add(c);
                     continue;
                 }
@@ -64,36 +66,36 @@ namespace Scoop.Parsing.Tokenization.Parsers
                     buffer.Add(c);
                     while (true)
                     {
-                        c = _chars.GetNext();
+                        c = input.GetNext();
                         if (c == '\0')
-                            TokenizingException.UnexpectedEndOfInput(_chars.CurrentLocation);
+                            TokenizingException.UnexpectedEndOfInput(input.CurrentLocation);
                         if (c == '"')
                             break;
                         if (c == '\\')
                         {
                             buffer.Add(c);
-                            c = _chars.GetNext();
+                            c = input.GetNext();
                         }
                         buffer.Add(c);
                     }
                     buffer.Add(c);
                     continue;
                 }
-                if (c == '@' && _chars.Peek() == '"')
+                if (c == '@' && input.Peek() == '"')
                 {
                     buffer.Add(c);
-                    buffer.Add(_chars.GetNext());
+                    buffer.Add(input.GetNext());
                     while (true)
                     {
-                        c = _chars.GetNext();
+                        c = input.GetNext();
                         if (c == '\0')
-                            TokenizingException.UnexpectedEndOfInput(_chars.CurrentLocation);
+                            TokenizingException.UnexpectedEndOfInput(input.CurrentLocation);
                         if (c == '"')
                         {
-                            if (_chars.Peek() != '"')
+                            if (input.Peek() != '"')
                                 break;
                             buffer.Add(c);
-                            c = _chars.GetNext();
+                            c = input.GetNext();
                         }
 
                         buffer.Add(c);
@@ -122,15 +124,15 @@ namespace Scoop.Parsing.Tokenization.Parsers
             }
 
             //_chars.Expect('}');
-            return new SuccessResult<Token>(Token.CSharpLiteral(new string(buffer.ToArray())), _chars.CurrentLocation);
+            return state.Success(this, Token.CSharpLiteral(new string(buffer.ToArray())), input.Consumed - startConsumed, input.CurrentLocation);
         }
-
-        public IParseResult<object> ParseUntyped(ISequence<char> t) => Parse(t);
 
         public string Name { get; set; }
 
         public IEnumerable<IParser> GetChildren() => Enumerable.Empty<IParser>();
 
         public IParser ReplaceChild(IParser find, IParser replace) => this;
+
+        IResult IParser<char>.Parse(ParseState<char> state) => Parse(state);
     }
 }

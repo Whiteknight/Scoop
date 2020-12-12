@@ -2,13 +2,13 @@ using NUnit.Framework;
 using ParserObjects.Sequences;
 using Scoop.Parsing.Tokenization;
 using Scoop.Tests.Utility;
+using ParserObjects;
 
 namespace Scoop.Tests.Tokenizing
 {
     [TestFixture]
     public class LexicalGrammarCSharpLiteralTests
     {
-
         [Test]
         public void ParseNext_CSharpLiteral_Simple()
         {

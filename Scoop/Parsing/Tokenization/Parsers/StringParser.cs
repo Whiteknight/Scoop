@@ -9,13 +9,15 @@ namespace Scoop.Parsing.Tokenization.Parsers
         private static readonly HashSet<char> _hexChars = new HashSet<char>("abcdefABCDEF0123456789");
         private static readonly HashSet<char> _escapeChars = new HashSet<char>("abfnrtv0'\"\\");
 
-        public IParseResult<Token> Parse(ISequence<char> t)
+        public IResult<Token> Parse(ParseState<char> state)
         {
-            var token = ReadStringToken(t);
-            return token == null ? new FailResult<Token>() : (IParseResult<Token>)new SuccessResult<Token>(token, t.CurrentLocation);
+            int startConsumed = state.Input.Consumed;
+            var startLocation = state.Input.CurrentLocation;
+            var token = ReadStringToken(state.Input);
+            if (token == null)
+                return state.Fail(this, "");
+            return state.Success(this, token, state.Input.Consumed - startConsumed, startLocation);
         }
-
-        public IParseResult<object> ParseUntyped(ISequence<char> t) => Parse(t);
 
         public string Name { get; set; }
 
@@ -187,6 +189,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
                         }
 
                         break;
+
                     case StringReadState.String:
                         if (c == '\\')
                         {
@@ -201,6 +204,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
                         }
 
                         break;
+
                     case StringReadState.InterpolatedString:
                         if (c == '\\')
                         {
@@ -221,6 +225,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
                         }
 
                         break;
+
                     case StringReadState.BlockString:
                         if (c == '"')
                         {
@@ -237,6 +242,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
                         }
 
                         break;
+
                     case StringReadState.InterpolatedBlockString:
                         if (c == '"')
                         {
@@ -290,7 +296,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
 
             if (_escapeChars.Contains(d))
                 return;
-            
+
             errors.Add(new Diagnostic(Errors.UnrecognizedCharEscape, t.CurrentLocation));
         }
 
@@ -349,5 +355,7 @@ namespace Scoop.Parsing.Tokenization.Parsers
                 buffer.Add(e);
             }
         }
+
+        IResult IParser<char>.Parse(ParseState<char> state) => Parse(state);
     }
 }

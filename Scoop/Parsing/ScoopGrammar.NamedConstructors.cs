@@ -2,7 +2,7 @@
 using ParserObjects.Parsers;
 using Scoop.Parsing.Tokenization;
 using Scoop.SyntaxTree;
-using static ParserObjects.Parsers.ParserMethods;
+using static ParserObjects.ParserMethods<Scoop.Parsing.Tokenization.Token>;
 using static Scoop.Parsing.Parsers.TokenParserMethods;
 
 namespace Scoop.Parsing
@@ -37,7 +37,7 @@ namespace Scoop.Parsing
                         Type = type,
                         Name = name,
                         Arguments = args,
-                        Initializers = inits
+                        Initializers = inits.GetValueOrDefault(null)
                     }.WithUnused(o)
                 ).Named("newNamedArgsInits")
             );
@@ -57,7 +57,7 @@ namespace Scoop.Parsing
                         parameterLists,
                         Rule(
                                 Operator(":"),
-                                Keyword("this").Optional(t => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
+                                Keyword("this").Optional((t, d) => new KeywordNode().WithDiagnostics(t.CurrentLocation, Errors.MissingThis)),
                                 argumentLists,
                                 (a, b, args) => args.WithUnused(a, b)
                             )
@@ -73,7 +73,7 @@ namespace Scoop.Parsing
                             ClassName = type,
                             Name = name,
                             Parameters = param,
-                            ThisArgs = targs,
+                            ThisArgs = targs.GetValueOrDefault(null),
                             Statements = body
                         }.WithUnused(c)
                     )
