@@ -28,7 +28,7 @@ namespace XYZ
         {
             var ast = TestSuite.GetGrammar().Classes.Parse(@"
 
-public class MyClass 
+public class MyClass
 {
     // default parameterless constructor
     public MyClass() { }
@@ -57,7 +57,7 @@ public class MyClass
         public void Compile_ClassMethodReturnValue()
         {
             var ast = TestSuite.GetGrammar().Classes.Parse(@"
-public class MyClass 
+public class MyClass
 {
     public int MyMethod()
     {
@@ -69,7 +69,7 @@ public class MyClass
             var type = assembly.ExportedTypes.First();
             var myObj = Activator.CreateInstance(type);
             var method = type.GetMethod("MyMethod");
-            var result = (int) method.Invoke(myObj, new object[0]);
+            var result = (int)method.Invoke(myObj, new object[0]);
             result.Should().Be(11);
         }
 
@@ -77,7 +77,7 @@ public class MyClass
         public void Compile_ClassMethodReturnExpression()
         {
             var ast = TestSuite.GetGrammar().Classes.Parse(@"
-public class MyClass 
+public class MyClass
 {
     public string MyMethod()
     {
@@ -99,9 +99,9 @@ public class MyClass
             var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System.Collections.Generic;
 
-namespace XYZ 
+namespace XYZ
 {
-    public class MyClass 
+    public class MyClass
     {
         public List<int> MyMethod()
         {
@@ -124,9 +124,9 @@ namespace XYZ
             var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System.Collections.Generic;
 
-namespace XYZ 
+namespace XYZ
 {
-    public class MyClass 
+    public class MyClass
     {
         public List<int> MyMethod()
         {
@@ -156,9 +156,9 @@ namespace XYZ
             var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System.Collections.Generic;
 
-namespace XYZ 
+namespace XYZ
 {
-    public class MyClass 
+    public class MyClass
     {
         public int MyMethod()
         {
@@ -184,9 +184,9 @@ namespace XYZ
             var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System.Collections.Generic;
 
-namespace XYZ 
+namespace XYZ
 {
-    public class MyClass 
+    public class MyClass
     {
         public string MyMethod()
         {
@@ -209,13 +209,13 @@ namespace XYZ
 using System;
 using System.Collections.Generic;
 
-namespace XYZ 
+namespace XYZ
 {
-    public class MyClass 
+    public class MyClass
     {
         public int MyMethod()
         {
-            c# { Func<int, int> func; }   
+            c# { Func<int, int> func; }
             func = (a => a + 5);
             return func(4);
         }
@@ -235,12 +235,12 @@ namespace XYZ
             var ast = TestSuite.GetGrammar().CompilationUnits.Parse(@"
 using System.Collections.Generic;
 
-namespace XYZ 
+namespace XYZ
 {
-    public class MyClass 
+    public class MyClass
     {
         // use code literal to define a protected method, which Scoop doesn't support
-        c# 
+        c#
         {
             protected int CSharpMethod() => 4;
         }
@@ -272,9 +272,9 @@ namespace XYZ
 using System.Collections.Generic;
 using System.Linq;
 
-namespace XYZ 
+namespace XYZ
 {
-    public class MyClass 
+    public class MyClass
     {
         public int MyMethod(List<List<int>> e)
         {
@@ -297,9 +297,9 @@ namespace XYZ
 using System.Collections.Generic;
 using System.Linq;
 
-namespace XYZ 
+namespace XYZ
 {
-    public class MyClass 
+    public class MyClass
     {
         c# {
             public class TestClass {
@@ -327,7 +327,7 @@ namespace XYZ
             var innerObj = result[1];
             var innerObjType = innerObj.GetType();
             var prop = innerObjType.GetProperty("Value");
-            var intValue = (int) prop.GetValue(innerObj);
+            var intValue = (int)prop.GetValue(innerObj);
             intValue.Should().Be(5);
 
             // TODO: Indexer initializer syntax "[0] = ..." parses and serializes correctly but I can't
@@ -341,9 +341,9 @@ namespace XYZ
 using System.Collections.Generic;
 using System.Linq;
 
-namespace XYZ 
+namespace XYZ
 {
-    public class MyClass 
+    public class MyClass
     {
         public int MyMethod()
         {
@@ -352,13 +352,12 @@ namespace XYZ
         }
     }
 
-
     public class MyList
     {
         List<int> Items;
         public MyList() { Items = new List<int>(); }
         c#{
-            public int this[int i] 
+            public int this[int i]
             {
                 get { return Items[i]; }
                 set { Items.Insert(i, value); }
@@ -381,14 +380,14 @@ namespace XYZ
 using System.Collections.Generic;
 using System.Linq;
 
-namespace XYZ 
+namespace XYZ
 {
-    public class MyClass 
+    public class MyClass
     {
         private const int _two = 2;
         public int[] MyMethod()
         {
-            return new int[] { 1, _two, 3 }; 
+            return new int[] { 1, _two, 3 };
         }
     }
 }");
@@ -408,15 +407,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace XYZ 
+namespace XYZ
 {
     [Flags]
-    enum MyEnum
+    public enum MyEnum
     {
         A, B = 1, C
     }
 
-    public class MyClass 
+    public class MyClass
     {
         public int MyMethod()
         {
@@ -425,8 +424,9 @@ namespace XYZ
     }
 }");
             var assembly = TestCompiler.Compile(ast);
-            var type = assembly.ExportedTypes.First();
+            var type = assembly.ExportedTypes.First(t => t.Name == "MyClass");
             var myObj = Activator.CreateInstance(type);
+            var methods = type.GetMethods();
             var method = type.GetMethod("MyMethod");
             var result = (int)method.Invoke(myObj, new object[] { });
             result.Should().Be(1);
@@ -440,7 +440,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace XYZ 
+namespace XYZ
 {
     public interface IMyInterface
     {
@@ -461,7 +461,7 @@ namespace XYZ
         public void Compile_MethodParameters()
         {
             var ast = TestSuite.GetGrammar().Classes.Parse(@"
-public class MyClass 
+public class MyClass
 {
     public int MyMethod()
     {
@@ -486,7 +486,7 @@ public class MyClass
         public void Compile_ExpressionPrefixPostfix()
         {
             var ast = TestSuite.GetGrammar().Classes.Parse(@"
-public class MyClass 
+public class MyClass
 {
     public int MyMethod()
     {

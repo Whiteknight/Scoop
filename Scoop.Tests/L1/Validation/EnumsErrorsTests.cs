@@ -12,7 +12,7 @@ namespace Scoop.Tests.L1.Validation
         public void Enum_MissingName()
         {
             const string syntax = @"
-enum 
+enum
 {
     MemberA,
     MemberB = 1

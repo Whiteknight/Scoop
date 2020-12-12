@@ -101,9 +101,10 @@ namespace Scoop.Parsing
             _identifiers = Match(t => t.IsType(TokenType.Word) && !_keywords.Contains(t.Value))
                 .Transform(t => new IdentifierNode(t))
                 .Named("_identifiers");
-            _accessModifiers = Keyword("public", "private")
-                //.Optional()
-                .Named("accessModifiers");
+            _accessModifiers = First(
+                Keyword("public", "private"),
+                Produce(() => new KeywordNode("public"))
+            ).Named("accessModifiers");
 
             // Setup some parsers for requiring operators or communicating helpful errors
             _requiredSemicolon = RequiredOperator(";", Errors.MissingSemicolon);
@@ -648,7 +649,7 @@ namespace Scoop.Parsing
                     {
                         Attributes = attrs.IsNullOrEmpty() ? null : attrs,
                         AccessModifier = vis.GetValueOrDefault(new KeywordNode("public")),
-                        Modifiers = isPartial is KeywordNode k ? new ListNode<KeywordNode> { k } : null,
+                        Modifiers = isPartial.Success && isPartial.Value is KeywordNode k ? new ListNode<KeywordNode> { k } : null,
                         Type = obj,
                         Name = name,
                         GenericTypeParameters = genParm.IsNullOrEmpty() ? null : genParm,
@@ -674,7 +675,7 @@ namespace Scoop.Parsing
                     {
                         Attributes = attrs.IsNullOrEmpty() ? null : attrs,
                         AccessModifier = vis ?? new KeywordNode("private"),
-                        Modifiers = isPartial is KeywordNode k ? new ListNode<KeywordNode> { k } : null,
+                        Modifiers = isPartial.Success && isPartial.Value is KeywordNode k ? new ListNode<KeywordNode> { k } : null,
                         Type = obj,
                         Name = name,
                         GenericTypeParameters = genParm.IsNullOrEmpty() ? null : genParm,
@@ -706,7 +707,7 @@ namespace Scoop.Parsing
                     {
                         Location = type.Location,
                         Attributes = attrs.IsNullOrEmpty() ? null : attrs,
-                        IsParams = isparams != null,
+                        IsParams = isparams.Success,
                         Type = type,
                         Name = name,
                         DefaultValue = value.GetValueOrDefault(null)

@@ -17,11 +17,10 @@ namespace Scoop.Parsing
             var compilationUnits = l1.CompilationUnits;
 
             // named constructors
-            var identifiers = compilationUnits.FindNamed("_identifiers") as IParser<Token, IdentifierNode>;
-            var initializers = compilationUnits.FindNamed("initializers") as IParser<Token, ListNode<AstNode>>;
-            var argumentLists = compilationUnits.FindNamed("ArgumentLists") as IParser<Token, ListNode<AstNode>>;
-            var newNamed = compilationUnits.FindNamed("newNamedArgsInitsStub") as ReplaceableParser<Token, NewNode>;
-            newNamed.SetParser(
+            var identifiers = compilationUnits.FindNamed("_identifiers").Value as IParser<Token, IdentifierNode>;
+            var initializers = compilationUnits.FindNamed("initializers").Value as IParser<Token, ListNode<AstNode>>;
+            var argumentLists = compilationUnits.FindNamed("ArgumentLists").Value as IParser<Token, ListNode<AstNode>>;
+            var newNamed = compilationUnits.Replace("newNamedArgsInitsStub",
                 // "new" <type> ":" <identifier> <arguments> <initializers>?
                 Rule(
                     Keyword("new"),
@@ -43,11 +42,10 @@ namespace Scoop.Parsing
             );
             // TODO: "new" <type> ":" <identifier> <initializers>
 
-            var accessModifiers = compilationUnits.FindNamed("accessModifiers") as IParser<Token, KeywordNode>;
-            var parameterLists = compilationUnits.FindNamed("ParameterList") as IParser<Token, ListNode<ParameterNode>>;
-            var methodBody = compilationUnits.FindNamed("methodBody") as IParser<Token, ListNode<AstNode>>;
-            var namedConstructor = compilationUnits.FindNamed("constructorNamedStub") as ReplaceableParser<Token, ConstructorNode>;
-            namedConstructor.SetParser(
+            var accessModifiers = compilationUnits.FindNamed("accessModifiers").Value as IParser<Token, KeywordNode>;
+            var parameterLists = compilationUnits.FindNamed("ParameterList").Value as IParser<Token, ListNode<ParameterNode>>;
+            var methodBody = compilationUnits.FindNamed("methodBody").Value as IParser<Token, ListNode<AstNode>>;
+            var namedConstructor = compilationUnits.Replace("constructorNamedStub",
                 Rule(
                         l1.Attributes,
                         accessModifiers,
@@ -80,7 +78,7 @@ namespace Scoop.Parsing
                     .Named("constructorNamed")
             );
 
-            var newParser = compilationUnits.FindNamed("new");
+            var newParser = compilationUnits.FindNamed("new").Value;
 
             return l1;
         }

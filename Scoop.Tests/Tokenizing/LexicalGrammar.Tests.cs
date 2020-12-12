@@ -62,10 +62,8 @@ comment */
 ");
             var result = target.Parse(source).Value;
             result.Type.Should().Be(TokenType.EndOfInput);
-            result.Frontmatter[1].Should().Be(@"/* This
-is
-a
-comment */");
+            var expected = "/* This\nis\na\ncomment */";
+            result.Frontmatter[1].Should().Be(expected);
         }
 
         [Test]

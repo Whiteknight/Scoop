@@ -299,6 +299,7 @@ namespace Scoop.Transpiling
             {
                 foreach (var a in n.Attributes)
                     Visit(a);
+                AppendLineAndIndent();
             }
             if (n.AccessModifier != null)
             {
@@ -310,6 +311,7 @@ namespace Scoop.Transpiling
             Visit(n.Name);
             Append("{");
             IncreaseIndent();
+            AppendLineAndIndent();
             if (n.Members.Count > 0)
             {
                 Visit(n.Members[0]);
